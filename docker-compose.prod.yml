@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  auth-service:
+    container_name: auth-service-prod
+    image: connectfy/auth-prod
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - auth-network
+      - auth-db-network
+      - api-gateway-network
+      - kafka_network
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.production
+
+  mongo:
+    image: mongo:6.0
+    container_name: auth-mongo-prod
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - auth-network
+      - auth-db-network
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: authDb
+    ports:
+      - "25001:27017"
+
+volumes:
+  mongo-data:
+
+networks:
+  auth-network:
+    external: true
+  auth-db-network:
+  api-gateway-network:
+    external: true
+  kafka_network:
+    external: true
