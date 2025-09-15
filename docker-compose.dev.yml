@@ -11,7 +11,8 @@ services:
     depends_on:
       - mongo
     volumes:
-      - .:/app
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     networks:
       - auth-network
       - auth-db-network
@@ -19,7 +20,10 @@ services:
       - api-gateway-network
     environment:
       - NODE_ENV=development
-    command: npm run start:dev
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+      - WATCHPACK_POLLING=true
+    command: npx nodemon --legacy-watch --watch src --ext ts,js,json --exec "npm run start:dev"
     env_file:
       - .env.development
 
