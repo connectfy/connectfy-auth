@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   auth-service:
-    container_name: auth-service-dev
-    image: connectfy/auth-dev
+    container_name: connectfy-auth-service-dev
+    image: connectfy/connectfy-auth-dev
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -13,26 +13,26 @@ services:
     volumes:
       - .:/usr/src/app
     networks:
-      - auth-network
+      - connectfy-auth-network
       - auth-db-network
-      - kafka_network
-      - api-gateway-network
+      - connectfy_kafka_network
+      - connectfy-api-gateway-network
     environment:
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=1000
-      - WATCHPACK_POLLING=true
-    command: npx nodemon --legacy-watch --watch src --ext ts,js,json --exec "npm run start:dev"
+      # - CHOKIDAR_USEPOLLING=true
+      # - CHOKIDAR_INTERVAL=1000
+      # - WATCHPACK_POLLING=true
+    # command: npx nodemon --legacy-watch --watch src --ext ts,js,json --exec "npm run start:dev"
     env_file:
       - .env.development
 
   mongo:
     image: mongo:6.0
-    container_name: auth-mongo-dev
+    container_name: connectfy-auth-mongo-dev
     volumes:
       - mongo-data:/data/db
     networks:
-      - auth-network
+      - connectfy-auth-network
       - auth-db-network
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -45,10 +45,10 @@ volumes:
   mongo-data:
 
 networks:
-  auth-network:
+  connectfy-auth-network:
     external: true
   auth-db-network:
-  kafka_network:
+  connectfy_kafka_network:
     external: true
-  api-gateway-network:
+  connectfy-api-gateway-network:
     external: true
