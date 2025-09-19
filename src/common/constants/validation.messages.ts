@@ -1,0 +1,17 @@
+export const ValidationMessages = {
+  REQUIRED: (field: string) => `${field} is required`,
+  STRING: (field: string) => `${field} should be string`,
+  INT: (field: string) => `${field} should be integer`,
+  MIN: (field: string, min: number) => `${field} must be at least ${min}`,
+  DATE: (field: string) => `${field} should be date`,
+  UUID: (field: string) => `${field} should be uuid`,
+  ARRAY: (field: string) => `${field} should be an array`,
+  ENUM: (field: string, values: string[]) => `${field} must be one of the following values: ${values.join(', ')}`,
+  BOOLEAN: (field: string) => `${field} must be a boolean.`,
+  EXISTS: (field: string) => `${field} already exists.`,
+  AVAILABLE: (field: string) => `${field} is available`,
+  NOT_ALLOWED_FIELD: (field: string) => `Field "${field}" is not allowed.`,
+  TYPE_MISMATCH: (field: string, expectedType: string) => `Field "${field}" expects a value of type "${expectedType}".`,
+  OBJECT: (field: string) => `${field} should be an object`,
+  EMAIL: (field: string) => `${field} must be an email`
+};
