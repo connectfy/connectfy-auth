@@ -1,0 +1,10 @@
+export abstract class BaseRepository<
+  T,
+  CreateDto = Partial<T>,
+  UpdateDto = Partial<T>,
+> {
+  abstract save(data: CreateDto): Promise<T>;
+  abstract update(data: UpdateDto): Promise<T>;
+  abstract findTokenByUserId(userId: string): Promise<T | null>;
+  abstract findByRefreshToken(refresh_token: string): Promise<T | null>;
+}

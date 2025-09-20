@@ -13,5 +13,7 @@ export const ValidationMessages = {
   NOT_ALLOWED_FIELD: (field: string) => `Field "${field}" is not allowed.`,
   TYPE_MISMATCH: (field: string, expectedType: string) => `Field "${field}" expects a value of type "${expectedType}".`,
   OBJECT: (field: string) => `${field} should be an object`,
-  EMAIL: (field: string) => `${field} must be an email`
+  EMAIL: (field: string) => `${field} must be an email`,
+  MISMATCH: (field: string, characters: string) => `${field} can not contain spaces or special characters like ${characters}`,
+  PASSWORD: () => `Password must be minimum 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character`
 };

@@ -17,8 +17,8 @@ export const ExceptionMessages = {
   TOO_MANY_REQUESTS_MESSAGE:
     'The user has sent too many requests in a given amount of time ("rate limiting").',
   ACCESS_TOKEN_EXPIRED: 'Access token expired',
-  ALREADY_EXISTS_MESSAGE:'This user already exists',
-  INVALID_CREDENTIALS:'Email or password not valid'
+  ALREADY_EXISTS_MESSAGE: (field: string) => `${field} already exists`,
+  INVALID_CREDENTIALS: 'Invalid credential',
 };
 
 export const ExceptionTypes = {
@@ -31,5 +31,5 @@ export const ExceptionTypes = {
   UNPROCESSABLE_ENTITY: 'UnprocessableEntity',
   GONE: 'Gone',
   TOO_MANY_REQUESTS: 'TooManyRequests',
-  ALREADY_EXISTS:'AlreadyExists'
+  ALREADY_EXISTS: 'AlreadyExists',
 };

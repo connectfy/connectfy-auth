@@ -1,0 +1,45 @@
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { BannedUserRepository } from './repo/banned-user.repo';
+import { AddBannedUserDto } from './dto/add.banned-user.dto';
+import { RemoveBannedUserDto } from './dto/remove.banned-user.dto';
+import { IReturnedBannedUser } from './interface/banned-user.interface';
+import { BaseException } from '@common/exceptions/base.exception';
+import {
+  ExceptionMessages,
+  ExceptionTypes,
+} from '@common/constants/exception.constants';
+
+@Injectable()
+export class BannedUserService {
+  constructor(private readonly repo: BannedUserRepository) {}
+
+  async create(data: AddBannedUserDto): Promise<IReturnedBannedUser> {
+    const res = await this.repo.create(data);
+
+    return res;
+  }
+
+  async remove(data: RemoveBannedUserDto): Promise<IReturnedBannedUser> {
+    const { _id } = data;
+
+    const foundData = await this.repo.findOne({ _id });
+
+    if (!foundData)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE,
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+      );
+
+    const res = this.repo.remove(_id);
+
+    return res as IReturnedBannedUser;
+  }
+
+  async findOne(
+    query: Record<string, any>,
+  ): Promise<IReturnedBannedUser | null> {
+    const res = await this.repo.findOne(query);
+    return res;
+  }
+}
