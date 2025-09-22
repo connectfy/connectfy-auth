@@ -1,4 +1,4 @@
-import { IDENTIFIER_TYPE } from '@common/constants/common.enum';
+import { GOOGLE_AUTH_LOGIN_TYPE, IDENTIFIER_TYPE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
@@ -22,4 +22,11 @@ export class LoginDto {
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   password: string;
+}
+
+export class GoogleAuthloginDto {
+  @IsString({ message: ValidationMessages.STRING('idToken') })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
+  idToken: string;
 }

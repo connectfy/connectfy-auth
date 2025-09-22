@@ -65,3 +65,47 @@ export class SignupDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
   birthdayDate: Date;
 }
+
+export class GoogleAuthSignupDto {
+  @IsString({ message: ValidationMessages.STRING('idToken') })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
+  idToken: string;
+
+  @IsString({ message: ValidationMessages.STRING('firstName') })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('firstName') })
+  firstName: string;
+
+  @IsString({ message: ValidationMessages.STRING('lastName') })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('lastName') })
+  lastName: string;
+
+  @IsString({ message: ValidationMessages.STRING('username') })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
+  @Matches(/^[^\s.,?()$:;"'{}[\]=+&!\\|/<>`~@#№%^]+$/, {
+    message: ValidationMessages.MISMATCH(
+      'username',
+      '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)',
+    ),
+  })
+  username: string;
+
+  @Type(() => PhoneNumberDto)
+  @ValidateNested()
+  phoneNumber: PhoneNumberDto;
+
+  @IsEnum(GENDER, {
+    message: ValidationMessages.ENUM('gender', Object.keys(GENDER)),
+  })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('gender') })
+  gender: GENDER;
+
+  @Type(() => Date)
+  @IsDate({ message: ValidationMessages.DATE('birthdayDate') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
+  birthdayDate: Date;
+}

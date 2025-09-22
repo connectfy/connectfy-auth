@@ -2,7 +2,7 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from '../users/user/repo/user.repo';
 import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
 import { ConfigService } from '@nestjs/config';
-import { SignupDto } from './dto/signup.dto';
+import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { BaseException } from '@common/exceptions/base.exception';
 import {
   ExceptionMessages,
@@ -24,12 +24,15 @@ import {
   PROVIDER,
 } from '@common/constants/common.enum';
 import { lastValueFrom } from 'rxjs';
-import { LoginDto } from './dto/login.dto';
+import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
+
   constructor(
     @Inject('NOTIFICATION_SERVICE_KAFKA')
     private readonly notificationServiceKafka: ClientKafka,
@@ -42,10 +45,38 @@ export class AuthService {
     private readonly bannedUserRepo: BannedUserRepository,
     private readonly deletedUserRepo: DeletedUserRepository,
     private readonly refreshTokenService: RefreshTokenService,
-  ) {}
+  ) {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    this.googleClient = new OAuth2Client(clientId);
+  }
 
   async onModuleInit() {
     await this.notificationServiceKafka.connect();
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const salt = await genSalt();
+    const hashedPassword = await hash(password, salt);
+
+    return hashedPassword;
+  }
+
+  private setAvatar(gender: GENDER, username: string): string {
+    let avatar: string;
+
+    switch (gender) {
+      case GENDER.MALE:
+        avatar = `https://avatar.iran.liara.run/public/boy?username=${username}`;
+        break;
+      case GENDER.FEMALE:
+        avatar = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+        break;
+      default:
+        avatar = `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUy9s7L2aRDadM1KxmVNkNQ9Edar2APzIeHw&s`;
+        break;
+    }
+
+    return avatar;
   }
 
   async singup(
@@ -158,18 +189,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    let avatar: string | null;
-    switch (gender) {
-      case GENDER.MALE:
-        avatar = `https://avatar.iran.liara.run/public/boy?username=${username}`;
-        break;
-      case GENDER.FEMALE:
-        avatar = `https://avatar.iran.liara.run/public/girl?username=${username}`;
-        break;
-      default:
-        avatar = `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUy9s7L2aRDadM1KxmVNkNQ9Edar2APzIeHw&s`;
-        break;
-    }
+    const avatar = this.setAvatar(gender, username)
 
     await lastValueFrom(
       this.accountServiceTcp.send('account/create', {
@@ -222,6 +242,13 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
+    if (user.provider !== PROVIDER.PASSWORD)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
     const isPasswordMatch = await compare(password, user.password as string);
 
     if (!isPasswordMatch)
@@ -242,13 +269,6 @@ export class AuthService {
         ExceptionMessages.FORBIDDEN_MESSAGE,
       );
 
-    if (user.provider !== PROVIDER.PASSWORD)
-      throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS,
-        HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
-      );
-
     const tokens = await this.refreshTokenService.generateTokens({
       _id: user._id as string,
     });
@@ -256,10 +276,172 @@ export class AuthService {
     return tokens;
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const salt = await genSalt();
-    const hashedPassword = await hash(password, salt);
+  async googleLogin(data: GoogleAuthloginDto) {
+    const { idToken } = data;
 
-    return hashedPassword;
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken,
+      audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+    });
+
+    const payload = ticket.getPayload();
+
+    const email = payload?.email;
+
+    if (!email)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const user = await this.userRepo.findOne({ email });
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    if (user.provider !== PROVIDER.GOOGLE)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const isUserBanned = await this.bannedUserRepo.findOne({
+      userId: user._id,
+    });
+
+    if (isUserBanned)
+      throw new BaseException(
+        ExceptionMessages.BANNED_MESSAGE(isUserBanned.bannedToDate as Date),
+        HttpStatus.FORBIDDEN,
+        ExceptionMessages.FORBIDDEN_MESSAGE,
+      );
+
+    const tokens = await this.refreshTokenService.generateTokens({
+      _id: user._id,
+    });
+
+    return tokens;
+  }
+
+  async googleSignup(data: GoogleAuthSignupDto) {
+    const { idToken, firstName, lastName, username, phoneNumber, gender } =
+      data;
+
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken,
+      audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+    });
+
+    const payload = ticket.getPayload();
+
+    const email = payload?.email;
+
+    if (!email)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const usersWithEmail = await this.userRepo.findMany({ email });
+    if (usersWithEmail.length) {
+      const userIds = usersWithEmail.map((u) => u._id);
+
+      const deletedUsers = await this.deletedUserRepo.findMany({
+        userId: { $in: userIds },
+      });
+
+      checkRecentlyDeletedConflict({
+        users: usersWithEmail,
+        deletedUsers,
+        value: email,
+      });
+
+      checkActiveUserConflict({
+        userIds,
+        deletedUsers,
+        value: email,
+      });
+    }
+
+    const usersWithPhoneNumber = await this.userRepo.findMany({
+      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
+    });
+    if (usersWithPhoneNumber.length) {
+      const userIds = usersWithPhoneNumber.map((u) => u._id);
+
+      const deletedUsers = await this.deletedUserRepo.findMany({
+        userId: { $in: userIds },
+      });
+
+      checkRecentlyDeletedConflict({
+        users: usersWithPhoneNumber,
+        deletedUsers,
+        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
+      });
+
+      checkActiveUserConflict({
+        userIds,
+        deletedUsers,
+        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
+      });
+    }
+
+    const usersWithUsername = await this.userRepo.findMany({ username });
+    if (usersWithUsername.length) {
+      const userIds = usersWithUsername.map((u) => u._id);
+
+      const deletedUsers = await this.deletedUserRepo.findMany({
+        userId: { $in: userIds },
+      });
+
+      checkRecentlyDeletedConflict({
+        users: usersWithUsername,
+        deletedUsers,
+        value: username,
+      });
+
+      checkActiveUserConflict({
+        userIds,
+        deletedUsers,
+        value: username,
+      });
+    }
+
+    const { _id } = await this.userRepo.create({
+      email,
+      username,
+      phoneNumber,
+      provider: PROVIDER.GOOGLE,
+      password: 'signed_up_with_google',
+    });
+
+    const avatar = this.setAvatar(gender, username)
+
+    await lastValueFrom(
+      this.accountServiceTcp.send('account/create', {
+        userId: _id,
+        firstName,
+        lastName,
+        gender,
+        avatar,
+      }),
+    );
+
+    await lastValueFrom(
+      this.accountServiceTcp.send('privacy-settings/create', {
+        userId: _id,
+      }),
+    );
+
+    const tokens = await this.refreshTokenService.generateTokens({ _id });
+
+    return { _id, ...tokens };
   }
 }
