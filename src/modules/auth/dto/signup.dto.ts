@@ -9,9 +9,11 @@ import {
   IsString,
   Matches,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { PhoneNumberDto } from '../../users/user/dto/nested/phoneNumber.dto';
 
-export class SingupDto {
+export class SignupDto {
   @IsString({ message: ValidationMessages.STRING('firstName') })
   @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('firstName') })
@@ -38,10 +40,9 @@ export class SingupDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
   email: string;
 
-  @IsString({ message: ValidationMessages.STRING('phoneNumber') })
-  @Transform(({ value }) => value?.trim())
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  phoneNumber: string;
+  @Type(() => PhoneNumberDto)
+  @ValidateNested()
+  phoneNumber: PhoneNumberDto;
 
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })

@@ -6,9 +6,37 @@ import { UsersModule } from '../users/users.module';
 import { RefreshTokenModule } from '../tokens/refresh-token/refresh-token.module';
 import { UserModule } from '../users/user/user.module';
 import { DeletedUserModule } from '../users/deleted-user/deleted-user.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
+    ClientsModule.register([
+      {
+        name: 'ACCOUNT_SETTINGS_TCP',
+        transport: Transport.TCP,
+        options: {
+          host: 'account-service',
+          port: 5000,
+        },
+      },
+      {
+        name: 'NOTIFICATION_SERVICE_KAFKA',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'notification-action-history',
+            brokers: ['kafka-0:9092', 'kafka-1:9092'],
+          },
+          consumer: {
+            groupId: 'consumer-notification-action-history',
+            allowAutoTopicCreation: false,
+          },
+          run: {
+            autoCommit: false,
+          },
+        },
+      },
+    ]),
     UsersModule,
     RefreshTokenModule,
     JwtModule,

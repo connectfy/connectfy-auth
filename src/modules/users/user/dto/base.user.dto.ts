@@ -1,13 +1,14 @@
 import { PROVIDER, ROLE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { PhoneNumberDto } from './nested/phoneNumber.dto';
 
 export class BaseUserDto {
-  @IsEnum(ROLE, { message: ValidationMessages.ENUM('role', Object.keys(ROLE)) })
-  @Transform(({ value }) => value?.trim())
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('role') })
-  role: ROLE;
+  // @IsEnum(ROLE, { message: ValidationMessages.ENUM('role', Object.keys(ROLE)) })
+  // @Transform(({ value }) => value?.trim())
+  // @IsNotEmpty({ message: ValidationMessages.REQUIRED('role') })
+  // role: ROLE;
 
   @IsEnum(PROVIDER, {
     message: ValidationMessages.ENUM('provider', Object.keys(PROVIDER)),
@@ -21,8 +22,7 @@ export class BaseUserDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   password: string;
 
-  @IsString({ message: ValidationMessages.STRING('phoneNumber') })
-  @Transform(({ value }) => value?.trim())
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  phoneNumber: string;
+  @ValidateNested()
+  @Type(() => PhoneNumberDto)
+  phoneNumber: PhoneNumberDto;
 }
