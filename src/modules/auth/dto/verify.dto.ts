@@ -1,4 +1,4 @@
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsString, Length, ValidateNested } from 'class-validator';
 import { SignupDto } from './signup.dto';

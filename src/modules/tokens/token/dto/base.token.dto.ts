@@ -1,5 +1,5 @@
-import { TOKEN_TYPE } from '@/src/common/constants/common.enum';
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { TOKEN_TYPE } from '@common/constants/common.enum';
+import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsDate, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 

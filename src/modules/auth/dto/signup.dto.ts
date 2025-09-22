@@ -1,5 +1,5 @@
-import { GENDER } from '@/src/common/constants/common.enum';
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { GENDER } from '@common/constants/common.enum';
+import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
 import {
   IsDate,

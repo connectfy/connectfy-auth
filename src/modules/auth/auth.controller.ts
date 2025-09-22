@@ -3,6 +3,7 @@ import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { VerifySignupDto } from './dto/verify.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('')
 export class AuthController {
@@ -18,5 +19,11 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   async verifySignup(@Payload() data: VerifySignupDto) {
     return await this.service.verifySignup(data);
+  }
+
+  @MessagePattern('auth/login', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async login(@Payload() data: LoginDto) {
+    return await this.service.login(data);
   }
 }

@@ -19,6 +19,7 @@ export const ExceptionMessages = {
   ACCESS_TOKEN_EXPIRED: 'Access token expired',
   ALREADY_EXISTS_MESSAGE: (field: string) => `${field} already exists`,
   INVALID_CREDENTIALS: 'Invalid credential',
+  BANNED_MESSAGE: (bannedToDate: Date) => `Your account has been banned to until ${bannedToDate}`
 };
 
 export const ExceptionTypes = {

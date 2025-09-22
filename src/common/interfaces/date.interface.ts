@@ -11,3 +11,9 @@ export interface ICheckRecentlyDeletedConflictParams {
   value: string;
   days?: number;
 }
+
+export interface ICheckActiveUserConflictParams {
+  value: string;
+  userIds: string[];
+  deletedUsers: IReturnedDeletedUser[];
+}

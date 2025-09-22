@@ -3,20 +3,30 @@ import { UserRepository } from '../users/user/repo/user.repo';
 import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
 import { ConfigService } from '@nestjs/config';
 import { SignupDto } from './dto/signup.dto';
-import { BaseException } from '@/src/common/exceptions/base.exception';
+import { BaseException } from '@common/exceptions/base.exception';
 import {
   ExceptionMessages,
   ExceptionTypes,
-} from '@/src/common/constants/exception.constants';
+} from '@common/constants/exception.constants';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
-import { checkRecentlyDeletedConflict } from '@/src/common/functions/check-unique';
-import { generateVerifyCode } from '@/src/common/functions/generate-codes';
+import {
+  checkActiveUserConflict,
+  checkRecentlyDeletedConflict,
+} from '@common/functions/check-unique';
+import { generateVerifyCode } from '@common/functions/generate-codes';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
-import { signupVerifyMessage } from '@/src/common/constants/emial.messages';
+import { signupVerifyMessage } from '@common/constants/emial.messages';
 import { VerifySignupDto } from './dto/verify.dto';
-import { genSalt, hash } from 'bcrypt';
-import { GENDER, PROVIDER } from '@/src/common/constants/common.enum';
+import { genSalt, hash, compare } from 'bcrypt';
+import {
+  GENDER,
+  IDENTIFIER_TYPE,
+  PROVIDER,
+} from '@common/constants/common.enum';
 import { lastValueFrom } from 'rxjs';
+import { LoginDto } from './dto/login.dto';
+import { IReturnedUser } from '../users/user/interface/user.interface';
+import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +39,7 @@ export class AuthService {
 
     private readonly config: ConfigService,
     private readonly userRepo: UserRepository,
+    private readonly bannedUserRepo: BannedUserRepository,
     private readonly deletedUserRepo: DeletedUserRepository,
     private readonly refreshTokenService: RefreshTokenService,
   ) {}
@@ -44,12 +55,20 @@ export class AuthService {
 
     const usersWithEmail = await this.userRepo.findMany({ email });
     if (usersWithEmail.length) {
+      const userIds = usersWithEmail.map((u) => u._id);
+
       const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: usersWithEmail.map((u) => u._id) },
+        userId: { $in: userIds },
       });
 
       checkRecentlyDeletedConflict({
         users: usersWithEmail,
+        deletedUsers,
+        value: email,
+      });
+
+      checkActiveUserConflict({
+        userIds,
         deletedUsers,
         value: email,
       });
@@ -59,8 +78,10 @@ export class AuthService {
       'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
     });
     if (usersWithPhoneNumber.length) {
+      const userIds = usersWithPhoneNumber.map((u) => u._id);
+
       const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: usersWithPhoneNumber.map((u) => u._id) },
+        userId: { $in: userIds },
       });
 
       checkRecentlyDeletedConflict({
@@ -68,16 +89,30 @@ export class AuthService {
         deletedUsers,
         value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
       });
+
+      checkActiveUserConflict({
+        userIds,
+        deletedUsers,
+        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
+      });
     }
 
     const usersWithUsername = await this.userRepo.findMany({ username });
     if (usersWithUsername.length) {
+      const userIds = usersWithUsername.map((u) => u._id);
+
       const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: usersWithUsername.map((u) => u._id) },
+        userId: { $in: userIds },
       });
 
       checkRecentlyDeletedConflict({
         users: usersWithUsername,
+        deletedUsers,
+        value: username,
+      });
+
+      checkActiveUserConflict({
+        userIds,
         deletedUsers,
         value: username,
       });
@@ -99,7 +134,9 @@ export class AuthService {
     };
   }
 
-  async verifySignup(data: VerifySignupDto) {
+  async verifySignup(
+    data: VerifySignupDto,
+  ): Promise<{ _id: string; refresh_token: string; access_token?: string }> {
     const { code, verifyCode, unverifiedUser } = data;
 
     if (verifyCode !== code)
@@ -153,6 +190,70 @@ export class AuthService {
     const tokens = await this.refreshTokenService.generateTokens({ _id });
 
     return { _id, ...tokens };
+  }
+
+  async login(
+    data: LoginDto,
+  ): Promise<{ refresh_token: string; access_token?: string }> {
+    const { identifierType, identifier, password } = data;
+
+    let user: IReturnedUser | null;
+
+    switch (identifierType) {
+      case IDENTIFIER_TYPE.EMAIL:
+        user = await this.userRepo.findOne({ email: identifier });
+        break;
+
+      case IDENTIFIER_TYPE.USERNAME:
+        user = await this.userRepo.findOne({ username: identifier });
+        break;
+
+      default:
+        user = await this.userRepo.findOne({
+          'phoneNumber.fullPhoneNumber': identifier,
+        });
+        break;
+    }
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const isPasswordMatch = await compare(password, user.password as string);
+
+    if (!isPasswordMatch)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const isUserBanned = await this.bannedUserRepo.findOne({
+      userId: user._id,
+    });
+
+    if (isUserBanned)
+      throw new BaseException(
+        ExceptionMessages.BANNED_MESSAGE(isUserBanned.bannedToDate as Date),
+        HttpStatus.FORBIDDEN,
+        ExceptionMessages.FORBIDDEN_MESSAGE,
+      );
+
+    if (user.provider !== PROVIDER.PASSWORD)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS,
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const tokens = await this.refreshTokenService.generateTokens({
+      _id: user._id as string,
+    });
+
+    return tokens;
   }
 
   private async hashPassword(password: string): Promise<string> {

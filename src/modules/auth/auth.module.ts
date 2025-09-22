@@ -7,6 +7,7 @@ import { RefreshTokenModule } from '../tokens/refresh-token/refresh-token.module
 import { UserModule } from '../users/user/user.module';
 import { DeletedUserModule } from '../users/deleted-user/deleted-user.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { BannedUserModule } from '../users/banned-user/banned-user.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     JwtModule,
     UserModule,
     DeletedUserModule,
+    BannedUserModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
