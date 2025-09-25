@@ -50,4 +50,14 @@ export class RefreshTokenRepository extends BaseRepository<
     const newData = new this.model(data);
     return await newData.save();
   }
+
+  async remove(
+    query: Record<string, any>,
+  ): Promise<RefreshTokenDocument | null> {
+    return await this.model.findOneAndDelete(query).exec();
+  }
+
+  async removeMany(query: Record<string, any>): Promise<void> {
+    await this.model.deleteMany(query).exec();
+  }
 }

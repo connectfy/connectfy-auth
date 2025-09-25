@@ -7,4 +7,6 @@ export abstract class BaseRepository<
   abstract update(data: UpdateDto): Promise<T>;
   abstract findTokenByUserId(userId: string): Promise<T | null>;
   abstract findByRefreshToken(refresh_token: string): Promise<T | null>;
+  abstract remove(query: Record<string, any>): Promise<T | null>;
+  abstract removeMany(query: Record<string, any>): Promise<void>;
 }

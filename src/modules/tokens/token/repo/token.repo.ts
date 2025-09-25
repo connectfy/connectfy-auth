@@ -4,6 +4,7 @@ import { AddTokenDto } from '../dto/add.token.dto';
 import { UpdateTokenDto } from '../dto/edit.token.dto';
 import { TokenDocument } from '../entity/token.entity';
 import { BaseRepository } from '../shared/base.repository';
+import { FindTokenDto } from '../dto/find.token.dto';
 
 export class TokenRepository extends BaseRepository<
   TokenDocument,
@@ -21,12 +22,29 @@ export class TokenRepository extends BaseRepository<
     return await newData.save();
   }
 
-  async findOne(query: Record<string, any>): Promise<TokenDocument | null> {
-    return await this.model.findOne(query).exec();
+  async findOne(data: FindTokenDto): Promise<TokenDocument | null> {
+    const { query = {}, populate = [] } = data;
+    return await this.model.findOne(query).populate(populate).exec();
   }
 
-  async findMany(query: Record<string, any>): Promise<TokenDocument[]> {
-    return await this.model.find(query).exec();
+  async findMany(options: FindTokenDto): Promise<TokenDocument[]> {
+    const {
+      query = {},
+      fields = '',
+      limit = 10,
+      skip = 0,
+      sort = {},
+      populate = [],
+    } = options;
+
+    return this.model
+      .find(query)
+      .select(fields)
+      .skip(skip)
+      .limit(limit)
+      .sort(sort)
+      .populate(populate)
+      .exec();
   }
 
   async update(data: UpdateTokenDto): Promise<TokenDocument | null> {

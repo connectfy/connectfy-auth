@@ -4,7 +4,9 @@ import { AuthService } from './auth.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { VerifySignupDto } from './dto/verify.dto';
 import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
-import { GOOGLE_AUTH_LOGIN_TYPE } from '@/src/common/constants/common.enum';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { LogoutDto } from './dto/logout.dto';
 
 @Controller('')
 export class AuthController {
@@ -38,5 +40,29 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   async googleAuthSignup(@Payload() data: GoogleAuthSignupDto) {
     return await this.service.googleSignup(data);
+  }
+
+  @MessagePattern('auth/forgot-password', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async forgotPassword(@Payload() data: ForgotPasswordDto) {
+    return await this.service.forgotPassword(data);
+  }
+
+  @MessagePattern('auth/reset-password', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async resetPassword(@Payload() data: ResetPasswordDto) {
+    return await this.service.resetPassword(data);
+  }
+
+  @MessagePattern('auth/logout', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async logout(@Payload() data: LogoutDto) {
+    return await this.service.logout(data);
+  }
+
+  @MessagePattern('auth/refresh-token/verify-token', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async verifyAuthToken(@Payload() { access_token }: { access_token: string }) {
+    return await this.service.verifyAuthToken(access_token);
   }
 }

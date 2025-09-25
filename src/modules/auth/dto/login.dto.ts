@@ -1,4 +1,4 @@
-import { GOOGLE_AUTH_LOGIN_TYPE, IDENTIFIER_TYPE } from '@common/constants/common.enum';
+import { IDENTIFIER_TYPE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';

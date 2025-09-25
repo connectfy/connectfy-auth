@@ -51,9 +51,18 @@ export class RefreshTokenService {
     return this.repo.findByRefreshToken(refresh_token);
   }
 
-  async verifyToken(token: string, key: string): Promise<any> {
+  async verifyToken(
+    token: string,
+    isAccessToken: boolean = true,
+  ): Promise<any> {
     return await this.jwtService.verifyAsync(token, {
-      secret: key,
+      secret: isAccessToken
+        ? this.config.get<string>('JWT_ACCESS_SECRET')
+        : this.config.get<string>('JWT_REFRESH_SECRET'),
     });
+  }
+
+  async removeTokenByUserId(userId: string): Promise<RefreshTokenDocument | null> {
+    return await this.repo.remove({ userId });
   }
 }

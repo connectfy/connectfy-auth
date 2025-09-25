@@ -17,9 +17,11 @@ export const ExceptionMessages = {
   TOO_MANY_REQUESTS_MESSAGE:
     'The user has sent too many requests in a given amount of time ("rate limiting").',
   ACCESS_TOKEN_EXPIRED: 'Access token expired',
+  TOKEN_EXPIRED: 'Token not found or expired',
   ALREADY_EXISTS_MESSAGE: (field: string) => `${field} already exists`,
   INVALID_CREDENTIALS: 'Invalid credential',
-  BANNED_MESSAGE: (bannedToDate: Date) => `Your account has been banned to until ${bannedToDate}`
+  BANNED_MESSAGE: (bannedToDate: Date) => `Your account has been banned to until ${bannedToDate}`,
+  SAME_DATA: (field: string) => `${field} can not be same as old`
 };
 
 export const ExceptionTypes = {

@@ -3,6 +3,7 @@ import { Document } from 'mongoose';
 import { IToken } from '../interface/token.interface';
 import { TOKEN_TYPE } from '@common/constants/common.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { IUser } from '@modules/users/user/interface/user.interface';
 
 @Schema({ timestamps: true, collection: 'tokens' })
 export class TokenModel implements IToken {
@@ -26,4 +27,7 @@ export class TokenModel implements IToken {
 }
 
 export const TokenSchema = SchemaFactory.createForClass(TokenModel);
-export type TokenDocument = TokenModel & Document;
+export type TokenDocument = TokenModel &
+  Document & {
+    userId?: string | IUser;
+  };

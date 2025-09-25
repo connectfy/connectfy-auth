@@ -10,6 +10,7 @@ import { TokenDocument } from './entity/token.entity';
 import { BaseException } from '@common/exceptions/base.exception';
 import { RemoveAllTokensDto } from './dto/remove.all.tokens.dto';
 import { IRemoveAllResponse } from '@common/interfaces/response.interface';
+import { FindTokenDto } from './dto/find.token.dto';
 
 @Injectable()
 export class TokenService {
@@ -19,8 +20,8 @@ export class TokenService {
     return await this.repo.save(data);
   }
 
-  async findToken(query: Record<string, any>): Promise<TokenDocument> {
-    const token = await this.repo.findOne(query);
+  async findToken(option: FindTokenDto): Promise<TokenDocument> {
+    const token = await this.repo.findOne(option);
 
     if (!token)
       throw new BaseException(
@@ -32,8 +33,8 @@ export class TokenService {
     return token;
   }
 
-  async findAllTokens(query: Record<string, any>): Promise<TokenDocument[]> {
-    return await this.repo.findMany(query);
+  async findAllTokens(options: FindTokenDto): Promise<TokenDocument[]> {
+    return await this.repo.findMany(options);
   }
 
   async removeToken({ _id }: RemoveTokenDto): Promise<TokenDocument> {
@@ -52,7 +53,9 @@ export class TokenService {
   async removeTokens({
     _ids,
   }: RemoveAllTokensDto): Promise<IRemoveAllResponse> {
-    const allTokens = await this.repo.findMany({ _id: { $in: _ids } });
+    const allTokens = await this.repo.findMany({
+      query: { _id: { $in: _ids } },
+    });
 
     if (!allTokens.length)
       return { deletedCount: 0, notDeleted: [], deletedIds: [] };
