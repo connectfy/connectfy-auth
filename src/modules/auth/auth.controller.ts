@@ -15,7 +15,7 @@ export class AuthController {
   @MessagePattern('auth/signup', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   async signup(@Payload() data: SignupDto) {
-    return await this.service.singup(data);
+    return await this.service.signup(data);
   }
 
   @MessagePattern('auth/verify-signup', Transport.TCP)

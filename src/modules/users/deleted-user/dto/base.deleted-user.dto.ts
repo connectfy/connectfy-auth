@@ -17,4 +17,9 @@ export class BaseUserDto {
   @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
   email: string;
+
+  @IsString({ message: ValidationMessages.STRING('phoneNumber') })
+  @Transform(({ value }) => value?.trim())
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
+  phoneNumber: string;
 }

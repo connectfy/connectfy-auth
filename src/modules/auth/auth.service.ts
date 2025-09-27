@@ -16,6 +16,7 @@ import {
 import { generateVerifyCode } from '@common/functions/generate-codes';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import {
+  deleteAccountMessage,
   emailNotFoundMessage,
   forgotPasswordMessage,
   googleSignInMessage,
@@ -40,6 +41,7 @@ import * as crypto from 'crypto';
 import { TokenService } from '../tokens/token/token.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { DeleteAccountDto, RemoveAccount } from './dto/delete-account.dto';
 
 @Injectable()
 export class AuthService {
@@ -102,7 +104,7 @@ export class AuthService {
     return avatar;
   }
 
-  async singup(
+  async signup(
     data: SignupDto,
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
     const { firstName, lastName, email, username, phoneNumber } = data;
@@ -553,7 +555,9 @@ export class AuthService {
     const { resetToken, password, confirmPassword } = data;
 
     const token = await this.tokenService.findToken({
-      query: { token: resetToken },
+      query: {
+        $and: [{ token: resetToken }, { type: TOKEN_TYPE.PASSWORD_RESET }],
+      },
       populate: [{ path: 'userId', select: '-faceDescriptor' }],
     });
 
@@ -563,12 +567,14 @@ export class AuthService {
         : new Date(token.expiresAt);
     const now = new Date();
 
-    if (!token || now >= expiresAt || token.isUsed)
+    if (!token || now >= expiresAt || token.isUsed) {
+      if (token) await this.tokenService.removeToken({ _id: token._id });
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED,
         HttpStatus.BAD_REQUEST,
         ExceptionTypes.BAD_REQUEST,
       );
+    }
 
     if (password !== confirmPassword)
       throw new BaseException(
@@ -635,5 +641,63 @@ export class AuthService {
         ExceptionTypes.UNAUTHORIZED,
       );
     }
+  }
+
+  async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
+    const { _loggedUser } = data;
+    const { _id, email } = _loggedUser;
+
+    const token = crypto.randomBytes(64).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.tokenService.generateToken({
+      userId: _id,
+      token,
+      expiresAt: tokenExpiry,
+      type: TOKEN_TYPE.DELETE_ACCOUNT,
+    });
+
+    this.sendEmail(email, 'Account Deletion', deleteAccountMessage(token));
+
+    return { statusCode: 200 };
+  }
+
+  async removeAccount(data: RemoveAccount): Promise<{ statusCode: 200 }> {
+    const { token, _loggedUser } = data;
+    const { _id, username, email, phoneNumber } = _loggedUser;
+
+    const deleteToken = await this.tokenService.findToken({
+      query: {
+        $and: [{ token }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
+      },
+    });
+
+    const expiresAt =
+      deleteToken.expiresAt instanceof Date
+        ? deleteToken.expiresAt
+        : new Date(deleteToken.expiresAt);
+    const now = new Date();
+
+    if (!deleteToken || now >= expiresAt || deleteToken.isUsed) {
+      if (deleteToken)
+        await this.tokenService.removeToken({ _id: deleteToken._id });
+      throw new BaseException(
+        ExceptionMessages.TOKEN_EXPIRED,
+        HttpStatus.BAD_REQUEST,
+        ExceptionTypes.BAD_REQUEST,
+      );
+    }
+
+    await Promise.all([
+      this.deletedUserRepo.create({
+        email,
+        username,
+        userId: _id,
+        phoneNumber: phoneNumber.fullPhoneNumber,
+      }),
+      this.userRepo.remove(_id),
+    ]);
+
+    return { statusCode: 200 };
   }
 }
