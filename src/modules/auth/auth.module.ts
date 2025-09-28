@@ -55,6 +55,23 @@ import { TokenModule } from '../tokens/token/token.module';
           },
         },
       },
+      {
+        name: 'RELATIONSHIP_SERVICE_KAFKA',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'connectfy-relationship',
+            brokers: ['kafka-0:9092', 'kafka-1:9092'],
+          },
+          consumer: {
+            groupId: 'consumer-connectfy-relationship',
+            allowAutoTopicCreation: false,
+          },
+          run: {
+            autoCommit: false,
+          },
+        },
+      },
     ]),
     UsersModule,
     RefreshTokenModule,

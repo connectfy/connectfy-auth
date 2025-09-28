@@ -55,6 +55,9 @@ export class AuthService {
     @Inject('ACCOUNT_SERVICE_KAFKA')
     private readonly accountServiceKafka: ClientKafka,
 
+    @Inject('RELATIONSHIP_SERVICE_KAFKA')
+    private readonly relationshipServiceKafka: ClientKafka,
+
     private readonly config: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly bannedUserRepo: BannedUserRepository,
@@ -70,6 +73,7 @@ export class AuthService {
     await Promise.all([
       this.notificationServiceKafka.connect(),
       this.accountServiceKafka.connect(),
+      this.relationshipServiceKafka.connect(),
     ]);
   }
 
@@ -665,8 +669,12 @@ export class AuthService {
     this.accountServiceKafka.emit('account.deletePrivacySetting.create', {
       userId: userObj._id,
     });
-    // relationships service with kafka must add here to save deleted relationships
-    // notification service with kafka must add here to save deleted notifications
+    this.relationshipServiceKafka.emit('relationship.deleteFriendship.create', {
+      userId: userObj._id,
+    });
+    this.relationshipServiceKafka.emit('relationship.deleteBlocklist.create', {
+      userId: userObj._id,
+    });
 
     await Promise.all([
       this.tokenService.generateToken({
