@@ -9,6 +9,7 @@ import { DeletedUserModule } from '../users/deleted-user/deleted-user.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { BannedUserModule } from '../users/banned-user/banned-user.module';
 import { TokenModule } from '../tokens/token/token.module';
+import { DeletionOrchestratorModule } from '../orchestrators/deletion-orchestrator/deletion-orchestrator.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { TokenModule } from '../tokens/token/token.module';
     DeletedUserModule,
     BannedUserModule,
     TokenModule,
+    DeletionOrchestratorModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

@@ -4,6 +4,7 @@ import { IUser } from '../interface/user.interface';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { PROVIDER, ROLE } from '@common/constants/common.enum';
 import { PhoneNumberModel } from './nested/phoneNumber.entity';
+import { ITimestamps } from '@common/interfaces/date.interface';
 
 @Schema({ timestamps: true, collection: 'users' })
 export class UserModel implements IUser {
@@ -38,4 +39,4 @@ export class UserModel implements IUser {
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);
-export type UserDocument = UserModel & Document;
+export type UserDocument = UserModel & Document & ITimestamps;

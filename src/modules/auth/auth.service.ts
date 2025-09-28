@@ -40,6 +40,7 @@ import { TokenService } from '../tokens/token/token.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
+import { DeletionOrchestorRepository } from '../orchestrators/deletion-orchestrator/repo/deletion-orchestor.repo';
 
 @Injectable()
 export class AuthService {
@@ -64,6 +65,7 @@ export class AuthService {
     private readonly deletedUserRepo: DeletedUserRepository,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly tokenService: TokenService,
+    private readonly deletionOrchestorRepo: DeletionOrchestorRepository,
   ) {
     const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
     this.googleClient = new OAuth2Client(clientId);
@@ -660,21 +662,35 @@ export class AuthService {
     const newToken = crypto.randomBytes(64).toString('hex');
     const tokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    this.accountServiceKafka.emit('account.deleteAccount.create', {
-      userId: userObj._id,
+    await this.deletionOrchestorRepo.create({
+      userId: _id,
+      email: userObj.email,
+      deletionToken: newToken,
+      parts: {
+        account: false,
+        socialLinks: false,
+        privacySettings: false,
+        friendships: false,
+        blocklist: false,
+      },
+      emailSent: false,
     });
-    this.accountServiceKafka.emit('account.deleteSocialLink.create', {
-      userId: userObj._id,
-    });
-    this.accountServiceKafka.emit('account.deletePrivacySetting.create', {
-      userId: userObj._id,
-    });
-    this.relationshipServiceKafka.emit('relationship.deleteFriendship.create', {
-      userId: userObj._id,
-    });
-    this.relationshipServiceKafka.emit('relationship.deleteBlocklist.create', {
-      userId: userObj._id,
-    });
+
+    const payload = { userId: userObj._id, deletionToken: newToken };
+    this.accountServiceKafka.emit('account.deleteAccount.create', payload);
+    this.accountServiceKafka.emit('account.deleteSocialLink.create', payload);
+    this.accountServiceKafka.emit(
+      'account.deletePrivacySetting.create',
+      payload,
+    );
+    this.relationshipServiceKafka.emit(
+      'relationship.deleteFriendship.create',
+      payload,
+    );
+    this.relationshipServiceKafka.emit(
+      'relationship.deleteBlocklist.create',
+      payload,
+    );
 
     await Promise.all([
       this.tokenService.generateToken({
@@ -686,12 +702,6 @@ export class AuthService {
       this.tokenService.removeTokensByUserId(_id),
       this.refreshTokenService.removeTokenByUserId(_id),
     ]);
-
-    this.sendEmail(
-      user.email,
-      'Account Deletion Compleated',
-      accountDeletedMessage(newToken),
-    );
 
     return { statusCode: 200 };
   }
