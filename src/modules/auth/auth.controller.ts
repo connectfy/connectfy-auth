@@ -7,6 +7,7 @@ import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 
 @Controller('')
 export class AuthController {
@@ -64,5 +65,17 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   async verifyAuthToken(@Payload() { access_token }: { access_token: string }) {
     return await this.service.verifyAuthToken(access_token);
+  }
+
+  @MessagePattern('auth/delete-account', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async deleteAccount(@Payload() data: DeleteAccountDto) {
+    return await this.service.deleteAccount(data);
+  }
+
+  @MessagePattern('auth/remove-account', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
+  async removeAccount(@Payload() data: RemoveAccountDto) {
+    return await this.service.removeAccount(data);
   }
 }

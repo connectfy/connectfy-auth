@@ -1,16 +1,14 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { BaseUserDto } from './base.user.dto';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
+import { PROVIDER } from '@common/constants/common.enum';
 
 export class AddUserDto extends BaseUserDto {
-  @IsString({ message: ValidationMessages.STRING('username') })
+  @IsEnum(PROVIDER, {
+    message: ValidationMessages.ENUM('provider', Object.keys(PROVIDER)),
+  })
   @Transform(({ value }) => value?.trim())
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
-  username: string;
-
-  @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @Transform(({ value }) => value?.trim())
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
-  email: string;
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('provider') })
+  provider: PROVIDER;
 }

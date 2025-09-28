@@ -2,18 +2,18 @@ import { HttpStatus } from '@nestjs/common';
 import { BaseException } from '../exceptions/base.exception';
 import { ExceptionTypes } from '../constants/exception.constants';
 import { ExceptionMessages } from '../constants/exception.constants';
-import { ICheckActiveUserConflictParams, ICheckRecentlyDeletedConflictParams } from '../interfaces/date.interface';
+import { ICheckRecentlyDeletedConflictParams } from '../interfaces/date.interface';
 
 
 export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflictParams): void {
   const {
-    users,
+    user,
     deletedUsers,
     value,
     days = 30
   } = data;
   
-  if (!users.length || !deletedUsers.length) return;
+  if (!deletedUsers.length) return;
 
   const now = Date.now();
   const timeLimit = days * 24 * 60 * 60 * 1000;
@@ -23,7 +23,7 @@ export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflict
     return now - deletedAt <= timeLimit;
   });
 
-  if (isRecentlyDeleted) {
+  if (user || isRecentlyDeleted) {
     throw new BaseException(
       ExceptionMessages.ALREADY_EXISTS_MESSAGE(value),
       HttpStatus.CONFLICT,
@@ -33,19 +33,19 @@ export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflict
 }
 
 
-export function checkActiveUserConflict(data: ICheckActiveUserConflictParams): void {
-  const { value, userIds, deletedUsers } = data;
+// export function checkActiveUserConflict(data: ICheckActiveUserConflictParams): void {
+//   const { value, userIds, deletedUsers } = data;
 
-  const deletedIds = deletedUsers.map((u) => u._id);
+//   const deletedIds = deletedUsers.map((u) => u._id);
   
-  const activeUsers = userIds.map((uId) => {
-    if (!deletedIds.includes(uId)) return uId;
-  });
+//   const activeUsers = userIds.map((uId) => {
+//     if (!deletedIds.includes(uId)) return uId;
+//   });
 
-  if (activeUsers.length)
-    throw new BaseException(
-      ExceptionMessages.ALREADY_EXISTS_MESSAGE(value),
-      HttpStatus.CONFLICT,
-      ExceptionTypes.CONFLICT,
-    );
-}
+//   if (activeUsers.length)
+//     throw new BaseException(
+//       ExceptionMessages.ALREADY_EXISTS_MESSAGE(value),
+//       HttpStatus.CONFLICT,
+//       ExceptionTypes.CONFLICT,
+//     );
+// }

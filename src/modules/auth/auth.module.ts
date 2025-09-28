@@ -14,7 +14,7 @@ import { TokenModule } from '../tokens/token/token.module';
   imports: [
     ClientsModule.register([
       {
-        name: 'ACCOUNT_SETTINGS_TCP',
+        name: 'ACCOUNT_SERVICE_TCP',
         transport: Transport.TCP,
         options: {
           host: 'account-service',
@@ -22,15 +22,32 @@ import { TokenModule } from '../tokens/token/token.module';
         },
       },
       {
+        name: 'ACCOUNT_SERVICE_KAFKA',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'connectfy-account',
+            brokers: ['kafka-0:9092', 'kafka-1:9092'],
+          },
+          consumer: {
+            groupId: 'consumer-connectfy-account',
+            allowAutoTopicCreation: false,
+          },
+          run: {
+            autoCommit: false,
+          },
+        },
+      },
+      {
         name: 'NOTIFICATION_SERVICE_KAFKA',
         transport: Transport.KAFKA,
         options: {
           client: {
-            clientId: 'notification-action-history',
+            clientId: 'connectfy-notification',
             brokers: ['kafka-0:9092', 'kafka-1:9092'],
           },
           consumer: {
-            groupId: 'consumer-notification-action-history',
+            groupId: 'consumer-connectfy-notification',
             allowAutoTopicCreation: false,
           },
           run: {
@@ -45,7 +62,7 @@ import { TokenModule } from '../tokens/token/token.module';
     UserModule,
     DeletedUserModule,
     BannedUserModule,
-    TokenModule
+    TokenModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

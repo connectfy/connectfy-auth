@@ -1,4 +1,4 @@
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { ValidationMessages } from '@common/constants/validation.messages';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { IUser } from '../../users/user/interface/user.interface';
 import { Transform } from 'class-transformer';
@@ -9,7 +9,7 @@ export class DeleteAccountDto {
   _loggedUser: IUser;
 }
 
-export class RemoveAccount {
+export class RemoveAccountDto {
   @IsString({ message: ValidationMessages.STRING('token') })
   @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })

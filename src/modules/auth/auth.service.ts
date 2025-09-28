@@ -9,13 +9,11 @@ import {
   ExceptionTypes,
 } from '@common/constants/exception.constants';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
-import {
-  checkActiveUserConflict,
-  checkRecentlyDeletedConflict,
-} from '@common/functions/check-unique';
+import { checkRecentlyDeletedConflict } from '@common/functions/check-unique';
 import { generateVerifyCode } from '@common/functions/generate-codes';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import {
+  accountDeletedMessage,
   deleteAccountMessage,
   emailNotFoundMessage,
   forgotPasswordMessage,
@@ -41,7 +39,7 @@ import * as crypto from 'crypto';
 import { TokenService } from '../tokens/token/token.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LogoutDto } from './dto/logout.dto';
-import { DeleteAccountDto, RemoveAccount } from './dto/delete-account.dto';
+import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 
 @Injectable()
 export class AuthService {
@@ -51,8 +49,11 @@ export class AuthService {
     @Inject('NOTIFICATION_SERVICE_KAFKA')
     private readonly notificationServiceKafka: ClientKafka,
 
-    @Inject('ACCOUNT_SETTINGS_TCP')
+    @Inject('ACCOUNT_SERVICE_TCP')
     private readonly accountServiceTcp: ClientProxy,
+
+    @Inject('ACCOUNT_SERVICE_KAFKA')
+    private readonly accountServiceKafka: ClientKafka,
 
     private readonly config: ConfigService,
     private readonly userRepo: UserRepository,
@@ -66,7 +67,10 @@ export class AuthService {
   }
 
   async onModuleInit() {
-    await this.notificationServiceKafka.connect();
+    await Promise.all([
+      this.notificationServiceKafka.connect(),
+      this.accountServiceKafka.connect(),
+    ]);
   }
 
   private sendEmail(to: string, subject: string, html: string): void {
@@ -109,70 +113,38 @@ export class AuthService {
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
     const { firstName, lastName, email, username, phoneNumber } = data;
 
-    const usersWithEmail = await this.userRepo.findMany({ email });
-    if (usersWithEmail.length) {
-      const userIds = usersWithEmail.map((u) => u._id);
+    const userWithEmail = await this.userRepo.findOne({ email });
+    const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
+      email,
+    });
 
-      const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: userIds },
-      });
+    checkRecentlyDeletedConflict({
+      user: userWithEmail,
+      deletedUsers: deletedUsersWithEmail,
+      value: email,
+    });
 
-      checkRecentlyDeletedConflict({
-        users: usersWithEmail,
-        deletedUsers,
-        value: email,
-      });
-
-      checkActiveUserConflict({
-        userIds,
-        deletedUsers,
-        value: email,
-      });
-    }
-
-    const usersWithPhoneNumber = await this.userRepo.findMany({
+    const userWithPhoneNumber = await this.userRepo.findOne({
       'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
     });
-    if (usersWithPhoneNumber.length) {
-      const userIds = usersWithPhoneNumber.map((u) => u._id);
+    const deletedUsersWithPhoneNumber = await this.deletedUserRepo.findMany({
+      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
+    });
 
-      const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: userIds },
-      });
+    checkRecentlyDeletedConflict({
+      user: userWithPhoneNumber,
+      deletedUsers: deletedUsersWithPhoneNumber,
+      value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
+    });
 
-      checkRecentlyDeletedConflict({
-        users: usersWithPhoneNumber,
-        deletedUsers,
-        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
-      });
+    const userWithUsername = await this.userRepo.findOne({ username });
+    const deletedUsersWithUsername = await this.userRepo.findMany({ username });
 
-      checkActiveUserConflict({
-        userIds,
-        deletedUsers,
-        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
-      });
-    }
-
-    const usersWithUsername = await this.userRepo.findMany({ username });
-    if (usersWithUsername.length) {
-      const userIds = usersWithUsername.map((u) => u._id);
-
-      const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: userIds },
-      });
-
-      checkRecentlyDeletedConflict({
-        users: usersWithUsername,
-        deletedUsers,
-        value: username,
-      });
-
-      checkActiveUserConflict({
-        userIds,
-        deletedUsers,
-        value: username,
-      });
-    }
+    checkRecentlyDeletedConflict({
+      user: userWithUsername,
+      deletedUsers: deletedUsersWithUsername,
+      value: username,
+    });
 
     const verifyCode = generateVerifyCode();
 
@@ -190,7 +162,7 @@ export class AuthService {
 
   async verifySignup(
     data: VerifySignupDto,
-  ): Promise<{ _id: string; refresh_token: string; access_token?: string }> {
+  ): Promise<{ _id: string; access_token?: string }> {
     const { code, verifyCode, unverifiedUser } = data;
 
     if (verifyCode !== code)
@@ -230,19 +202,18 @@ export class AuthService {
       }),
     );
 
-    const tokens = await this.refreshTokenService.generateTokens({ _id });
+    const { access_token, refresh_token } =
+      await this.refreshTokenService.generateTokens({ _id });
 
     await this.refreshTokenService.saveTokens({
-      refresh_token: tokens.refresh_token,
+      refresh_token,
       userId: _id,
     });
 
-    return { _id, ...tokens };
+    return { _id, access_token };
   }
 
-  async login(
-    data: LoginDto,
-  ): Promise<{ refresh_token: string; access_token?: string }> {
+  async login(data: LoginDto): Promise<{ access_token?: string }> {
     const { identifierType, identifier, password } = data;
 
     let user: IReturnedUser | null;
@@ -297,21 +268,22 @@ export class AuthService {
         ExceptionMessages.FORBIDDEN_MESSAGE,
       );
 
-    const tokens = await this.refreshTokenService.generateTokens({
-      _id: user._id as string,
-    });
+    const { refresh_token, access_token } =
+      await this.refreshTokenService.generateTokens({
+        _id: user._id as string,
+      });
 
     await this.refreshTokenService.saveTokens({
-      refresh_token: tokens.refresh_token,
+      refresh_token,
       userId: user._id as string,
     });
 
-    return tokens;
+    return { access_token };
   }
 
   async googleLogin(
     data: GoogleAuthloginDto,
-  ): Promise<{ refresh_token: string; access_token?: string }> {
+  ): Promise<{ access_token?: string }> {
     const { idToken } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
@@ -357,21 +329,22 @@ export class AuthService {
         ExceptionMessages.FORBIDDEN_MESSAGE,
       );
 
-    const tokens = await this.refreshTokenService.generateTokens({
-      _id: user._id,
-    });
+    const { access_token, refresh_token } =
+      await this.refreshTokenService.generateTokens({
+        _id: user._id,
+      });
 
     await this.refreshTokenService.saveTokens({
-      refresh_token: tokens.refresh_token,
+      refresh_token,
       userId: user._id,
     });
 
-    return tokens;
+    return { access_token };
   }
 
   async googleSignup(
     data: GoogleAuthSignupDto,
-  ): Promise<{ _id: string; refresh_token: string; access_token?: string }> {
+  ): Promise<{ _id: string; access_token?: string }> {
     const { idToken, firstName, lastName, username, phoneNumber, gender } =
       data;
 
@@ -391,70 +364,38 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
-    const usersWithEmail = await this.userRepo.findMany({ email });
-    if (usersWithEmail.length) {
-      const userIds = usersWithEmail.map((u) => u._id);
+    const userWithEmail = await this.userRepo.findOne({ email });
+    const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
+      email,
+    });
 
-      const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: userIds },
-      });
+    checkRecentlyDeletedConflict({
+      user: userWithEmail,
+      deletedUsers: deletedUsersWithEmail,
+      value: email,
+    });
 
-      checkRecentlyDeletedConflict({
-        users: usersWithEmail,
-        deletedUsers,
-        value: email,
-      });
-
-      checkActiveUserConflict({
-        userIds,
-        deletedUsers,
-        value: email,
-      });
-    }
-
-    const usersWithPhoneNumber = await this.userRepo.findMany({
+    const userWithPhoneNumber = await this.userRepo.findOne({
       'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
     });
-    if (usersWithPhoneNumber.length) {
-      const userIds = usersWithPhoneNumber.map((u) => u._id);
+    const deletedUsersWithPhoneNumber = await this.deletedUserRepo.findMany({
+      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
+    });
 
-      const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: userIds },
-      });
+    checkRecentlyDeletedConflict({
+      user: userWithPhoneNumber,
+      deletedUsers: deletedUsersWithPhoneNumber,
+      value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
+    });
 
-      checkRecentlyDeletedConflict({
-        users: usersWithPhoneNumber,
-        deletedUsers,
-        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
-      });
+    const userWithUsername = await this.userRepo.findOne({ username });
+    const deletedUsersWithUsername = await this.userRepo.findMany({ username });
 
-      checkActiveUserConflict({
-        userIds,
-        deletedUsers,
-        value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
-      });
-    }
-
-    const usersWithUsername = await this.userRepo.findMany({ username });
-    if (usersWithUsername.length) {
-      const userIds = usersWithUsername.map((u) => u._id);
-
-      const deletedUsers = await this.deletedUserRepo.findMany({
-        userId: { $in: userIds },
-      });
-
-      checkRecentlyDeletedConflict({
-        users: usersWithUsername,
-        deletedUsers,
-        value: username,
-      });
-
-      checkActiveUserConflict({
-        userIds,
-        deletedUsers,
-        value: username,
-      });
-    }
+    checkRecentlyDeletedConflict({
+      user: userWithUsername,
+      deletedUsers: deletedUsersWithUsername,
+      value: username,
+    });
 
     const { _id } = await this.userRepo.create({
       email,
@@ -482,14 +423,15 @@ export class AuthService {
       }),
     );
 
-    const tokens = await this.refreshTokenService.generateTokens({ _id });
+    const { access_token, refresh_token } =
+      await this.refreshTokenService.generateTokens({ _id });
 
     await this.refreshTokenService.saveTokens({
-      refresh_token: tokens.refresh_token,
+      refresh_token,
       userId: _id as string,
     });
 
-    return { _id, ...tokens };
+    return { _id, access_token };
   }
 
   async forgotPassword(data: ForgotPasswordDto): Promise<{ statusCode: 200 }> {
@@ -662,9 +604,9 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
-  async removeAccount(data: RemoveAccount): Promise<{ statusCode: 200 }> {
+  async removeAccount(data: RemoveAccountDto): Promise<{ statusCode: 200 }> {
     const { token, _loggedUser } = data;
-    const { _id, username, email, phoneNumber } = _loggedUser;
+    const { _id } = _loggedUser;
 
     const deleteToken = await this.tokenService.findToken({
       query: {
@@ -672,15 +614,19 @@ export class AuthService {
       },
     });
 
+    const deleteTokenObj = deleteToken.toObject
+      ? deleteToken.toObject()
+      : deleteToken;
+
     const expiresAt =
-      deleteToken.expiresAt instanceof Date
-        ? deleteToken.expiresAt
-        : new Date(deleteToken.expiresAt);
+      deleteTokenObj.expiresAt instanceof Date
+        ? deleteTokenObj.expiresAt
+        : new Date(deleteTokenObj.expiresAt);
     const now = new Date();
 
-    if (!deleteToken || now >= expiresAt || deleteToken.isUsed) {
-      if (deleteToken)
-        await this.tokenService.removeToken({ _id: deleteToken._id });
+    if (!deleteTokenObj || now >= expiresAt || deleteTokenObj.isUsed) {
+      if (deleteTokenObj)
+        await this.tokenService.removeToken({ _id: deleteTokenObj._id });
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED,
         HttpStatus.BAD_REQUEST,
@@ -688,15 +634,56 @@ export class AuthService {
       );
     }
 
+    const user = await this.userRepo.findOne({ _id });
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE,
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+      );
+
+    const userObj = user.toObject ? user.toObject() : user;
+
     await Promise.all([
       this.deletedUserRepo.create({
-        email,
-        username,
         userId: _id,
-        phoneNumber: phoneNumber.fullPhoneNumber,
+        ...userObj,
       }),
       this.userRepo.remove(_id),
     ]);
+
+    const newToken = crypto.randomBytes(64).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    this.accountServiceKafka.emit('account.deleteAccount.create', {
+      userId: userObj._id,
+    });
+    this.accountServiceKafka.emit('account.deleteSocialLink.create', {
+      userId: userObj._id,
+    });
+    this.accountServiceKafka.emit('account.deletePrivacySetting.create', {
+      userId: userObj._id,
+    });
+    // relationships service with kafka must add here to save deleted relationships
+    // notification service with kafka must add here to save deleted notifications
+
+    await Promise.all([
+      this.tokenService.generateToken({
+        userId: _id,
+        token: newToken,
+        expiresAt: tokenExpiry,
+        type: TOKEN_TYPE.RESTORE_ACCOUNT,
+      }),
+      this.tokenService.removeTokensByUserId(_id),
+      this.refreshTokenService.removeTokenByUserId(_id),
+    ]);
+
+    this.sendEmail(
+      user.email,
+      'Account Deletion Compleated',
+      accountDeletedMessage(newToken),
+    );
 
     return { statusCode: 200 };
   }

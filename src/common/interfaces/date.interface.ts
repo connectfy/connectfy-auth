@@ -1,3 +1,4 @@
+import { IReturnedUser } from '@modules/users/user/interface/user.interface';
 import { IReturnedDeletedUser } from '@modules/users/deleted-user/interface/deleted-user.interface';
 
 export interface ITimestamps {
@@ -6,14 +7,14 @@ export interface ITimestamps {
 }
 
 export interface ICheckRecentlyDeletedConflictParams {
-  users: { _id: string }[];
+  user: IReturnedUser | null;
   deletedUsers: IReturnedDeletedUser[];
   value: string;
   days?: number;
 }
 
-export interface ICheckActiveUserConflictParams {
-  value: string;
-  userIds: string[];
-  deletedUsers: IReturnedDeletedUser[];
-}
+// export interface ICheckActiveUserConflictParams {
+//   value: string;
+//   userIds: string[];
+//   deletedUsers: IReturnedDeletedUser[];
+// }

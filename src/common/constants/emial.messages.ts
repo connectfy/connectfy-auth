@@ -121,6 +121,39 @@ export const deleteAccountMessage = (deleteToken: string) => {
     `;
 };
 
+export const accountDeletedMessage = (restoreToken: string) => {
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+          <h2 style="text-align: center; color: #f44336;">Your Account Has Been Deleted</h2>
+          <p>Dear User,</p>
+          <p>We confirm that your Connectfy account has been successfully deleted.</p>
+          <p>If this action was intentional, no further action is needed. However, if you change your mind, you can restore your account within the next <strong>30 days</strong> by clicking the button below:</p>
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="http://localhost:4800/auth?type=restore&token=${restoreToken}" 
+               style="display: inline-block; font-size: 18px; font-weight: bold; color: #ffffff; background-color: #4CAF50; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+              Restore My Account
+            </a>
+          </div>
+          <p>If the button above does not work, you can use this link:</p>
+          <a href="http://localhost:4800/auth?type=restore&token=${restoreToken}" 
+             style="word-wrap: break-word; color: #4CAF50;">
+            http://localhost:4800/auth?type=restore&token=${restoreToken}
+          </a>
+          <p style="color: #777; font-size: 14px;">Note: After 30 days, your account and all associated data will be permanently removed and cannot be recovered.</p>
+          <p>If you did not request this deletion or need assistance, please contact our support team at 
+            <a href="mailto:connectfy.team@gmail.com" style="color: #2ecc71; text-decoration: none;">connectfy.team@gmail.com</a>.
+          </p>
+          <p>Best regards,</p>
+          <p style="text-align: center; font-weight: bold; color: #2ecc71;">Connectfy Team</p>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+
 export const verifyYourselfMessage = (
   firstName: string,
   lastName: string,
