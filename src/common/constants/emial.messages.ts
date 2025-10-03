@@ -26,6 +26,7 @@ export const signupVerifyMessage = (
     `;
 };
 
+
 export const forgotPasswordMessage = (resetToken: string) => {
   return `
       <html>
@@ -49,6 +50,7 @@ export const forgotPasswordMessage = (resetToken: string) => {
     `;
 };
 
+
 export const emailNotFoundMessage = (email: string) => {
   return `
       <html>
@@ -70,6 +72,7 @@ export const emailNotFoundMessage = (email: string) => {
       </html>
     `;
 };
+
 
 export const googleSignInMessage = (email: string) => {
   return `
@@ -93,6 +96,7 @@ export const googleSignInMessage = (email: string) => {
       </html>
     `;
 };
+
 
 export const deleteAccountMessage = (deleteToken: string) => {
   return `
@@ -120,6 +124,7 @@ export const deleteAccountMessage = (deleteToken: string) => {
       </html>
     `;
 };
+
 
 export const accountDeletedMessage = (restoreToken: string) => {
   return `

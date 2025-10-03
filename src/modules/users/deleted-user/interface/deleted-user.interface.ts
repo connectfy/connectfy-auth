@@ -10,7 +10,7 @@ export interface IDeletedUser {
   provider: PROVIDER;
   password: string;
   phoneNumber: IPhoneNumber;
-  faceDescriptor?: string;
+  faceDescriptor: string | null;
 }
 
 export interface IReturnedDeletedUser {
@@ -22,6 +22,6 @@ export interface IReturnedDeletedUser {
   provider?: PROVIDER;
   password?: string;
   phoneNumber?: IPhoneNumber;
-  faceDescriptor?: string;
+  faceDescriptor?: string | null;
   createdAt?: Date;
 }

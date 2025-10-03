@@ -34,8 +34,8 @@ export class UserModel implements IUser {
   @Prop({ type: PhoneNumberModel, required: true, unique: true })
   phoneNumber: PhoneNumberModel;
 
-  @Prop({ type: String, required: false })
-  faceDescriptor?: string;
+  @Prop({ type: String, required: false, default: null })
+  faceDescriptor: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);

@@ -41,5 +41,5 @@ export class BaseUserDto {
   role: ROLE;
 
   @IsString({ message: ValidationMessages.REQUIRED('faceDescriptor') })
-  faceDescriptor?: string;
+  faceDescriptor: string | null;
 }

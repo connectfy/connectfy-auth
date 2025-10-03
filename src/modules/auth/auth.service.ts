@@ -13,7 +13,6 @@ import { checkRecentlyDeletedConflict } from '@common/functions/check-unique';
 import { generateVerifyCode } from '@common/functions/generate-codes';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import {
-  accountDeletedMessage,
   deleteAccountMessage,
   emailNotFoundMessage,
   forgotPasswordMessage,

@@ -38,7 +38,7 @@ export class DeletedUserModel implements IDeletedUser {
   phoneNumber: PhoneNumberModel;
 
   @Prop({ type: String, required: false })
-  faceDescriptor?: string;
+  faceDescriptor: string | null;
 }
 
 export const DeletedUserSchema = SchemaFactory.createForClass(DeletedUserModel);

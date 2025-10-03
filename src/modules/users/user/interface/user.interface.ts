@@ -9,7 +9,7 @@ export interface IUser {
   provider: PROVIDER;
   password: string;
   phoneNumber: IPhoneNumber;
-  faceDescriptor?: string;
+  faceDescriptor: string | null;
 }
 
 export interface IReturnedUser {
@@ -20,5 +20,5 @@ export interface IReturnedUser {
   provider?: PROVIDER;
   password?: string;
   phoneNumber?: IPhoneNumber;
-  faceDescriptor?: string;
+  faceDescriptor?: string | null;
 }
