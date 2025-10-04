@@ -12,13 +12,14 @@ import {
   ExceptionTypes,
 } from '@common/constants/exception.constants';
 import { HttpStatus } from '@nestjs/common';
+import { LANGUAGE } from '../common/constants/common.enum';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
   catch(exception: any, host: ArgumentsHost): Observable<any> {
-    let message = ExceptionMessages.INTERNAL_SERVER_ERROR_MESSAGE;
+    let message = ExceptionMessages.INTERNAL_SERVER_ERROR_MESSAGE(LANGUAGE.EN);
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let errorType = ExceptionTypes.INTERNAL_SERVER_ERROR;
     let additional: Record<string, any> | undefined;

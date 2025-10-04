@@ -1,6 +1,7 @@
+import { LANGUAGE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class ResetPasswordDto {
   @IsString({ message: ValidationMessages.STRING('resetToken') })
@@ -21,4 +22,10 @@ export class ResetPasswordDto {
   @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('confirmPassword') })
   confirmPassword: string;
+
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }

@@ -3,6 +3,7 @@ import { BaseException } from '../exceptions/base.exception';
 import { ExceptionTypes } from '../constants/exception.constants';
 import { ExceptionMessages } from '../constants/exception.constants';
 import { ICheckRecentlyDeletedConflictParams } from '../interfaces/date.interface';
+import { LANGUAGE } from '../constants/common.enum';
 
 
 export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflictParams): void {
@@ -10,7 +11,8 @@ export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflict
     user,
     deletedUsers,
     value,
-    days = 30
+    days = 30,
+    _lang
   } = data;
   
   if (!deletedUsers.length) return;
@@ -25,7 +27,7 @@ export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflict
 
   if (user || isRecentlyDeleted) {
     throw new BaseException(
-      ExceptionMessages.ALREADY_EXISTS_MESSAGE(value),
+      ExceptionMessages.ALREADY_EXISTS_MESSAGE(value, _lang ?? LANGUAGE.EN),
       HttpStatus.CONFLICT,
       ExceptionTypes.CONFLICT,
     );

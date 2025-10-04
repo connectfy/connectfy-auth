@@ -1,7 +1,14 @@
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsString, Length, ValidateNested } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  Length,
+  ValidateNested,
+} from 'class-validator';
 import { SignupDto } from './signup.dto';
+import { LANGUAGE } from '@common/constants/common.enum';
 
 export class VerifySignupDto {
   @IsString({ message: ValidationMessages.STRING('code') })
@@ -18,4 +25,10 @@ export class VerifySignupDto {
   @ValidateNested()
   @Type(() => SignupDto)
   unverifiedUser: SignupDto;
+
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }

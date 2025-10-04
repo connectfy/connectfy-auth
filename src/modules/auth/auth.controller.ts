@@ -8,6 +8,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
+import { LANGUAGE } from '@common/constants/common.enum';
 
 @Controller('')
 export class AuthController {
@@ -63,8 +64,8 @@ export class AuthController {
 
   @MessagePattern('auth/refresh-token/verify-token', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
-  async verifyAuthToken(@Payload() { access_token }: { access_token: string }) {
-    return await this.service.verifyAuthToken(access_token);
+  async verifyAuthToken(@Payload() { access_token, _lang }: { access_token: string, _lang: LANGUAGE }) {
+    return await this.service.verifyAuthToken(access_token, _lang);
   }
 
   @MessagePattern('auth/delete-account', Transport.TCP)

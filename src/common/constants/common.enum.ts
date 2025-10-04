@@ -37,3 +37,10 @@ export enum FORGOT_PASSWORD_IDENTIFIER_TYPE {
   EMAIL = 'EMAIL',
   PHONE_NUMBER = 'PHONE_NUMBER',
 }
+
+export enum LANGUAGE {
+  EN = 'en',
+  AZ = 'az',
+  RU = 'ru',
+  TR = 'tr',
+}

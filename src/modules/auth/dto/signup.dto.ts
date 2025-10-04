@@ -1,4 +1,4 @@
-import { GENDER } from '@common/constants/common.enum';
+import { GENDER, LANGUAGE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -64,6 +64,10 @@ export class SignupDto {
   @IsDate({ message: ValidationMessages.DATE('birthdayDate') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
   birthdayDate: Date;
+
+  @IsEnum(LANGUAGE, { message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)) })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED("_lang") })
+  _lang: LANGUAGE
 }
 
 export class GoogleAuthSignupDto {
@@ -108,4 +112,8 @@ export class GoogleAuthSignupDto {
   @IsDate({ message: ValidationMessages.DATE('birthdayDate') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
   birthdayDate: Date;
+
+  @IsEnum(LANGUAGE, { message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)) })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED("_lang") })
+  _lang: LANGUAGE
 }

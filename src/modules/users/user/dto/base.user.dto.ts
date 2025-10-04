@@ -1,7 +1,14 @@
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
+import { LANGUAGE } from '@common/constants/common.enum';
 
 export class BaseUserDto {
   // @IsEnum(ROLE, { message: ValidationMessages.ENUM('role', Object.keys(ROLE)) })
@@ -27,4 +34,10 @@ export class BaseUserDto {
   @ValidateNested()
   @Type(() => PhoneNumberDto)
   phoneNumber: PhoneNumberDto;
+
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang?: LANGUAGE;
 }

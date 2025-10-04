@@ -1,27 +1,54 @@
+import i18n from '@/src/i18n';
+import { LANGUAGE } from './common.enum';
+
 export const ExceptionMessages = {
-  INTERNAL_SERVER_ERROR_MESSAGE:
-    'An unexpected error occurred. Please try again later.',
-  BAD_REQUEST_MESSAGE:
-    'The request could not be understood or was missing required parameters.',
-  UNAUTHORIZED_MESSAGE:
-    'Authentication failed or user does not have permissions for the requested operation.',
-  FORBIDDEN_MESSAGE:
-    'Authentication succeeded but authenticated user does not have access to the requested resource.',
-  NOT_FOUND_MESSAGE: 'The requested resource could not be found.',
-  CONFLICT_MESSAGE:
-    'The request could not be completed due to a conflict with the current state of the resource.',
-  UNPROCESSABLE_ENTITY_MESSAGE:
-    'The request was well-formed but was unable to be followed due to semantic errors.',
-  GONE_MESSAGE:
-    'The requested resource is no longer available at the server and no forwarding address is known.',
-  TOO_MANY_REQUESTS_MESSAGE:
-    'The user has sent too many requests in a given amount of time ("rate limiting").',
-  ACCESS_TOKEN_EXPIRED: 'Access token expired',
-  TOKEN_EXPIRED: 'Token not found or expired',
-  ALREADY_EXISTS_MESSAGE: (field: string) => `${field} already exists`,
-  INVALID_CREDENTIALS: 'Invalid credential',
-  BANNED_MESSAGE: (bannedToDate: Date) => `Your account has been banned to until ${bannedToDate}`,
-  SAME_DATA: (field: string) => `${field} can not be same as old`
+  INTERNAL_SERVER_ERROR_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.internal_server_error_message', { lng: lang }),
+
+  BAD_REQUEST_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.bad_request_message', { lng: lang }),
+
+  UNAUTHORIZED_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.unauthorized_message', { lng: lang }),
+
+  FORBIDDEN_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.forbidden_message', { lng: lang }),
+
+  NOT_FOUND_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.not_found_message', { lng: lang }),
+
+  CONFLICT_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.conflict_message', { lng: lang }),
+
+  UNPROCESSABLE_ENTITY_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.unprocessable_entity_message', { lng: lang }),
+
+  GONE_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.gone_message', { lng: lang }),
+
+  TOO_MANY_REQUESTS_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.too_many_requests_message', { lng: lang }),
+
+  ACCESS_TOKEN_EXPIRED: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.access_token_expired', { lng: lang }),
+
+  TOKEN_EXPIRED: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.token_expired', { lng: lang }),
+
+  ALREADY_EXISTS_MESSAGE: (field: string, lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.already_exists_message', { field, lng: lang }),
+
+  INVALID_CREDENTIALS: (lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.invalid_credentials', { lng: lang }),
+
+  BANNED_MESSAGE: (bannedToDate: Date, lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.banned_message', {
+      bannedToDate: bannedToDate,
+      lng: lang,
+    }),
+
+  SAME_DATA: (field: string, lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.same_data', { field, lng: lang }),
 };
 
 export const ExceptionTypes = {

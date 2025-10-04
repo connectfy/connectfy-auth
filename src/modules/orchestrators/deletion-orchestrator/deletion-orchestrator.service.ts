@@ -2,6 +2,8 @@ import { ClientKafka } from '@nestjs/microservices';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeletionOrchestorRepository } from './repo/deletion-orchestor.repo';
 import { accountDeletedMessage } from '@common/constants/emial.messages';
+import { LANGUAGE } from '@common/constants/common.enum';
+import i18n from '@/src/i18n';
 
 @Injectable()
 export class DeletionOrchestratorService {
@@ -16,7 +18,7 @@ export class DeletionOrchestratorService {
     await this.notificationServiceKafka.connect();
   }
 
-  async markCompleted(deletionToken: string, part: string) {
+  async markCompleted(deletionToken: string, part: string, _lang: LANGUAGE) {
     const updated = await this.deletionRequestRepo.markPartCompleted(
       deletionToken,
       part,
@@ -36,8 +38,8 @@ export class DeletionOrchestratorService {
         from: '"Connectfy Team" <connectfy.team@gmail.com>',
         sender: 'Connectfy Team',
         to: req.email,
-        subject: 'Account Deletion Completed',
-        html: accountDeletedMessage(deletionToken),
+        subject: i18n.t("email_messages.delete_account_completed.mail_subject", { lang: _lang }),
+        html: accountDeletedMessage(deletionToken, _lang),
       });
     }
   }

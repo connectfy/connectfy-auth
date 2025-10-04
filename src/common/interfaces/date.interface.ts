@@ -1,5 +1,6 @@
 import { IReturnedUser } from '@modules/users/user/interface/user.interface';
 import { IReturnedDeletedUser } from '@modules/users/deleted-user/interface/deleted-user.interface';
+import { LANGUAGE } from '../constants/common.enum';
 
 export interface ITimestamps {
   createdAt: Date;
@@ -11,6 +12,7 @@ export interface ICheckRecentlyDeletedConflictParams {
   deletedUsers: IReturnedDeletedUser[];
   value: string;
   days?: number;
+  _lang: LANGUAGE
 }
 
 // export interface ICheckActiveUserConflictParams {

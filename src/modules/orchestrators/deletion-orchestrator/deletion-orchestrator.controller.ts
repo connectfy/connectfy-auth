@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { DeletionOrchestratorService } from './deletion-orchestrator.service';
 import { EventPattern, Payload, Transport } from '@nestjs/microservices';
+import { LANGUAGE } from '@common/constants/common.enum';
 
 @Controller('deletion-orchestrator')
 export class DeletionOrchestratorController {
@@ -8,36 +9,36 @@ export class DeletionOrchestratorController {
 
   @EventPattern('auth.account.deleteAccount.completed', Transport.KAFKA)
   async onAccountCompleted(
-    @Payload() data: { userId: string; deletionToken: string },
+    @Payload() data: { userId: string; deletionToken: string, _lang: LANGUAGE },
   ) {
-    await this.service.markCompleted(data.deletionToken, 'account');
+    await this.service.markCompleted(data.deletionToken, 'account', data._lang);
   }
 
   @EventPattern('auth.account.deleteSocialLink.completed', Transport.KAFKA)
   async onSocialLinksCompleted(
-    @Payload() data: { userId: string; deletionToken: string },
+    @Payload() data: { userId: string; deletionToken: string, _lang: LANGUAGE },
   ) {
-    await this.service.markCompleted(data.deletionToken, 'socialLinks');
+    await this.service.markCompleted(data.deletionToken, 'socialLinks', data._lang);
   }
 
   @EventPattern('auth.account.deletePrivacySetting.completed', Transport.KAFKA)
   async onPrivacyCompleted(
-    @Payload() data: { userId: string; deletionToken: string },
+    @Payload() data: { userId: string; deletionToken: string, _lang: LANGUAGE },
   ) {
-    await this.service.markCompleted(data.deletionToken, 'privacySettings');
+    await this.service.markCompleted(data.deletionToken, 'privacySettings', data._lang);
   }
 
   @EventPattern('auth.relationship.deleteFriendship.completed', Transport.KAFKA)
   async onFriendshipsCompleted(
-    @Payload() data: { userId: string; deletionToken: string },
+    @Payload() data: { userId: string; deletionToken: string, _lang: LANGUAGE },
   ) {
-    await this.service.markCompleted(data.deletionToken, 'friendships');
+    await this.service.markCompleted(data.deletionToken, 'friendships', data._lang);
   }
 
   @EventPattern('auth.relationship.deleteBlocklist.completed', Transport.KAFKA)
   async onBlocklistCompleted(
-    @Payload() data: { userId: string; deletionToken: string },
+    @Payload() data: { userId: string; deletionToken: string, _lang: LANGUAGE },
   ) {
-    await this.service.markCompleted(data.deletionToken, 'blocklist');
+    await this.service.markCompleted(data.deletionToken, 'blocklist', data._lang);
   }
 }

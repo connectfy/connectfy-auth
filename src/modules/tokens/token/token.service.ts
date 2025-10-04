@@ -22,11 +22,13 @@ export class TokenService {
   }
 
   async findToken(option: FindTokenDto): Promise<TokenDocument> {
-    const token = await this.repo.findOne(option);
+    const { _lang, ...options } = option;
+
+    const token = await this.repo.findOne(options);
 
     if (!token)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE,
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -38,12 +40,14 @@ export class TokenService {
     return await this.repo.findMany(options);
   }
 
-  async removeToken({ _id }: RemoveTokenDto): Promise<TokenDocument> {
+  async removeToken(data: RemoveTokenDto): Promise<TokenDocument> {
+    const { _id, _lang } = data;
+
     const res = await this.repo.remove({ _id });
 
     if (!res)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE,
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );

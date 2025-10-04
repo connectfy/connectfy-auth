@@ -21,13 +21,13 @@ export class UserService {
   }
 
   async edit(data: EditUserDto): Promise<IReturnedUser> {
-    const { _id } = data;
+    const { _id, _lang } = data;
 
     const foundData = await this.repo.findOne({ _id });
 
     if (!foundData)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE,
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -38,13 +38,13 @@ export class UserService {
   }
 
   async remove(data: RemoveUserDto): Promise<IReturnedUser> {
-    const { _id } = data;
+    const { _id, _lang } = data;
 
     const foundData = await this.repo.findOne({ _id });
 
     if (!foundData)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE,
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );

@@ -1,4 +1,4 @@
-import { IDENTIFIER_TYPE } from '@common/constants/common.enum';
+import { IDENTIFIER_TYPE, LANGUAGE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
@@ -22,6 +22,12 @@ export class LoginDto {
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   password: string;
+
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }
 
 export class GoogleAuthloginDto {
@@ -29,4 +35,10 @@ export class GoogleAuthloginDto {
   @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
   idToken: string;
+
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }

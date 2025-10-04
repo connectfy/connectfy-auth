@@ -1,4 +1,7 @@
-import { FORGOT_PASSWORD_IDENTIFIER_TYPE } from '@common/constants/common.enum';
+import {
+  FORGOT_PASSWORD_IDENTIFIER_TYPE,
+  LANGUAGE,
+} from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
@@ -17,4 +20,10 @@ export class ForgotPasswordDto {
   @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifier') })
   identifier: string;
+
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }
