@@ -599,7 +599,7 @@ export class AuthService {
 
       const userObj = user.toObject ? user.toObject() : user;
 
-      const { password, faceDescriptor, ...safeUser } = userObj;
+      const { password, ...safeUser } = userObj;
 
       return { status: 200, user: safeUser };
     } catch (error) {
@@ -728,5 +728,37 @@ export class AuthService {
     ]);
 
     return { statusCode: 200 };
+  }
+
+  async refreshToken(refreshToken: string, _lang: LANGUAGE) {
+    const payload = await this.refreshTokenService.verifyToken(
+      refreshToken,
+      false,
+    );
+
+    const user = await this.userRepo.findOne({ _id: payload.user_id });
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        HttpStatus.UNAUTHORIZED,
+        ExceptionTypes.UNAUTHORIZED,
+      );
+
+    let { access_token, refresh_token } =
+      await this.refreshTokenService.generateTokens({
+        userId: user._id,
+      });
+
+    await this.refreshTokenService.saveTokens({
+      userId: user._id,
+      refresh_token,
+    });
+
+    return {
+      user_id: user._id,
+      access_token,
+      refresh_token,
+    };
   }
 }

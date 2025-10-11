@@ -1,5 +1,5 @@
 import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
-import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { VerifySignupDto } from './dto/verify.dto';
@@ -9,6 +9,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 import { LANGUAGE } from '@common/constants/common.enum';
+import { BaseException } from '@/src/common/exceptions/base.exception';
+import { ExceptionMessages, ExceptionTypes } from '@/src/common/constants/exception.constants';
 
 @Controller('')
 export class AuthController {
@@ -78,5 +80,17 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   async removeAccount(@Payload() data: RemoveAccountDto) {
     return await this.service.removeAccount(data);
+  }
+
+  @MessagePattern('auth/refreshToken', Transport.TCP)
+  async refreshToken(@Payload() { refresh_token, _lang }: { refresh_token: string, _lang: LANGUAGE }) {
+    if (!refresh_token) 
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+      );
+
+    return await this.service.refreshToken(refresh_token, _lang);
   }
 }
