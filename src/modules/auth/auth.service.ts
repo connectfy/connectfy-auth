@@ -480,6 +480,8 @@ export class AuthService {
     );
 
     if (!user) {
+      if (!isEmail) return { statusCode: 200 };
+
       this.sendEmail(
         identifier,
         i18n.t('email_messages.email_not_found.mail_subject', { lang: _lang }),
