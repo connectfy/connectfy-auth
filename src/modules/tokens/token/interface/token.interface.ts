@@ -10,10 +10,10 @@ export interface IToken {
 }
 
 export interface IReturnedToken {
-  _id?: string;
-  userId?: string;
-  token?: string;
-  type?: TOKEN_TYPE;
-  expiresAt?: Date;
-  isUsed?: boolean;
+  _id: string;
+  userId: string;
+  token: string;
+  type: TOKEN_TYPE;
+  expiresAt: Date;
+  isUsed: boolean;
 }

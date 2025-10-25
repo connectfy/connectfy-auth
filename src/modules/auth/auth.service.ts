@@ -120,11 +120,22 @@ export class AuthService {
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
     const { firstName, lastName, email, username, phoneNumber, _lang } = data;
 
+    const userWithUsername = await this.userRepo.findOne({ username });
+    const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
+      username,
+    });
+
+    checkRecentlyDeletedConflict({
+      user: userWithUsername,
+      deletedUsers: deletedUsersWithUsername,
+      value: username,
+      _lang,
+    });
+
     const userWithEmail = await this.userRepo.findOne({ email });
     const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
       email,
     });
-
     checkRecentlyDeletedConflict({
       user: userWithEmail,
       deletedUsers: deletedUsersWithEmail,
@@ -143,16 +154,6 @@ export class AuthService {
       user: userWithPhoneNumber,
       deletedUsers: deletedUsersWithPhoneNumber,
       value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
-      _lang,
-    });
-
-    const userWithUsername = await this.userRepo.findOne({ username });
-    const deletedUsersWithUsername = await this.userRepo.findMany({ username });
-
-    checkRecentlyDeletedConflict({
-      user: userWithUsername,
-      deletedUsers: deletedUsersWithUsername,
-      value: username,
       _lang,
     });
 
@@ -203,12 +204,14 @@ export class AuthService {
         lastName,
         gender,
         avatar,
+        _lang,
       }),
     );
 
     await lastValueFrom(
       this.accountServiceTcp.send('privacy-settings/create', {
         userId: _id,
+        _lang,
       }),
     );
 
@@ -414,7 +417,9 @@ export class AuthService {
     });
 
     const userWithUsername = await this.userRepo.findOne({ username });
-    const deletedUsersWithUsername = await this.userRepo.findMany({ username });
+    const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
+      username,
+    });
 
     checkRecentlyDeletedConflict({
       user: userWithUsername,
@@ -440,12 +445,14 @@ export class AuthService {
         lastName,
         gender,
         avatar,
+        _lang,
       }),
     );
 
     await lastValueFrom(
       this.accountServiceTcp.send('privacy-settings/create', {
         userId: _id,
+        _lang,
       }),
     );
 
@@ -460,7 +467,9 @@ export class AuthService {
     return { _id, access_token };
   }
 
-  async forgotPassword(data: ForgotPasswordDto): Promise<{ statusCode: 200 }> {
+  async forgotPassword(
+    data: ForgotPasswordDto,
+  ): Promise<{ statusCode: 200; email?: string }> {
     const { identifierType, identifier, _lang } = data;
 
     const isEmail = identifierType === FORGOT_PASSWORD_IDENTIFIER_TYPE.EMAIL;
@@ -476,31 +485,46 @@ export class AuthService {
         i18n.t('email_messages.email_not_found.mail_subject', { lang: _lang }),
         emailNotFoundMessage(identifier, _lang),
       );
-    } else if (user.provider !== PROVIDER.PASSWORD) {
+
+      return { statusCode: 200 };
+    }
+
+    if (user.provider !== PROVIDER.PASSWORD) {
       this.sendEmail(
         identifier,
         i18n.t('email_messages.google_sign_in.mail_subject', { lang: _lang }),
         googleSignInMessage(identifier, _lang),
       );
-    } else {
-      const token = crypto.randomBytes(64).toString('hex');
-      const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-      await this.tokenService.generateToken({
-        userId: user._id as string,
-        token,
-        type: TOKEN_TYPE.PASSWORD_RESET,
-        expiresAt: tokenExpiry,
-      });
-
-      this.sendEmail(
-        identifier,
-        i18n.t('email_messages.forgot_password.mail_subject', { lang: _lang }),
-        forgotPasswordMessage(token, _lang),
-      );
+      return { statusCode: 200 };
     }
 
-    return { statusCode: 200 };
+    const token = crypto.randomBytes(64).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.tokenService.generateToken({
+      userId: user._id as string,
+      token,
+      type: TOKEN_TYPE.PASSWORD_RESET,
+      expiresAt: tokenExpiry,
+    });
+
+    this.sendEmail(
+      identifier,
+      i18n.t('email_messages.forgot_password.mail_subject', { lang: _lang }),
+      forgotPasswordMessage(token, _lang),
+    );
+
+    const emailParts = user.email.split('@');
+
+    const local = emailParts[0] || '';
+    const localLength = local.length;
+    const domain = emailParts[0] || '';
+
+    const email =
+      local[0] + '*'.repeat(localLength - 2) + local[localLength - 1] + domain;
+
+    return { statusCode: 200, email };
   }
 
   async isTokenValid(data: string): Promise<boolean> {

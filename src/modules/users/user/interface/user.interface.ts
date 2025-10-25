@@ -13,12 +13,12 @@ export interface IUser {
 }
 
 export interface IReturnedUser {
-  _id?: string;
-  username?: string;
-  email?: string;
-  role?: ROLE;
-  provider?: PROVIDER;
-  password?: string;
-  phoneNumber?: IPhoneNumber;
-  faceDescriptor?: string | null;
+  _id: string;
+  username: string;
+  email: string;
+  role: ROLE;
+  provider: PROVIDER;
+  password: string;
+  phoneNumber: IPhoneNumber;
+  faceDescriptor: string | null;
 }

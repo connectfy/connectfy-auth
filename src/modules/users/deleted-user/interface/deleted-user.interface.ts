@@ -14,14 +14,14 @@ export interface IDeletedUser {
 }
 
 export interface IReturnedDeletedUser {
-  _id?: string;
-  userId?: string;
-  username?: string;
-  email?: string;
-  role?: ROLE;
-  provider?: PROVIDER;
-  password?: string;
-  phoneNumber?: IPhoneNumber;
-  faceDescriptor?: string | null;
-  createdAt?: Date;
+  _id: string;
+  userId: string;
+  username: string;
+  email: string;
+  role: ROLE;
+  provider: PROVIDER;
+  password: string;
+  phoneNumber: IPhoneNumber;
+  faceDescriptor: string | null;
+  createdAt: Date;
 }

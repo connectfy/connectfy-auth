@@ -9,8 +9,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 import { LANGUAGE } from '@common/constants/common.enum';
-import { BaseException } from '@/src/common/exceptions/base.exception';
-import { ExceptionMessages, ExceptionTypes } from '@/src/common/constants/exception.constants';
+import { BaseException } from '@common/exceptions/base.exception';
+import { ExceptionMessages, ExceptionTypes } from '@common/constants/exception.constants';
 
 @Controller('')
 export class AuthController {

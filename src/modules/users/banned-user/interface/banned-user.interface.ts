@@ -5,7 +5,7 @@ export interface IBannedUser {
 }
 
 export interface IReturnedBannedUser {
-  _id?: string;
-  userId?: string;
-  bannedToDate?: Date | null;
+  _id: string;
+  userId: string;
+  bannedToDate: Date | null;
 }

@@ -1,16 +1,20 @@
+import {
+  enumTransform,
+  stringTransform,
+} from '@common/functions/tranform';
 import { LANGUAGE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class ResetPasswordDto {
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('resetToken') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('resetToken') })
   resetToken: string;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('password') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   @Matches(
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>'№_;:/-])[A-Za-z\d@$!%*?&]{8,15}$/,
@@ -18,11 +22,14 @@ export class ResetPasswordDto {
   )
   password: string;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('resetToken') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('confirmPassword') })
   confirmPassword: string;
 
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: LANGUAGE }),
+  )
   @IsEnum(LANGUAGE, {
     message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
   })

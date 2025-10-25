@@ -1,3 +1,3 @@
-import { BaseUserDto } from './base.banned-user.dto';
+import { BaseBannedUserDto } from './base.banned-user.dto';
 
-export class AddBannedUserDto extends BaseUserDto {}
+export class AddBannedUserDto extends BaseBannedUserDto {}

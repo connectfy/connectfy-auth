@@ -1,20 +1,30 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 import { ValidationMessages } from '@common/constants/validation.messages';
+import { stringTransform } from '@common/functions/tranform';
 
 export class PhoneNumberDto {
+  @Transform(({ key, value }) => stringTransform({ key ,value }))
   @IsString({ message: ValidationMessages.STRING('countryCode') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('countryCode') })
+  @Matches(/^\+\d+$/, {
+    message: ValidationMessages.PHONE_CODE('countryCode'),
+  })
   countryCode: string;
 
+  @Transform(({ key, value }) => stringTransform({ key ,value }))
   @IsString({ message: ValidationMessages.STRING('number') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('number') })
+  @Matches(/^\d+$/, {
+    message: ValidationMessages.NUMBER('number'),
+  })
   number: string;
 
+  @Transform(({ key, value }) => stringTransform({ key ,value }))
   @IsString({ message: ValidationMessages.STRING('fullPhoneNumber') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('fullPhoneNumber') })
+  @Matches(/^\+\d+$/, {
+    message: ValidationMessages.FULL_PHONE('fullPhoneNumber'),
+  })
   fullPhoneNumber: string;
 }

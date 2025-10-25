@@ -31,7 +31,7 @@ export class DeletedUserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const res = this.repo.remove(_id);
+    const res = await this.repo.remove(_id);
 
     return res as IReturnedDeletedUser;
   }

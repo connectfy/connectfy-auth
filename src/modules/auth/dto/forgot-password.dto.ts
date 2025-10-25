@@ -1,3 +1,4 @@
+import { enumTransform, stringTransform } from '@common/functions/tranform';
 import {
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
   LANGUAGE,
@@ -7,6 +8,9 @@ import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class ForgotPasswordDto {
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: FORGOT_PASSWORD_IDENTIFIER_TYPE }),
+  )
   @IsEnum(FORGOT_PASSWORD_IDENTIFIER_TYPE, {
     message: ValidationMessages.ENUM(
       'identifierType',
@@ -16,11 +20,14 @@ export class ForgotPasswordDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifierType') })
   identifierType: FORGOT_PASSWORD_IDENTIFIER_TYPE;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('identifier') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifier') })
   identifier: string;
 
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: LANGUAGE }),
+  )
   @IsEnum(LANGUAGE, {
     message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
   })

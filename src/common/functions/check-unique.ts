@@ -15,7 +15,7 @@ export function checkRecentlyDeletedConflict(data: ICheckRecentlyDeletedConflict
     _lang
   } = data;
   
-  if (!deletedUsers.length) return;
+  if (!user && !deletedUsers.length) return;
 
   const now = Date.now();
   const timeLimit = days * 24 * 60 * 60 * 1000;

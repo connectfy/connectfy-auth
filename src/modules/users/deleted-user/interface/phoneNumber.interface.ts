@@ -5,7 +5,7 @@ export interface IPhoneNumber {
 }
 
 export interface IReturnedPhoneNumber {
-  countryCode?: string;
-  number?: string;
-  fullPhoneNumber?: string;
+  countryCode: string;
+  number: string;
+  fullPhoneNumber: string;
 }

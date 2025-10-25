@@ -12,22 +12,28 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PhoneNumberDto } from '../../users/user/dto/nested/phoneNumber.dto';
+import {
+  dateTransform,
+  enumTransform,
+  objectTransform,
+  stringTransform,
+} from '@common/functions/tranform';
 
 export class SignupDto {
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('firstName') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('firstName') })
   firstName: string;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('lastName') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('lastName') })
   lastName: string;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('username') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
-  @Matches(/^[^\s.,?()$:;"'{}[\]=+&!\\|/<>`~@#№%^]+$/, {
+  @Matches(/^[A-Za-z0-9._-]+$/, {
     message: ValidationMessages.MISMATCH(
       'username',
       '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)',
@@ -35,15 +41,18 @@ export class SignupDto {
   })
   username: string;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
   email: string;
 
-  @Type(() => PhoneNumberDto)
+  @Transform(({ key, value }) => objectTransform({ key, value }))
   @ValidateNested()
+  @Type(() => PhoneNumberDto)
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
   phoneNumber: PhoneNumberDto;
 
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   @MinLength(8, { message: ValidationMessages.MIN('password', 8) })
@@ -53,21 +62,28 @@ export class SignupDto {
   )
   password: string;
 
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: GENDER }),
+  )
   @IsEnum(GENDER, {
     message: ValidationMessages.ENUM('gender', Object.keys(GENDER)),
   })
-  @Transform(({ value }) => value?.trim())
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('gender') })
   gender: GENDER;
 
-  @Type(() => Date)
+  @Transform(({ key, value }) => dateTransform({ key, value }))
   @IsDate({ message: ValidationMessages.DATE('birthdayDate') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
   birthdayDate: Date;
 
-  @IsEnum(LANGUAGE, { message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)) })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED("_lang") })
-  _lang: LANGUAGE
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: LANGUAGE }),
+  )
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }
 
 export class GoogleAuthSignupDto {
@@ -113,7 +129,9 @@ export class GoogleAuthSignupDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
   birthdayDate: Date;
 
-  @IsEnum(LANGUAGE, { message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)) })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED("_lang") })
-  _lang: LANGUAGE
+  @IsEnum(LANGUAGE, {
+    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang: LANGUAGE;
 }
