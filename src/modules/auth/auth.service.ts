@@ -261,7 +261,7 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
-    const isPasswordMatch = await compare(password, user.password as string);
+    const isPasswordMatch = await compare(password!, user.password as string);
 
     if (!isPasswordMatch)
       throw new BaseException(
@@ -364,15 +364,7 @@ export class AuthService {
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string }> {
-    const {
-      idToken,
-      firstName,
-      lastName,
-      username,
-      phoneNumber,
-      gender,
-      _lang,
-    } = data;
+    const { idToken, username, phoneNumber, gender, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -382,6 +374,9 @@ export class AuthService {
     const payload = ticket.getPayload();
 
     const email = payload?.email;
+    const firstName = payload?.given_name || '';
+    const lastName = payload?.family_name || '';
+    let avatar = payload?.picture || null;
 
     if (!email)
       throw new BaseException(
@@ -436,7 +431,7 @@ export class AuthService {
       password: 'signed_up_with_google',
     });
 
-    const avatar = this.setAvatar(gender, username);
+    if (!avatar) avatar = this.setAvatar(gender, username);
 
     await lastValueFrom(
       this.accountServiceTcp.send('account/create', {

@@ -29,11 +29,10 @@ export class LoginDto {
   identifier: string;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsOptional()
   @ValidateIf((ld) => ld.identifierType !== IDENTIFIER_TYPE.FACE_DESCRIPTOR)
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  password: string;
+  password: string | null;
 
   @Transform(({ key, value }) =>
     enumTransform({ key, value, enumObject: LANGUAGE }),
