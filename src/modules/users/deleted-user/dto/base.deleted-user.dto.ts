@@ -36,6 +36,7 @@ export class BaseUserDto {
   password: string;
   
   @Transform(({ key, value }) => objectTransform({ key, value }))
+  @IsOptional()
   @ValidateNested()
   @Type(() => PhoneNumberDto)
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })

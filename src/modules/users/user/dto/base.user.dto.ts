@@ -7,7 +7,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { PhoneNumberDto } from './nested/phoneNumber.dto';
+// import { PhoneNumberDto } from './nested/phoneNumber.dto';
 import { LANGUAGE } from '@common/constants/common.enum';
 import {
   enumTransform,
@@ -38,11 +38,11 @@ export class BaseUserDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   password: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @ValidateNested()
-  @Type(() => PhoneNumberDto)
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  phoneNumber: PhoneNumberDto;
+  // @Transform(({ key, value }) => objectTransform({ key, value }))
+  // @ValidateNested()
+  // @Type(() => PhoneNumberDto)
+  // @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
+  // phoneNumber: PhoneNumberDto;
 
   @Transform(({ key, value }) =>
     enumTransform({ key, value, enumObject: LANGUAGE }),

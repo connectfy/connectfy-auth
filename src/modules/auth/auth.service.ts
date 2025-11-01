@@ -118,7 +118,7 @@ export class AuthService {
   async signup(
     data: SignupDto,
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
-    const { firstName, lastName, email, username, phoneNumber, _lang } = data;
+    const { firstName, lastName, email, username, _lang } = data;
 
     const userWithUsername = await this.userRepo.findOne({ username });
     const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
@@ -140,20 +140,6 @@ export class AuthService {
       user: userWithEmail,
       deletedUsers: deletedUsersWithEmail,
       value: email,
-      _lang,
-    });
-
-    const userWithPhoneNumber = await this.userRepo.findOne({
-      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
-    });
-    const deletedUsersWithPhoneNumber = await this.deletedUserRepo.findMany({
-      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
-    });
-
-    checkRecentlyDeletedConflict({
-      user: userWithPhoneNumber,
-      deletedUsers: deletedUsersWithPhoneNumber,
-      value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
       _lang,
     });
 
@@ -364,7 +350,7 @@ export class AuthService {
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string }> {
-    const { idToken, username, phoneNumber, gender, _lang } = data;
+    const { idToken, username, gender, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -397,20 +383,6 @@ export class AuthService {
       _lang,
     });
 
-    const userWithPhoneNumber = await this.userRepo.findOne({
-      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
-    });
-    const deletedUsersWithPhoneNumber = await this.deletedUserRepo.findMany({
-      'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber,
-    });
-
-    checkRecentlyDeletedConflict({
-      user: userWithPhoneNumber,
-      deletedUsers: deletedUsersWithPhoneNumber,
-      value: `(${phoneNumber.countryCode}) ${phoneNumber.number}`,
-      _lang,
-    });
-
     const userWithUsername = await this.userRepo.findOne({ username });
     const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
       username,
@@ -426,7 +398,6 @@ export class AuthService {
     const { _id } = await this.userRepo.create({
       email,
       username,
-      phoneNumber,
       provider: PROVIDER.GOOGLE,
       password: 'signed_up_with_google',
     });

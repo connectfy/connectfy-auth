@@ -11,7 +11,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { PhoneNumberDto } from '../../users/user/dto/nested/phoneNumber.dto';
+// import { PhoneNumberDto } from '../../users/user/dto/nested/phoneNumber.dto';
 import {
   dateTransform,
   enumTransform,
@@ -46,11 +46,11 @@ export class SignupDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
   email: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @ValidateNested()
-  @Type(() => PhoneNumberDto)
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  phoneNumber: PhoneNumberDto;
+  // @Transform(({ key, value }) => objectTransform({ key, value }))
+  // @ValidateNested()
+  // @Type(() => PhoneNumberDto)
+  // @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
+  // phoneNumber: PhoneNumberDto;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('password') })
@@ -103,11 +103,11 @@ export class GoogleAuthSignupDto {
   })
   username: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @ValidateNested()
-  @Type(() => PhoneNumberDto)
-  @IsNotEmpty({ message: ValidationMessages.STRING("phoneNumber") })
-  phoneNumber: PhoneNumberDto;
+  // @Transform(({ key, value }) => objectTransform({ key, value }))
+  // @ValidateNested()
+  // @Type(() => PhoneNumberDto)
+  // @IsNotEmpty({ message: ValidationMessages.STRING("phoneNumber") })
+  // phoneNumber: PhoneNumberDto;
 
   @Transform(({ key, value }) => enumTransform({ key, value, enumObject: GENDER }))
   @IsEnum(GENDER, {

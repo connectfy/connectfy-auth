@@ -1,11 +1,11 @@
 export interface IPhoneNumber {
-  countryCode: string;
-  number: string;
-  fullPhoneNumber: string;
+  countryCode: string | null;
+  number: string | null;
+  fullPhoneNumber: string | null;
 }
 
 export interface IReturnedPhoneNumber {
-  countryCode: string;
-  number: string;
-  fullPhoneNumber: string;
+  countryCode: string | null;
+  number: string | null;
+  fullPhoneNumber: string | null;
 }

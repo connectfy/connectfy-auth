@@ -34,7 +34,7 @@ export class DeletedUserModel implements IDeletedUser {
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: PhoneNumberModel, required: true, unique: true })
+  @Prop({ type: PhoneNumberModel, required: false })
   phoneNumber: PhoneNumberModel;
 
   @Prop({ type: String, required: false })

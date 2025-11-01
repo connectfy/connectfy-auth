@@ -11,10 +11,10 @@ export class UserModel implements IUser {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ type: String, required: true })
   username: string;
 
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ type: String, required: true })
   email: string;
 
   @Prop({ type: String, enum: ROLE, required: true, default: ROLE.USER })
@@ -31,7 +31,7 @@ export class UserModel implements IUser {
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: PhoneNumberModel, required: true, unique: true })
+  @Prop({ type: PhoneNumberModel, required: false })
   phoneNumber: PhoneNumberModel;
 
   @Prop({ type: String, required: false, default: null })

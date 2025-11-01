@@ -3,13 +3,13 @@ import { IPhoneNumber } from '../../interface/phoneNumber.interface';
 
 @Schema({ _id: false, timestamps: false })
 export class PhoneNumberModel implements IPhoneNumber {
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false, default: null })
   countryCode: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false, default: null })
   number: string;
 
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ type: String, required: false, default: null })
   fullPhoneNumber: string;
 }
 
