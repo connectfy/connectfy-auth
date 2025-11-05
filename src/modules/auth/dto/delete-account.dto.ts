@@ -7,7 +7,7 @@ import {
   enumTransform,
   objectTransform,
   stringTransform,
-} from '@common/functions/tranform';
+} from '@/src/common/functions/transform';
 
 export class DeleteAccountDto {
   @Transform(({ key, value }) => objectTransform({ key, value }))

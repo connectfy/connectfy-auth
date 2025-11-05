@@ -3,7 +3,7 @@ import { BaseUserDto } from './base.user.dto';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { PROVIDER } from '@common/constants/common.enum';
-import { enumTransform } from '@common/functions/tranform';
+import { enumTransform } from '@/src/common/functions/transform';
 
 export class AddUserDto extends BaseUserDto {
   @Transform(({ key, value }) => enumTransform({ key, value, enumObject: PROVIDER }))

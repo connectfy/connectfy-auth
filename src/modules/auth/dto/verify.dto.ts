@@ -14,7 +14,7 @@ import {
   enumTransform,
   objectTransform,
   stringTransform,
-} from '@common/functions/tranform';
+} from '@/src/common/functions/transform';
 
 export class VerifySignupDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

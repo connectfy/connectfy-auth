@@ -10,7 +10,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { arrayTransform, stringTransform } from '@common/functions/tranform';
+import { arrayTransform, stringTransform } from '@/src/common/functions/transform';
 
 export class EditUserDto extends PartialType(BaseUserDto) {
   @Transform(({ key, value }) => stringTransform({ key, value }))
@@ -26,5 +26,5 @@ export class EditUserDto extends PartialType(BaseUserDto) {
     { allowNaN: false },
     { message: ValidationMessages.NUMBER('faceDescriptor') },
   )
-  faceDescriptor?: number[] | null;
+  faceDescriptor?: string | null;
 }

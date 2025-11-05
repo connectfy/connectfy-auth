@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { stringTransform } from '@/src/common/functions/tranform';
+import { stringTransform } from '@/src/common/functions/transform';
 
 export class PhoneNumberDto {
   @IsString({ message: ValidationMessages.STRING('countryCode') })

@@ -1,14 +1,12 @@
-import { enumTransform, stringTransform } from '@common/functions/tranform';
+import {
+  arrayTransform,
+  enumTransform,
+  stringTransform,
+} from '@/src/common/functions/transform';
 import { IDENTIFIER_TYPE, LANGUAGE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  ValidateIf,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginDto {
   @Transform(({ key, value }) =>
@@ -23,16 +21,22 @@ export class LoginDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifierType') })
   identifierType: IDENTIFIER_TYPE;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('identifier') })
+  @Transform(({ key, value }) => {
+    if (typeof value === 'string') return stringTransform({ key, value });
+
+    if (Array.isArray(value)) return arrayTransform({ key, value });
+
+    return null;
+  })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifier') })
   identifier: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @ValidateIf((ld) => ld.identifierType !== IDENTIFIER_TYPE.FACE_DESCRIPTOR)
-  @IsString({ message: ValidationMessages.STRING('password') })
+  @Transform(({ key, value }) => {
+    if (Array.isArray(value)) return arrayTransform({ key, value });
+    return stringTransform({ key, value });
+  })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  password: string | null;
+  password: string | number[];
 
   @Transform(({ key, value }) =>
     enumTransform({ key, value, enumObject: LANGUAGE }),

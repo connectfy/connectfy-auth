@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
-import { booleanTransform, stringTransform } from '@common/functions/tranform';
+import { booleanTransform, stringTransform } from '@/src/common/functions/transform';
 
 export class UpdateTokenDto extends PartialType(BaseTokenDto) {
   @Transform(({ key, value }) => stringTransform({ key, value }))

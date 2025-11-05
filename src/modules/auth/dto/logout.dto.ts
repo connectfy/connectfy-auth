@@ -3,7 +3,7 @@ import { IsEnum, IsNotEmpty, IsObject } from 'class-validator';
 import { IUser } from '../../users/user/interface/user.interface';
 import { LANGUAGE } from '@common/constants/common.enum';
 import { Transform } from 'class-transformer';
-import { enumTransform, objectTransform } from '@common/functions/tranform';
+import { enumTransform, objectTransform } from '@/src/common/functions/transform';
 
 export class LogoutDto {
   @Transform(({ key, value }) => objectTransform({ key, value }))

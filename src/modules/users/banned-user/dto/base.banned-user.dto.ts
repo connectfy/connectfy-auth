@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { dateTransform, stringTransform } from '@common/functions/tranform';
+import { dateTransform, stringTransform } from '@/src/common/functions/transform';
 
 export class BaseBannedUserDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

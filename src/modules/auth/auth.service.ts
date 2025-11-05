@@ -10,7 +10,10 @@ import {
 } from '@common/constants/exception.constants';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
 import { checkRecentlyDeletedConflict } from '@common/functions/check-unique';
-import { generateVerifyCode } from '@common/functions/generate-codes';
+import {
+  generateVerifyCode,
+  calculateEuclideanDistance,
+} from '@common/functions/function';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import {
   deleteAccountMessage,
@@ -42,6 +45,8 @@ import { LogoutDto } from './dto/logout.dto';
 import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 import { DeletionOrchestorRepository } from '../orchestrators/deletion-orchestrator/repo/deletion-orchestor.repo';
 import i18n from '@/src/i18n';
+import { FaceDescriptorDto } from './dto/face-descriptor.dto';
+import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
 
 @Injectable()
 export class AuthService {
@@ -215,6 +220,7 @@ export class AuthService {
   async login(data: LoginDto): Promise<{ access_token?: string }> {
     const { identifierType, identifier, password, _lang } = data;
 
+    let isValid: boolean = true;
     let user: IReturnedUser | null;
 
     switch (identifierType) {
@@ -226,6 +232,10 @@ export class AuthService {
         user = await this.userRepo.findOne({ username: identifier });
         break;
 
+      case IDENTIFIER_TYPE.FACE_DESCRIPTOR:
+        user = await this.userRepo.findOne({ username: identifier });
+        break;
+
       default:
         user = await this.userRepo.findOne({
           'phoneNumber.fullPhoneNumber': identifier,
@@ -233,23 +243,48 @@ export class AuthService {
         break;
     }
 
-    if (!user)
-      throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
-        HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
+    if (!user || user.provider !== PROVIDER.PASSWORD) isValid = false;
+
+    if (isValid && identifierType !== IDENTIFIER_TYPE.FACE_DESCRIPTOR) {
+      const isPasswordMatch = await compare(
+        password.toString(),
+        user?.password as string,
       );
 
-    if (user.provider !== PROVIDER.PASSWORD)
-      throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
-        HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
-      );
+      if (!isPasswordMatch) isValid = false;
+    } else if (isValid) {
+      if (!user?.faceDescriptor || !Array.isArray(password)) isValid = false;
+      else {
+        const decryptedDescriptor = decryptPayload(
+          user?.faceDescriptor,
+          this.config.get<string>('FACE_DESCRIPTOR_KEY')!,
+        );
 
-    const isPasswordMatch = await compare(password!, user.password as string);
+        // const descriptor: number[] = JSON.parse(decryptedDescriptor);
 
-    if (!isPasswordMatch)
+        // const storedDescriptor: number[] = Array.isArray(descriptor)
+        //   ? descriptor
+        //   : JSON.parse(descriptor);
+
+        const storedDescriptor: number[] = decryptedDescriptor
+          .split(',')
+          .map((num) => parseFloat(num.trim()));
+
+        if (storedDescriptor.length !== password.length) isValid = false;
+        else {
+          const distance = calculateEuclideanDistance(
+            password,
+            storedDescriptor,
+          );
+
+          const THRESOLD = 0.6;
+
+          if (distance > THRESOLD) isValid = false;
+        }
+      }
+    }
+
+    if (!isValid)
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(_lang),
         HttpStatus.CONFLICT,
@@ -257,7 +292,7 @@ export class AuthService {
       );
 
     const isUserBanned = await this.bannedUserRepo.findOne({
-      userId: user._id,
+      userId: user?._id,
     });
 
     if (isUserBanned)
@@ -272,12 +307,12 @@ export class AuthService {
 
     const { refresh_token, access_token } =
       await this.refreshTokenService.generateTokens({
-        _id: user._id as string,
+        _id: user?._id as string,
       });
 
     await this.refreshTokenService.saveTokens({
       refresh_token,
-      userId: user._id as string,
+      userId: user?._id as string,
     });
 
     return { access_token };
@@ -431,6 +466,41 @@ export class AuthService {
     });
 
     return { _id, access_token };
+  }
+
+  async updateFaceDescriptor(data: FaceDescriptorDto) {
+    const { faceDescriptor, _loggedUser, _lang } = data;
+
+    const user = await this.userRepo.findOne({ _id: _loggedUser._id });
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+      );
+
+    if (
+      (user.faceDescriptor && faceDescriptor) ||
+      (!user.faceDescriptor && !faceDescriptor)
+    )
+      throw new BaseException(
+        ExceptionMessages.CONFLICT_MESSAGE(_lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
+    const updatedFaceDescriptor = faceDescriptor
+      ? encryptPayload(
+          JSON.stringify(faceDescriptor),
+          this.config.get<string>('FACE_DESCRIPTOR_KEY')!,
+        )
+      : null;
+
+    await this.userRepo.update({
+      _id: user._id,
+      faceDescriptor: updatedFaceDescriptor,
+    });
   }
 
   async forgotPassword(

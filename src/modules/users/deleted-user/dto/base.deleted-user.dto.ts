@@ -11,7 +11,7 @@ import { Transform, Type } from 'class-transformer';
 import { LANGUAGE, ROLE } from '@common/constants/common.enum';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { enumTransform, objectTransform, stringTransform } from '@common/functions/tranform';
+import { enumTransform, objectTransform, stringTransform } from '@/src/common/functions/transform';
 
 export class BaseUserDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

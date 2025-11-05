@@ -11,6 +11,7 @@ import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 import { LANGUAGE } from '@common/constants/common.enum';
 import { BaseException } from '@common/exceptions/base.exception';
 import { ExceptionMessages, ExceptionTypes } from '@common/constants/exception.constants';
+import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 
 @Controller('')
 export class AuthController {
@@ -83,6 +84,7 @@ export class AuthController {
   }
 
   @MessagePattern('auth/refreshToken', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async refreshToken(@Payload() { refresh_token, _lang }: { refresh_token: string, _lang: LANGUAGE }) {
     if (!refresh_token) 
       throw new BaseException(
@@ -92,5 +94,11 @@ export class AuthController {
       );
 
     return await this.service.refreshToken(refresh_token, _lang);
+  }
+
+  @MessagePattern('auth/faceDescriptor', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async faceDescriptor(@Payload() data: FaceDescriptorDto) {
+    return await this.service.updateFaceDescriptor(data);
   }
 }

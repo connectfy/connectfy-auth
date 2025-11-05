@@ -1,4 +1,4 @@
-import { enumTransform, stringTransform } from '@common/functions/tranform';
+import { enumTransform, stringTransform } from '@/src/common/functions/transform';
 import {
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
   LANGUAGE,

@@ -1,4 +1,4 @@
-import { arrayTransform, enumTransform } from '@common/functions/tranform';
+import { arrayTransform, enumTransform } from '@/src/common/functions/transform';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import {

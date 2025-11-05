@@ -8,7 +8,7 @@ import {
 import { Transform } from 'class-transformer';
 import { BaseDeletionOrchestorDto } from './base.deletion-orchestor.dto ';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { stringTransform } from '@common/functions/tranform';
+import { stringTransform } from '@/src/common/functions/transform';
 
 export class AddDeletionOrchestorDto extends BaseDeletionOrchestorDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

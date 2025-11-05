@@ -13,7 +13,7 @@ import {
   enumTransform,
   objectTransform,
   stringTransform,
-} from '@common/functions/tranform';
+} from '@/src/common/functions/transform';
 
 export class BaseUserDto {
   // @IsEnum(ROLE, { message: ValidationMessages.ENUM('role', Object.keys(ROLE)) })

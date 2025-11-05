@@ -2,7 +2,7 @@ import {
   dateTransform,
   enumTransform,
   stringTransform,
-} from '@common/functions/tranform';
+} from '@/src/common/functions/transform';
 import { TOKEN_TYPE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
