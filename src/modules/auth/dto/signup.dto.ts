@@ -56,10 +56,9 @@ export class SignupDto {
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   @MinLength(8, { message: ValidationMessages.MIN('password', 8) })
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>'№_;:/-])[A-Za-z\d@$!%*?&]{8,15}$/,
-    { message: ValidationMessages.PASSWORD() },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,15}$/, {
+    message: ValidationMessages.PASSWORD(),
+  })
   password: string;
 
   @Transform(({ key, value }) =>
@@ -109,7 +108,9 @@ export class GoogleAuthSignupDto {
   // @IsNotEmpty({ message: ValidationMessages.STRING("phoneNumber") })
   // phoneNumber: PhoneNumberDto;
 
-  @Transform(({ key, value }) => enumTransform({ key, value, enumObject: GENDER }))
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: GENDER }),
+  )
   @IsEnum(GENDER, {
     message: ValidationMessages.ENUM('gender', Object.keys(GENDER)),
   })
@@ -121,7 +122,9 @@ export class GoogleAuthSignupDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
   birthdayDate: Date;
 
-  @Transform(({ key, value }) => enumTransform({ key, value, enumObject: LANGUAGE }))
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: LANGUAGE }),
+  )
   @IsEnum(LANGUAGE, {
     message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
   })
