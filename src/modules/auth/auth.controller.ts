@@ -1,5 +1,10 @@
 import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
-import { Controller, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  HttpStatus,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { VerifySignupDto } from './dto/verify.dto';
@@ -10,8 +15,12 @@ import { LogoutDto } from './dto/logout.dto';
 import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
 import { LANGUAGE } from '@common/constants/common.enum';
 import { BaseException } from '@common/exceptions/base.exception';
-import { ExceptionMessages, ExceptionTypes } from '@common/constants/exception.constants';
+import {
+  ExceptionMessages,
+  ExceptionTypes,
+} from '@common/constants/exception.constants';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
+import { ValidateTokenDto } from './dto/validate-token.dto';
 
 @Controller('')
 export class AuthController {
@@ -59,6 +68,12 @@ export class AuthController {
     return await this.service.resetPassword(data);
   }
 
+  @MessagePattern('auth/is-valid-token', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async isTokenValid(@Payload() data: ValidateTokenDto) {
+    return await this.service.isTokenValid(data);
+  }
+
   @MessagePattern('auth/logout', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async logout(@Payload() data: LogoutDto) {
@@ -67,7 +82,10 @@ export class AuthController {
 
   @MessagePattern('auth/refresh-token/verify-token', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async verifyAuthToken(@Payload() { access_token, _lang }: { access_token: string, _lang: LANGUAGE }) {
+  async verifyAuthToken(
+    @Payload()
+    { access_token, _lang }: { access_token: string; _lang: LANGUAGE },
+  ) {
     return await this.service.verifyAuthToken(access_token, _lang);
   }
 
@@ -85,8 +103,11 @@ export class AuthController {
 
   @MessagePattern('auth/refreshToken', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async refreshToken(@Payload() { refresh_token, _lang }: { refresh_token: string, _lang: LANGUAGE }) {
-    if (!refresh_token) 
+  async refreshToken(
+    @Payload()
+    { refresh_token, _lang }: { refresh_token: string; _lang: LANGUAGE },
+  ) {
+    if (!refresh_token)
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,

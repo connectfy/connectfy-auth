@@ -46,7 +46,7 @@ export const forgotPasswordMessage = (
   resetToken: string,
   lang: LANGUAGE = LANGUAGE.EN,
 ) => {
-  const resetUrl = `http://localhost:4800/auth?type=reset&token=${resetToken}`;
+  const resetUrl = `http://localhost:4800/auth/reset-password?token=${resetToken}`;
 
   const team = i18n.t('email_messages.forgot_password.team', { lng: lang });
   const intro = i18n.t('email_messages.forgot_password.intro', { lng: lang });
@@ -178,7 +178,7 @@ export const deleteAccountMessage = (
   deleteToken: string,
   lang: LANGUAGE = LANGUAGE.EN,
 ) => {
-  const deleteUrl = `http://localhost:4800/auth?type=delete&token=${deleteToken}`;
+  const deleteUrl = `http://localhost:4800/auth/delete-account?token=${deleteToken}`;
 
   const team = i18n.t('email_messages.delete_account.team', { lng: lang });
   const intro = i18n.t('email_messages.delete_account.intro', { lng: lang });

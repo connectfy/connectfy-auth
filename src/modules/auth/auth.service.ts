@@ -47,6 +47,7 @@ import { DeletionOrchestorRepository } from '../orchestrators/deletion-orchestra
 import i18n from '@/src/i18n';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
+import { ValidateTokenDto } from './dto/validate-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -565,18 +566,21 @@ export class AuthService {
     return { statusCode: 200, email };
   }
 
-  async isTokenValid(data: string): Promise<boolean> {
-    const token = await this.tokenService.findToken({ query: { token: data } });
-    if (!token) return false;
+  async isTokenValid(data: ValidateTokenDto): Promise<boolean> {
+    const { token, type } = data;
+    const res = await this.tokenService.findToken({
+      query: { $and: [{ token }, { type }] },
+    });
+    if (!res) return false;
 
     const expiresAt =
-      token.expiresAt instanceof Date
-        ? token.expiresAt
-        : new Date(token.expiresAt);
+      res.expiresAt instanceof Date
+        ? res.expiresAt
+        : new Date(res.expiresAt);
     const now = new Date();
 
     if (now >= expiresAt) return false;
-    if (token.isUsed) return false;
+    if (res.isUsed) return false;
 
     return true;
   }

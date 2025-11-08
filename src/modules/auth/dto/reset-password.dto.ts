@@ -16,10 +16,9 @@ export class ResetPasswordDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>'№_;:/-])[A-Za-z\d@$!%*?&]{8,15}$/,
-    { message: ValidationMessages.PASSWORD() },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,15}$/, {
+    message: ValidationMessages.PASSWORD(),
+  })
   password: string;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
