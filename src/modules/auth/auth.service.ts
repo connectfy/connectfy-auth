@@ -32,6 +32,7 @@ import {
   LANGUAGE,
   NOTIFICATION_CONTENT_MODE,
   NOTIFICATION_SOUND_MODE,
+  PRIVACY_SETTINGS_CHOICE,
   PROVIDER,
   STARTUP_PAGE,
   TIME_FORMAT,
@@ -209,6 +210,16 @@ export class AuthService {
       this.accountServiceTcp.send('privacy-settings/create', {
         userId: _id,
         _lang,
+        email: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        bio: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        gender: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        location: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        socialLinks: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        lastSeen: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        avatar: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        friendshipRequest: true,
       }),
     );
 
@@ -494,6 +505,16 @@ export class AuthService {
       this.accountServiceTcp.send('privacy-settings/create', {
         userId: _id,
         _lang,
+        email: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        bio: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        gender: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        location: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        socialLinks: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        lastSeen: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        avatar: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        friendshipRequest: true,
       }),
     );
 
