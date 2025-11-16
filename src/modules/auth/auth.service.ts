@@ -25,11 +25,16 @@ import {
 import { VerifySignupDto } from './dto/verify.dto';
 import { genSalt, hash, compare } from 'bcrypt';
 import {
+  DATE_FORMAT,
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
   GENDER,
   IDENTIFIER_TYPE,
   LANGUAGE,
+  NOTIFICATION_CONTENT_MODE,
+  NOTIFICATION_SOUND_MODE,
   PROVIDER,
+  STARTUP_PAGE,
+  TIME_FORMAT,
   TOKEN_TYPE,
 } from '@common/constants/common.enum';
 import { lastValueFrom } from 'rxjs';
@@ -176,7 +181,7 @@ export class AuthService {
       );
 
     const { password, ...otherDatas } = unverifiedUser;
-    const { firstName, lastName, birthdayDate, gender, ...authDatas } =
+    const { firstName, lastName, birthdayDate, gender, theme, ...authDatas } =
       otherDatas;
 
     const hashedPassword = await this.hashPassword(password);
@@ -204,6 +209,40 @@ export class AuthService {
       this.accountServiceTcp.send('privacy-settings/create', {
         userId: _id,
         _lang,
+      }),
+    );
+
+    await lastValueFrom(
+      this.accountServiceTcp.send('general-settings/create', {
+        userId: _id,
+        _lang,
+        theme,
+        language: _lang,
+        startupPage: STARTUP_PAGE.MESSENGER,
+        timeZone: {
+          timeFormat: TIME_FORMAT.H24,
+          dateFormat: DATE_FORMAT.DDMMYYYY,
+        },
+      }),
+    );
+
+    await lastValueFrom(
+      this.accountServiceTcp.send('notification-settings/create', {
+        userId: _id,
+        _lang,
+        notificationSoundMode: NOTIFICATION_SOUND_MODE.SOUND,
+        notificationContentMode: NOTIFICATION_CONTENT_MODE.HEADER_AND_CONTENT,
+        sendMessageSound: true,
+        receiveMessageSound: true,
+        notificationSound: true,
+        privateMessageSound: true,
+        groupMessageSound: true,
+        systemNotificationSound: true,
+        friendshipNotificationSound: true,
+        showPrivateMessageNotification: true,
+        showGroupMessageNotification: true,
+        showFriendshipNotification: true,
+        showSystemNotification: true,
       }),
     );
 
@@ -386,7 +425,7 @@ export class AuthService {
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string }> {
-    const { idToken, username, gender, _lang } = data;
+    const { idToken, username, gender, theme, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -455,6 +494,40 @@ export class AuthService {
       this.accountServiceTcp.send('privacy-settings/create', {
         userId: _id,
         _lang,
+      }),
+    );
+
+    await lastValueFrom(
+      this.accountServiceTcp.send('general-settings/create', {
+        userId: _id,
+        _lang,
+        theme,
+        language: _lang,
+        startupPage: STARTUP_PAGE.MESSENGER,
+        timeZone: {
+          timeFormat: TIME_FORMAT.H24,
+          dateFormat: DATE_FORMAT.DDMMYYYY,
+        },
+      }),
+    );
+
+    await lastValueFrom(
+      this.accountServiceTcp.send('notification-settings/create', {
+        userId: _id,
+        _lang,
+        notificationSoundMode: NOTIFICATION_SOUND_MODE.SOUND,
+        notificationContentMode: NOTIFICATION_CONTENT_MODE.HEADER_AND_CONTENT,
+        sendMessageSound: true,
+        receiveMessageSound: true,
+        notificationSound: true,
+        privateMessageSound: true,
+        groupMessageSound: true,
+        systemNotificationSound: true,
+        friendshipNotificationSound: true,
+        showPrivateMessageNotification: true,
+        showGroupMessageNotification: true,
+        showFriendshipNotification: true,
+        showSystemNotification: true,
       }),
     );
 
@@ -574,9 +647,7 @@ export class AuthService {
     if (!res) return false;
 
     const expiresAt =
-      res.expiresAt instanceof Date
-        ? res.expiresAt
-        : new Date(res.expiresAt);
+      res.expiresAt instanceof Date ? res.expiresAt : new Date(res.expiresAt);
     const now = new Date();
 
     if (now >= expiresAt) return false;

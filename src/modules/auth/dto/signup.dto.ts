@@ -1,4 +1,4 @@
-import { GENDER, LANGUAGE } from '@common/constants/common.enum';
+import { GENDER, LANGUAGE, THEME } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -83,6 +83,15 @@ export class SignupDto {
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
+
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: THEME }),
+  )
+  @IsEnum(THEME, {
+    message: ValidationMessages.ENUM('theme', Object.values(THEME)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('theme') })
+  theme: THEME;
 }
 
 export class GoogleAuthSignupDto {
@@ -130,4 +139,13 @@ export class GoogleAuthSignupDto {
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
+
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: THEME }),
+  )
+  @IsEnum(THEME, {
+    message: ValidationMessages.ENUM('theme', Object.values(THEME)),
+  })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('theme') })
+  theme: THEME;
 }

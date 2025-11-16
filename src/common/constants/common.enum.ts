@@ -26,7 +26,7 @@ export enum IDENTIFIER_TYPE {
   USERNAME = 'USERNAME',
   EMAIL = 'EMAIL',
   PHONE_NUMBER = 'PHONE_NUMBER',
-  FACE_DESCRIPTOR = 'FACE_DESCRIPTOR'
+  FACE_DESCRIPTOR = 'FACE_DESCRIPTOR',
 }
 
 export enum GOOGLE_AUTH_LOGIN_TYPE {
@@ -44,4 +44,40 @@ export enum LANGUAGE {
   AZ = 'az',
   RU = 'ru',
   TR = 'tr',
+}
+
+export enum THEME {
+  DARK = 'dark',
+  LIGHT = 'light',
+}
+
+export enum STARTUP_PAGE {
+  MESSENGER = 'MESSENGER',
+  GROUPS = 'GROUPS',
+  CHANNELS = 'CHANNELS',
+  USERS = 'USERS',
+  NOTIFICATION = 'NOTIFICATION',
+  PROFILE = 'PROFILE',
+}
+
+export enum TIME_FORMAT {
+  H24 = '24h',
+  H12 = '12h',
+}
+
+export enum DATE_FORMAT {
+  DDMMYYYY = 'DD/MM/YYYY',
+  MMDDYYYY = 'MM/DD/YYYY',
+}
+
+export enum NOTIFICATION_SOUND_MODE {
+  SOUND = 'SOUND',
+  SLIENT = 'SLIENT',
+  DND = 'DND',
+}
+
+export enum NOTIFICATION_CONTENT_MODE {
+  HEADER_AND_CONTENT = 'HEADER_AND_CONTENT',
+  HEADER_ONLY = 'HEADER_ONLY',
+  HIDE_NOTIFICATION = 'HIDE_NOTIFICATION',
 }
