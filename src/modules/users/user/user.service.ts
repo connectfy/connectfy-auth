@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from './repo/user.repo';
 import { AddUserDto } from './dto/add.user.dto';
 import { IReturnedUser } from './interface/user.interface';
@@ -9,10 +9,60 @@ import {
   ExceptionMessages,
   ExceptionTypes,
 } from '@common/constants/exception.constants';
+import { FindUserDto } from './dto/find.user.dto';
+import { lastValueFrom } from 'rxjs';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly repo: UserRepository) {}
+  constructor(
+    private readonly repo: UserRepository,
+
+    @Inject('ACCOUNT_SERVICE_TCP')
+    private readonly accountServiceTcp: ClientProxy,
+  ) {}
+
+  async me(data: FindUserDto) {
+    const { _lang, _loggedUser } = data;
+    const { _id } = _loggedUser;
+
+    const res = await this.repo.findOne({
+      query: { _id },
+      fields: '-password -faceDescriptor',
+    });
+
+    if (!res)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+      );
+
+    const generalSettings = await lastValueFrom(
+      this.accountServiceTcp.send('general-settings/findOne', {
+        query: { userId: _id },
+      }),
+    );
+    const notificationSettings = await lastValueFrom(
+      this.accountServiceTcp.send('notification-settings/findOne', {
+        query: { userId: _id },
+      }),
+    );
+    const privacySettings = await lastValueFrom(
+      this.accountServiceTcp.send('privacy-settings/findOne', {
+        query: { userId: _id },
+      }),
+    );
+
+    return {
+      user: res,
+      settings: {
+        generalSettings,
+        notificationSettings,
+        privacySettings,
+      },
+    };
+  }
 
   async create(data: AddUserDto): Promise<IReturnedUser> {
     const res = await this.repo.create(data);
@@ -23,7 +73,7 @@ export class UserService {
   async edit(data: EditUserDto): Promise<IReturnedUser> {
     const { _id, _lang } = data;
 
-    const foundData = await this.repo.findOne({ _id });
+    const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
@@ -40,7 +90,7 @@ export class UserService {
   async remove(data: RemoveUserDto): Promise<IReturnedUser> {
     const { _id, _lang } = data;
 
-    const foundData = await this.repo.findOne({ _id });
+    const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
@@ -55,7 +105,7 @@ export class UserService {
   }
 
   async findOne(query: Record<string, any>): Promise<IReturnedUser | null> {
-    const res = await this.repo.findOne(query);
+    const res = await this.repo.findOne({ query });
     return res;
   }
 

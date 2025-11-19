@@ -4,7 +4,8 @@ import { UserDocument } from '../entity/user.entity';
 import { AddUserDto } from '../dto/add.user.dto';
 import { EditUserDto } from '../dto/edit.user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Query } from 'mongoose';
+import { FindUserDto } from '../dto/find.user.dto';
 
 @Injectable()
 export class UserRepository extends BaseRepository<
@@ -38,12 +39,57 @@ export class UserRepository extends BaseRepository<
     return await this.model.findByIdAndDelete(id).exec();
   }
 
-  async findOne(query: Record<string, any>): Promise<UserDocument | null> {
-    return await this.model.findOne(query).exec();
+  async findOne(data: FindUserDto): Promise<UserDocument | null> {
+    const { query = {}, fields, populate } = data;
+
+    let queryBuilder: Query<UserDocument | null, UserDocument> =
+      this.model.findOne(query);
+
+    if (fields) {
+      queryBuilder = queryBuilder.select(fields as any);
+    }
+
+    if (populate) {
+      queryBuilder = queryBuilder.populate(populate as any);
+    }
+
+    return queryBuilder.exec();
   }
 
-  async findMany(query: Record<string, any>): Promise<UserDocument[]> {
-    return await this.model.find(query).exec();
+  async findMany(data: {
+    query: Record<string, any>;
+    fields?: string;
+    populate?: any | any[];
+    sort?: Record<string, any>;
+    limit?: number;
+    skip?: number;
+  }): Promise<UserDocument[]> {
+    const { query, fields, populate, sort, limit, skip } = data;
+
+    let queryBuilder: Query<UserDocument[], UserDocument> =
+      this.model.find(query);
+
+    if (fields) {
+      queryBuilder = queryBuilder.select(fields);
+    }
+
+    if (populate) {
+      queryBuilder = queryBuilder.populate(populate);
+    }
+
+    if (sort) {
+      queryBuilder = queryBuilder.sort(sort);
+    }
+
+    if (skip) {
+      queryBuilder = queryBuilder.skip(skip);
+    }
+
+    if (limit) {
+      queryBuilder = queryBuilder.limit(limit);
+    }
+
+    return await queryBuilder.exec();
   }
 
   async count(query: Record<string, any>): Promise<number> {

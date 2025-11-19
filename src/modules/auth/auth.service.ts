@@ -132,7 +132,9 @@ export class AuthService {
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
     const { firstName, lastName, email, username, _lang } = data;
 
-    const userWithUsername = await this.userRepo.findOne({ username });
+    const userWithUsername = await this.userRepo.findOne({
+      query: { username },
+    });
     const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
       username,
     });
@@ -144,7 +146,7 @@ export class AuthService {
       _lang,
     });
 
-    const userWithEmail = await this.userRepo.findOne({ email });
+    const userWithEmail = await this.userRepo.findOne({ query: { email } });
     const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
       email,
     });
@@ -171,7 +173,7 @@ export class AuthService {
 
   async verifySignup(
     data: VerifySignupDto,
-  ): Promise<{ _id: string; access_token?: string }> {
+  ): Promise<{ _id: string; access_token?: string, refresh_token: string }> {
     const { code, verifyCode, unverifiedUser, _lang } = data;
 
     if (verifyCode !== code)
@@ -265,10 +267,10 @@ export class AuthService {
       userId: _id,
     });
 
-    return { _id, access_token };
+    return { _id, access_token, refresh_token};
   }
 
-  async login(data: LoginDto): Promise<{ access_token?: string }> {
+  async login(data: LoginDto): Promise<{ access_token?: string, refresh_token: string }> {
     const { identifierType, identifier, password, _lang } = data;
 
     let isValid: boolean = true;
@@ -276,20 +278,20 @@ export class AuthService {
 
     switch (identifierType) {
       case IDENTIFIER_TYPE.EMAIL:
-        user = await this.userRepo.findOne({ email: identifier });
+        user = await this.userRepo.findOne({ query: { email: identifier } });
         break;
 
       case IDENTIFIER_TYPE.USERNAME:
-        user = await this.userRepo.findOne({ username: identifier });
+        user = await this.userRepo.findOne({ query: { username: identifier } });
         break;
 
       case IDENTIFIER_TYPE.FACE_DESCRIPTOR:
-        user = await this.userRepo.findOne({ username: identifier });
+        user = await this.userRepo.findOne({ query: { username: identifier } });
         break;
 
       default:
         user = await this.userRepo.findOne({
-          'phoneNumber.fullPhoneNumber': identifier,
+          query: { 'phoneNumber.fullPhoneNumber': identifier },
         });
         break;
     }
@@ -366,12 +368,12 @@ export class AuthService {
       userId: user?._id as string,
     });
 
-    return { access_token };
+    return { access_token, refresh_token };
   }
 
   async googleLogin(
     data: GoogleAuthloginDto,
-  ): Promise<{ access_token?: string }> {
+  ): Promise<{ access_token?: string, refresh_token: string }> {
     const { idToken, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
@@ -390,7 +392,7 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
-    const user = await this.userRepo.findOne({ email });
+    const user = await this.userRepo.findOne({ query: { email } });
 
     if (!user)
       throw new BaseException(
@@ -430,12 +432,12 @@ export class AuthService {
       userId: user._id,
     });
 
-    return { access_token };
+    return { access_token, refresh_token };
   }
 
   async googleSignup(
     data: GoogleAuthSignupDto,
-  ): Promise<{ _id: string; access_token?: string }> {
+  ): Promise<{ _id: string; access_token?: string, refresh_token: string }> {
     const { idToken, username, gender, theme, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
@@ -457,7 +459,7 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
-    const userWithEmail = await this.userRepo.findOne({ email });
+    const userWithEmail = await this.userRepo.findOne({ query: { email } });
     const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
       email,
     });
@@ -469,7 +471,9 @@ export class AuthService {
       _lang,
     });
 
-    const userWithUsername = await this.userRepo.findOne({ username });
+    const userWithUsername = await this.userRepo.findOne({
+      query: { username },
+    });
     const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
       username,
     });
@@ -560,13 +564,15 @@ export class AuthService {
       userId: _id as string,
     });
 
-    return { _id, access_token };
+    return { _id, access_token, refresh_token };
   }
 
   async updateFaceDescriptor(data: FaceDescriptorDto) {
     const { faceDescriptor, _loggedUser, _lang } = data;
 
-    const user = await this.userRepo.findOne({ _id: _loggedUser._id });
+    const user = await this.userRepo.findOne({
+      query: { _id: _loggedUser._id },
+    });
 
     if (!user)
       throw new BaseException(
@@ -606,8 +612,8 @@ export class AuthService {
     const isEmail = identifierType === FORGOT_PASSWORD_IDENTIFIER_TYPE.EMAIL;
     const user = await this.userRepo.findOne(
       isEmail
-        ? { email: identifier }
-        : { 'phoneNumber.fullPhoneNumber': identifier },
+        ? { query: { email: identifier } }
+        : { query: { 'phoneNumber.fullPhoneNumber': identifier } },
     );
 
     if (!user) {
@@ -746,7 +752,7 @@ export class AuthService {
           ExceptionTypes.UNAUTHORIZED,
         );
 
-      const user = await this.userRepo.findOne({ _id: payload._id });
+      const user = await this.userRepo.findOne({ query: { _id: payload._id } });
 
       if (!user)
         throw new BaseException(
@@ -822,7 +828,7 @@ export class AuthService {
       );
     }
 
-    const user = await this.userRepo.findOne({ _id });
+    const user = await this.userRepo.findOne({ query: { _id } });
 
     if (!user)
       throw new BaseException(
@@ -894,7 +900,9 @@ export class AuthService {
       false,
     );
 
-    const user = await this.userRepo.findOne({ _id: payload.user_id });
+    const user = await this.userRepo.findOne({
+      query: { _id: payload.user_id },
+    });
 
     if (!user)
       throw new BaseException(
