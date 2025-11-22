@@ -901,7 +901,7 @@ export class AuthService {
     );
 
     const user = await this.userRepo.findOne({
-      query: { _id: payload.user_id },
+      query: { _id: payload._id },
     });
 
     if (!user)
@@ -913,7 +913,7 @@ export class AuthService {
 
     let { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({
-        userId: user._id,
+        _id: user._id,
       });
 
     await this.refreshTokenService.saveTokens({
