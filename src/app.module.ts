@@ -5,6 +5,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TokensModule } from './modules/tokens/tokens.module';
 import { OrchestratorsModule } from './modules/orchestrators/orchestrators.module';
+import { ClsInterceptor, ClsModule } from 'nestjs-cls';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
 
 @Module({
   imports: [
@@ -19,10 +22,18 @@ import { OrchestratorsModule } from './modules/orchestrators/orchestrators.modul
         dbName: 'authDb',
       }),
     }),
+    ClsModule.forRoot({
+      global: true,
+      interceptor: { mount: false },
+    }),
     AuthModule,
     UsersModule,
     TokensModule,
     OrchestratorsModule,
+  ],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: ClsInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: LoggedUserInterceptor },
   ],
 })
 export class AppModule {}

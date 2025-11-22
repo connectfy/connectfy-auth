@@ -12,6 +12,8 @@ import {
 import { FindUserDto } from './dto/find.user.dto';
 import { lastValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
+import { ClsService } from 'nestjs-cls';
+import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 
 @Injectable()
 export class UserService {
@@ -20,11 +22,14 @@ export class UserService {
 
     @Inject('ACCOUNT_SERVICE_TCP')
     private readonly accountServiceTcp: ClientProxy,
+
+    private readonly cls: ClsService,
   ) {}
 
-  async me(data: FindUserDto) {
-    const { _lang, _loggedUser } = data;
-    const { _id } = _loggedUser;
+  async me() {
+    const { user, settings } = this.cls.get<ILoggedUser>('user');
+    const { _id } = user;
+    const { language: _lang } = settings.generalSettings;
 
     const res = await this.repo.findOne({
       query: { _id },

@@ -47,13 +47,14 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import * as crypto from 'crypto';
 import { TokenService } from '../tokens/token/token.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { LogoutDto } from './dto/logout.dto';
-import { DeleteAccountDto, RemoveAccountDto } from './dto/delete-account.dto';
+import { RemoveAccountDto } from './dto/delete-account.dto';
 import { DeletionOrchestorRepository } from '../orchestrators/deletion-orchestrator/repo/deletion-orchestor.repo';
 import i18n from '@/src/i18n';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
+import { ClsService } from 'nestjs-cls';
+import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 
 @Injectable()
 export class AuthService {
@@ -72,6 +73,7 @@ export class AuthService {
     @Inject('RELATIONSHIP_SERVICE_KAFKA')
     private readonly relationshipServiceKafka: ClientKafka,
 
+    private cls: ClsService,
     private readonly config: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly bannedUserRepo: BannedUserRepository,
@@ -173,7 +175,7 @@ export class AuthService {
 
   async verifySignup(
     data: VerifySignupDto,
-  ): Promise<{ _id: string; access_token?: string, refresh_token: string }> {
+  ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
     const { code, verifyCode, unverifiedUser, _lang } = data;
 
     if (verifyCode !== code)
@@ -267,10 +269,12 @@ export class AuthService {
       userId: _id,
     });
 
-    return { _id, access_token, refresh_token};
+    return { _id, access_token, refresh_token };
   }
 
-  async login(data: LoginDto): Promise<{ access_token?: string, refresh_token: string }> {
+  async login(
+    data: LoginDto,
+  ): Promise<{ access_token?: string; refresh_token: string }> {
     const { identifierType, identifier, password, _lang } = data;
 
     let isValid: boolean = true;
@@ -373,7 +377,7 @@ export class AuthService {
 
   async googleLogin(
     data: GoogleAuthloginDto,
-  ): Promise<{ access_token?: string, refresh_token: string }> {
+  ): Promise<{ access_token?: string; refresh_token: string }> {
     const { idToken, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
@@ -437,7 +441,7 @@ export class AuthService {
 
   async googleSignup(
     data: GoogleAuthSignupDto,
-  ): Promise<{ _id: string; access_token?: string, refresh_token: string }> {
+  ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
     const { idToken, username, gender, theme, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
@@ -732,11 +736,10 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
-  async logout(data: LogoutDto): Promise<{ statusCode: 200 }> {
-    const { _loggedUser } = data;
-    const { _id } = _loggedUser;
+  async logout(): Promise<{ statusCode: 200 }> {
+    const { user } = this.cls.get<ILoggedUser>('user');
 
-    await this.refreshTokenService.removeTokenByUserId(_id);
+    await this.refreshTokenService.removeTokenByUserId(user._id);
 
     return { statusCode: 200 };
   }
@@ -765,7 +768,32 @@ export class AuthService {
 
       const { password, ...safeUser } = userObj;
 
-      return { status: 200, user: safeUser };
+      const generalSettings = await lastValueFrom(
+        this.accountServiceTcp.send('general-settings/findOne', {
+          query: { userId: safeUser._id },
+        }),
+      );
+      const notificationSettings = await lastValueFrom(
+        this.accountServiceTcp.send('notification-settings/findOne', {
+          query: { userId: safeUser._id },
+        }),
+      );
+      const privacySettings = await lastValueFrom(
+        this.accountServiceTcp.send('privacy-settings/findOne', {
+          query: { userId: safeUser._id },
+        }),
+      );
+
+      const result = {
+        user: safeUser,
+        settings: {
+          generalSettings,
+          notificationSettings,
+          privacySettings,
+        },
+      };
+
+      return { status: 200, user: result };
     } catch (error) {
       throw new BaseException(
         ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
@@ -775,9 +803,10 @@ export class AuthService {
     }
   }
 
-  async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
-    const { _loggedUser, _lang } = data;
-    const { _id, email } = _loggedUser;
+  async deleteAccount(): Promise<{ statusCode: 200 }> {
+    const { user, settings } = this.cls.get<ILoggedUser>('user');
+    const { _id, email } = user;
+    const { language: _lang } = settings.generalSettings;  
 
     const token = crypto.randomBytes(64).toString('hex');
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
@@ -799,8 +828,10 @@ export class AuthService {
   }
 
   async removeAccount(data: RemoveAccountDto): Promise<{ statusCode: 200 }> {
-    const { token, _loggedUser, _lang } = data;
+    const { token } = data;
+    const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
     const { _id } = _loggedUser;
+    const { language: _lang } = settings.generalSettings;  
 
     const deleteToken = await this.tokenService.findToken({
       query: {
