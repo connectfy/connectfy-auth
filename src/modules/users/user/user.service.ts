@@ -9,11 +9,10 @@ import {
   ExceptionMessages,
   ExceptionTypes,
 } from '@common/constants/exception.constants';
-import { FindUserDto } from './dto/find.user.dto';
-import { lastValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
+import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
 
 @Injectable()
 export class UserService {
@@ -43,21 +42,23 @@ export class UserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const generalSettings = await lastValueFrom(
-      this.accountServiceTcp.send('general-settings/findOne', {
-        query: { userId: _id },
-      }),
-    );
-    const notificationSettings = await lastValueFrom(
-      this.accountServiceTcp.send('notification-settings/findOne', {
-        query: { userId: _id },
-      }),
-    );
-    const privacySettings = await lastValueFrom(
-      this.accountServiceTcp.send('privacy-settings/findOne', {
-        query: { userId: _id },
-      }),
-    );
+    const generalSettings = await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'general-settings/findOne',
+      payload: { query: { userId: _id } },
+    });
+
+    const notificationSettings = await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'notification-settings/findOne',
+      payload: { query: { userId: _id } },
+    });
+
+    const privacySettings = await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'privacy-settings/findOne',
+      payload: { query: { userId: _id } },
+    });
 
     return {
       user: res,

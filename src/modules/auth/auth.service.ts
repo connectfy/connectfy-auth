@@ -38,7 +38,6 @@ import {
   TIME_FORMAT,
   TOKEN_TYPE,
 } from '@common/constants/common.enum';
-import { lastValueFrom } from 'rxjs';
 import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
@@ -55,6 +54,7 @@ import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
+import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
 
 @Injectable()
 export class AuthService {
@@ -199,19 +199,23 @@ export class AuthService {
 
     const avatar = this.setAvatar(gender, username);
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('account/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'account/create',
+      payload: {
         userId: _id,
         firstName,
         lastName,
         gender,
         avatar,
         _lang,
-      }),
-    );
+      },
+    });
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('privacy-settings/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'privacy-settings/create',
+      payload: {
         userId: _id,
         _lang,
         email: PRIVACY_SETTINGS_CHOICE.EVERYONE,
@@ -224,11 +228,13 @@ export class AuthService {
         messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         friendshipRequest: true,
-      }),
-    );
+      },
+    });
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('general-settings/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'general-settings/create',
+      payload: {
         userId: _id,
         _lang,
         theme,
@@ -238,11 +244,13 @@ export class AuthService {
           timeFormat: TIME_FORMAT.H24,
           dateFormat: DATE_FORMAT.DDMMYYYY,
         },
-      }),
-    );
+      },
+    });
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('notification-settings/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'notification-settings/create',
+      payload: {
         userId: _id,
         _lang,
         notificationSoundMode: NOTIFICATION_SOUND_MODE.SOUND,
@@ -258,8 +266,8 @@ export class AuthService {
         showGroupMessageNotification: true,
         showFriendshipNotification: true,
         showSystemNotification: true,
-      }),
-    );
+      },
+    });
 
     const { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({ _id });
@@ -498,19 +506,23 @@ export class AuthService {
 
     if (!avatar) avatar = this.setAvatar(gender, username);
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('account/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'account/create',
+      payload: {
         userId: _id,
         firstName,
         lastName,
         gender,
         avatar,
         _lang,
-      }),
-    );
+      },
+    });
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('privacy-settings/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'privacy-settings/create',
+      payload: {
         userId: _id,
         _lang,
         email: PRIVACY_SETTINGS_CHOICE.EVERYONE,
@@ -523,11 +535,13 @@ export class AuthService {
         messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         friendshipRequest: true,
-      }),
-    );
+      },
+    });
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('general-settings/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'general-settings/create',
+      payload: {
         userId: _id,
         _lang,
         theme,
@@ -537,11 +551,13 @@ export class AuthService {
           timeFormat: TIME_FORMAT.H24,
           dateFormat: DATE_FORMAT.DDMMYYYY,
         },
-      }),
-    );
+      },
+    });
 
-    await lastValueFrom(
-      this.accountServiceTcp.send('notification-settings/create', {
+    await sendWithContext({
+      client: this.accountServiceTcp,
+      endpoint: 'notification-settings/create',
+      payload: {
         userId: _id,
         _lang,
         notificationSoundMode: NOTIFICATION_SOUND_MODE.SOUND,
@@ -557,8 +573,8 @@ export class AuthService {
         showGroupMessageNotification: true,
         showFriendshipNotification: true,
         showSystemNotification: true,
-      }),
-    );
+      },
+    });
 
     const { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({ _id });
@@ -768,21 +784,23 @@ export class AuthService {
 
       const { password, ...safeUser } = userObj;
 
-      const generalSettings = await lastValueFrom(
-        this.accountServiceTcp.send('general-settings/findOne', {
-          query: { userId: safeUser._id },
-        }),
-      );
-      const notificationSettings = await lastValueFrom(
-        this.accountServiceTcp.send('notification-settings/findOne', {
-          query: { userId: safeUser._id },
-        }),
-      );
-      const privacySettings = await lastValueFrom(
-        this.accountServiceTcp.send('privacy-settings/findOne', {
-          query: { userId: safeUser._id },
-        }),
-      );
+      const generalSettings = await sendWithContext({
+        client: this.accountServiceTcp,
+        endpoint: 'general-settings/findOne',
+        payload: { query: { userId: safeUser._id } },
+      });
+
+      const notificationSettings = await sendWithContext({
+        client: this.accountServiceTcp,
+        endpoint: 'notification-settings/findOne',
+        payload: { query: { userId: safeUser._id } },
+      });
+
+      const privacySettings = await sendWithContext({
+        client: this.accountServiceTcp,
+        endpoint: 'privacy-settings/findOne',
+        payload: { query: { userId: safeUser._id } },
+      });
 
       const result = {
         user: safeUser,
@@ -806,7 +824,7 @@ export class AuthService {
   async deleteAccount(): Promise<{ statusCode: 200 }> {
     const { user, settings } = this.cls.get<ILoggedUser>('user');
     const { _id, email } = user;
-    const { language: _lang } = settings.generalSettings;  
+    const { language: _lang } = settings.generalSettings;
 
     const token = crypto.randomBytes(64).toString('hex');
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
@@ -831,7 +849,7 @@ export class AuthService {
     const { token } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
     const { _id } = _loggedUser;
-    const { language: _lang } = settings.generalSettings;  
+    const { language: _lang } = settings.generalSettings;
 
     const deleteToken = await this.tokenService.findToken({
       query: {
