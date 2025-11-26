@@ -9,11 +9,6 @@ import {
 } from '@/src/common/functions/transform';
 
 export class BaseUserDto {
-  // @IsEnum(ROLE, { message: ValidationMessages.ENUM('role', Object.keys(ROLE)) })
-  // @Transform(({ value }) => value?.trim())
-  // @IsNotEmpty({ message: ValidationMessages.REQUIRED('role') })
-  // role: ROLE;
-
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('username') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
@@ -21,13 +16,13 @@ export class BaseUserDto {
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
   email: string;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('password') })
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   password: string;
 
