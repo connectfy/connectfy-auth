@@ -19,8 +19,12 @@ export class LoggedUserInterceptor implements NestInterceptor {
     const loggedUser = data?._loggedUser;
 
     if (loggedUser) {        
-      this.cls.set('user', loggedUser);
-      // this.cls.set('userId', loggedUser.id); // optional
+      return new Observable(subscriber => {
+        this.cls.run(() => {
+          this.cls.set('user', loggedUser);
+          next.handle().subscribe(subscriber);
+        });
+      });
     }
 
     return next.handle();

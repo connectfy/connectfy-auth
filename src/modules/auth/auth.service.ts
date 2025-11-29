@@ -55,6 +55,7 @@ import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
+import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -129,6 +130,7 @@ export class AuthService {
     return avatar;
   }
 
+  // ================== SIGNUP
   async signup(
     data: SignupDto,
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
@@ -173,6 +175,7 @@ export class AuthService {
     };
   }
 
+  // ================== VERIFY SIGNUP
   async verifySignup(
     data: VerifySignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
@@ -280,6 +283,7 @@ export class AuthService {
     return { _id, access_token, refresh_token };
   }
 
+  // ================== LOGIN
   async login(
     data: LoginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
@@ -383,6 +387,7 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
+  // ================== GOOGLE LOGIN
   async googleLogin(
     data: GoogleAuthloginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
@@ -447,6 +452,7 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
+  // ================== GOOGLE SINGUP
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
@@ -587,6 +593,7 @@ export class AuthService {
     return { _id, access_token, refresh_token };
   }
 
+  // ================== UPDATE FACE DESCRIPTOR
   async updateFaceDescriptor(data: FaceDescriptorDto) {
     const { faceDescriptor, _loggedUser, _lang } = data;
 
@@ -624,6 +631,7 @@ export class AuthService {
     });
   }
 
+  // ================== FORGOT PASSWORD
   async forgotPassword(
     data: ForgotPasswordDto,
   ): Promise<{ statusCode: 200; email?: string }> {
@@ -686,6 +694,7 @@ export class AuthService {
     return { statusCode: 200, email };
   }
 
+  // ================== IS TOKEN VALID
   async isTokenValid(data: ValidateTokenDto): Promise<boolean> {
     const { token, type } = data;
     const res = await this.tokenService.findToken({
@@ -703,6 +712,7 @@ export class AuthService {
     return true;
   }
 
+  // ================== RESET PASSWORD
   async resetPassword(data: ResetPasswordDto): Promise<{ statusCode: 200 }> {
     const { resetToken, password, confirmPassword, _lang } = data;
 
@@ -752,6 +762,7 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
+  // ================== LOGOUT
   async logout(): Promise<{ statusCode: 200 }> {
     const { user } = this.cls.get<ILoggedUser>('user');
 
@@ -760,6 +771,7 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
+  // ================== VERIFY AUTH TOKEN
   async verifyAuthToken(token: string, _lang: LANGUAGE) {
     try {
       const payload = await this.refreshTokenService.verifyToken(token, true);
@@ -821,6 +833,7 @@ export class AuthService {
     }
   }
 
+  // ================== DELETE ACCOUNT
   async deleteAccount(): Promise<{ statusCode: 200 }> {
     const { user, settings } = this.cls.get<ILoggedUser>('user');
     const { _id, email } = user;
@@ -845,6 +858,7 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
+  // ================== REMOVE ACCOUNT
   async removeAccount(data: RemoveAccountDto): Promise<{ statusCode: 200 }> {
     const { token } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
@@ -943,6 +957,7 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
+  // ================== REFRESH TOKEN
   async refreshToken(refreshToken: string, _lang: LANGUAGE) {
     const payload = await this.refreshTokenService.verifyToken(
       refreshToken,
@@ -975,5 +990,35 @@ export class AuthService {
       access_token,
       refresh_token,
     };
+  }
+
+  // ================== AUTHENTICATE USER
+  async authenticateUser(
+    data: AuthenticateUserDto,
+  ): Promise<{ statusCode: 200 }> {
+    const { password } = data;
+    const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
+    const { _id } = _loggedUser;
+    const { language } = settings.generalSettings;
+
+    const user = await this.userRepo.findOne({ query: { _id } });
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const userObj: IReturnedUser = user.toObject ? user.toObject() : user;
+
+    const isPasswordMatch = await compare(password, userObj.password);
+
+    if (!isPasswordMatch)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(language),
+        HttpStatus.BAD_REQUEST,
+      );
+
+    return { statusCode: 200 };
   }
 }

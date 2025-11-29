@@ -20,6 +20,7 @@ import {
 } from '@common/constants/exception.constants';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
+import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 
 @Controller('')
 export class AuthController {
@@ -120,5 +121,11 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async faceDescriptor(@Payload() data: FaceDescriptorDto) {
     return await this.service.updateFaceDescriptor(data);
+  }
+
+  @MessagePattern('auth/authenticate-user', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async authenticateUser(@Payload() data: AuthenticateUserDto) {
+    return await this.service.authenticateUser(data);
   }
 }

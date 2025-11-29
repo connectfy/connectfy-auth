@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserSchema } from './entity/user.entity';
 import { UserRepository } from './repo/user.repo';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { DeletedUserModule } from '../deleted-user/deleted-user.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         },
       },
     ]),
+    DeletedUserModule,
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository],
