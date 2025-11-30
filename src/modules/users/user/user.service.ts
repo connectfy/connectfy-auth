@@ -223,7 +223,10 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
-    await this.tokenRepo.remove({ token });
+    await this.tokenRepo.removeMany({
+      userId: _id,
+      type: TOKEN_TYPE.CHANGE_USERNAME,
+    });
 
     return updatedObj;
   }
@@ -276,6 +279,11 @@ export class UserService {
       _lang: language,
     });
 
+    await this.tokenRepo.removeMany({
+      userId: _id,
+      type: TOKEN_TYPE.CHANGE_EMAIL,
+    });
+
     const emailChangeToken = this.jwtService.sign(
       {
         userId: _id.toString(),
@@ -306,8 +314,6 @@ export class UserService {
       i18n.t('email_messages.change_email.mail_subject', { lang: language }),
       changeEmailMessage(emailChangeToken, language),
     );
-
-    await this.tokenRepo.remove({ token });
 
     return { statusCode: 200 };
   }
@@ -427,7 +433,10 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
-    await this.tokenRepo.remove({ token });
+    await this.tokenRepo.removeMany({
+      userId: _id,
+      type: TOKEN_TYPE.CHANGE_PASSWORD,
+    });
 
     return updatedObj;
   }
