@@ -19,7 +19,7 @@ export class TokenModel implements IToken {
   @Prop({ type: String, enum: TOKEN_TYPE, default: TOKEN_TYPE.PASSWORD_RESET })
   type: TOKEN_TYPE;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date, required: false })
   expiresAt: Date;
 
   @Prop({ type: Boolean, default: false })

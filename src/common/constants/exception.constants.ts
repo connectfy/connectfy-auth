@@ -48,7 +48,7 @@ export const ExceptionMessages = {
     }),
 
   SAME_DATA: (field: string, lang: LANGUAGE = LANGUAGE.EN) =>
-    i18n.t('validation_messages.same_data', { field, lng: lang }),
+    i18n.t('exception_messages.same_data', { field, lng: lang }),
 
   STRING_OR_NULL_MESSAGE: (field: string, lang: LANGUAGE = LANGUAGE.EN) =>
     i18n.t('exception_messages.string_or_null', { field, lng: lang }),
@@ -91,7 +91,7 @@ export const ExceptionMessages = {
     validValues: any[],
     lang: LANGUAGE = LANGUAGE.EN,
   ) =>
-    i18n.t('validation_messages.enum_invalid', {
+    i18n.t('exception_messages.enum_invalid', {
       field,
       validValues: validValues.join(', '),
       lng: lang,

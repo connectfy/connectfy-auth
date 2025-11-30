@@ -54,7 +54,10 @@ import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
-import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
+import {
+  emitWithContext,
+  sendWithContext,
+} from '@/src/common/helpers/microservice-request.helper';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 
 @Injectable()
@@ -96,12 +99,16 @@ export class AuthService {
   }
 
   private sendEmail(to: string, subject: string, html: string): void {
-    this.notificationServiceKafka.emit('mail.send', {
-      from: '"Connectfy Team" <connectfy.team@gmail.com>',
-      sender: 'Connectfy Team',
-      to,
-      subject,
-      html,
+    emitWithContext({
+      client: this.notificationServiceKafka,
+      topic: 'mail.send',
+      payload: {
+        from: '"Connectfy Team" <connectfy.team@gmail.com>',
+        sender: 'Connectfy Team',
+        to,
+        subject,
+        html,
+      },
     });
   }
 
@@ -750,7 +757,10 @@ export class AuthService {
     const isPasswordSame = await compare(password, user.password!);
 
     if (isPasswordSame)
-      throw new BaseException(ExceptionMessages.SAME_DATA('password', _lang));
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA('password', _lang),
+        HttpStatus.BAD_REQUEST,
+      );
 
     const hashedPassword = await this.hashPassword(password);
 
@@ -995,8 +1005,8 @@ export class AuthService {
   // ================== AUTHENTICATE USER
   async authenticateUser(
     data: AuthenticateUserDto,
-  ): Promise<{ statusCode: 200 }> {
-    const { password } = data;
+  ): Promise<{ statusCode: number; token: string }> {
+    const { password, type } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
     const { _id } = _loggedUser;
     const { language } = settings.generalSettings;
@@ -1019,6 +1029,21 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
 
-    return { statusCode: 200 };
+    const rawToken = crypto.randomBytes(64).toString('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
+
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    const { token } = await this.tokenService.generateToken({
+      userId: _id,
+      token: hashedToken,
+      type,
+      expiresAt: tokenExpiry,
+    });
+
+    return { statusCode: 200, token };
   }
 }

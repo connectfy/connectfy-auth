@@ -2,7 +2,7 @@ import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
 import { ChangeUsernameDto } from './dto/change-username.dto';
-import { ChangeEmailDto } from './dto/change-email.dto';
+import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('')
@@ -25,6 +25,12 @@ export class UserController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async changeEmail(@Payload() data: ChangeEmailDto) {
     return await this.service.changeEmail(data);
+  }
+
+  @MessagePattern('user/change-email/verify', Transport.TCP)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async verifyEmailChange(@Payload() data: VerifyEmailChangeDto) {
+    return await this.service.verifyEmailChange(data);
   }
 
   @MessagePattern('user/change-password', Transport.TCP)

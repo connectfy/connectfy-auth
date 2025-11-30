@@ -16,4 +16,9 @@ export class ChangePasswordDto {
   @IsString({ message: ValidationMessages.STRING('resetToken') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('confirmPassword') })
   confirmPassword: string;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('token') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
+  token: string;
 }

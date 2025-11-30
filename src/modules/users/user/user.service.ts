@@ -9,17 +9,26 @@ import {
   ExceptionMessages,
   ExceptionTypes,
 } from '@common/constants/exception.constants';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
-import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
+import {
+  emitWithContext,
+  sendWithContext,
+} from '@/src/common/helpers/microservice-request.helper';
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { DeletedUserRepository } from '../deleted-user/repo/deleted-user.repo';
 import { checkRecentlyDeletedConflict } from '@/src/common/functions/check-unique';
 import { UserDocument } from './entity/user.entity';
-import { ChangeEmailDto } from './dto/change-email.dto';
+import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { genSalt, hash, compare } from 'bcrypt';
+import { TokenRepository } from '../../tokens/token/repo/token.repo';
+import i18n from '@/src/i18n';
+import { changeEmailMessage } from '@/src/common/constants/emial.messages';
+import { JwtService } from '@nestjs/jwt';
+import * as crypto from 'crypto';
+import { TOKEN_TYPE } from '@/src/common/constants/common.enum';
 
 @Injectable()
 export class UserService {
@@ -29,9 +38,32 @@ export class UserService {
     @Inject('ACCOUNT_SERVICE_TCP')
     private readonly accountServiceTcp: ClientProxy,
 
+    @Inject('NOTIFICATION_SERVICE_KAFKA')
+    private readonly notificationServiceKafka: ClientKafka,
+
     private readonly cls: ClsService,
     private readonly deletedUserRepo: DeletedUserRepository,
+    private readonly tokenRepo: TokenRepository,
+    private readonly jwtService: JwtService,
   ) {}
+
+  async onModuleInit() {
+    await Promise.all([this.notificationServiceKafka.connect()]);
+  }
+
+  private sendEmail(to: string, subject: string, html: string): void {
+    emitWithContext({
+      client: this.notificationServiceKafka,
+      topic: 'mail.send',
+      payload: {
+        from: '"Connectfy Team" <connectfy.team@gmail.com>',
+        sender: 'Connectfy Team',
+        to,
+        subject,
+        html,
+      },
+    });
+  }
 
   async me() {
     const { user, settings } = this.cls.get<ILoggedUser>('user');
@@ -136,7 +168,7 @@ export class UserService {
 
   // ================== CHANGE USERNAME
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
-    const { username } = data;
+    const { username, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
     const { _id, username: oldUsername } = user;
     const { language } = settings.generalSettings;
@@ -147,6 +179,18 @@ export class UserService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
+      );
+
+    const findToken = await this.tokenRepo.findOne({
+      query: {
+        $and: [{ token }, { userId: _id }],
+      },
+    });
+
+    if (!findToken)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.BAD_REQUEST,
       );
 
     if (username === oldUsername)
@@ -179,12 +223,14 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
+    await this.tokenRepo.remove({ token });
+
     return updatedObj;
   }
 
   // ================== CHANGE EMAIL
-  async changeEmail(data: ChangeEmailDto): Promise<IReturnedUser> {
-    const { email } = data;
+  async changeEmail(data: ChangeEmailDto): Promise<{ statusCode: number }> {
+    const { email, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
     const { _id, email: oldEmail } = user;
     const { language } = settings.generalSettings;
@@ -192,6 +238,18 @@ export class UserService {
     const isUserExist = await this.repo.existsByField({ _id });
 
     if (!isUserExist)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const findToken = await this.tokenRepo.findOne({
+      query: {
+        $and: [{ token }, { userId: _id }],
+      },
+    });
+
+    if (!findToken)
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
@@ -218,13 +276,97 @@ export class UserService {
       _lang: language,
     });
 
-    const updatedUser = (await this.repo.update({
-      _id,
-      email,
-    })) as UserDocument;
+    const emailChangeToken = this.jwtService.sign(
+      {
+        userId: _id.toString(),
+        email: email,
+        type: TOKEN_TYPE.CHANGE_EMAIL,
+      },
+      {
+        secret: process.env.EMAIL_CHANGE_SECRET || 'your-email-change-secret',
+        expiresIn: '1h',
+      },
+    );
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(emailChangeToken)
+      .digest('hex');
 
-    const updatedObj: IReturnedUser = updatedUser.toObject
-      ? updatedUser.toObject()
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.tokenRepo.save({
+      userId: _id,
+      token: hashedToken,
+      expiresAt: tokenExpiry,
+      type: TOKEN_TYPE.CHANGE_EMAIL,
+    });
+
+    this.sendEmail(
+      email,
+      i18n.t('email_messages.change_email.mail_subject', { lang: language }),
+      changeEmailMessage(emailChangeToken, language),
+    );
+
+    await this.tokenRepo.remove({ token });
+
+    return { statusCode: 200 };
+  }
+
+  // ================== VERIFY EMAIL CHANGE
+  async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IReturnedUser> {
+    const { token } = data;
+    const { user: me, settings } = this.cls.get<ILoggedUser>('user');
+    const { _id } = me;
+    const { language } = settings.generalSettings;
+
+    const user = await this.repo.findOne({ query: { _id } });
+
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const decoded = this.jwtService.verify(token, {
+      secret: process.env.EMAIL_CHANGE_SECRET || 'your-email-change-secret',
+    });
+
+    if (
+      decoded.type !== TOKEN_TYPE.CHANGE_EMAIL ||
+      decoded.userId !== _id.toString()
+    ) {
+      throw new BaseException(
+        ExceptionMessages.TOKEN_EXPIRED(language),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const isTokenExist = await this.tokenRepo.findOne({
+      query: {
+        $and: [{ token: hashedToken }, { userId: _id }],
+      },
+    });
+
+    if (!isTokenExist)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const [updatedUser] = await Promise.all([
+      await this.repo.update({
+        _id,
+        email: decoded.email,
+      }),
+      await this.tokenRepo.remove({
+        $and: [{ token: hashedToken }, { userId: _id }],
+      }),
+    ]);
+
+    const updatedObj = updatedUser?.toObject
+      ? updatedUser?.toObject()
       : updatedUser;
 
     return updatedObj;
@@ -232,7 +374,7 @@ export class UserService {
 
   // ================== CHANGE PASSWORD
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
-    const { password, confirmPassword } = data;
+    const { password, confirmPassword, token } = data;
     const { user: me, settings } = this.cls.get<ILoggedUser>('user');
     const { _id } = me;
     const { language } = settings.generalSettings;
@@ -253,6 +395,18 @@ export class UserService {
 
     const userObj: IReturnedUser = user.toObject ? user.toObject() : user;
 
+    const findToken = await this.tokenRepo.findOne({
+      query: {
+        $and: [{ token }, { userId: _id }],
+      },
+    });
+
+    if (!findToken)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.BAD_REQUEST,
+      );
+
     const isPasswordSame = await compare(password, userObj.password);
 
     if (isPasswordSame)
@@ -272,6 +426,8 @@ export class UserService {
     const updatedObj: IReturnedUser = updatedUser.toObject
       ? updatedUser.toObject()
       : updatedUser;
+
+    await this.tokenRepo.remove({ token });
 
     return updatedObj;
   }

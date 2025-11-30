@@ -9,4 +9,16 @@ export class ChangeEmailDto {
   @IsString({ message: ValidationMessages.STRING('email') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
   email: string;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('token') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
+  token: string;
+}
+
+export class VerifyEmailChangeDto {
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('token') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
+  token: string;
 }

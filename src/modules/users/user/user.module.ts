@@ -6,6 +6,8 @@ import { UserSchema } from './entity/user.entity';
 import { UserRepository } from './repo/user.repo';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DeletedUserModule } from '../deleted-user/deleted-user.module';
+import { TokenModule } from '../../tokens/token/token.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -19,8 +21,27 @@ import { DeletedUserModule } from '../deleted-user/deleted-user.module';
           port: 5000,
         },
       },
+      {
+        name: 'NOTIFICATION_SERVICE_KAFKA',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'connectfy-notification',
+            brokers: ['kafka-0:9092', 'kafka-1:9092'],
+          },
+          consumer: {
+            groupId: 'consumer-connectfy-notification',
+            allowAutoTopicCreation: false,
+          },
+          run: {
+            autoCommit: false,
+          },
+        },
+      },
     ]),
     DeletedUserModule,
+    TokenModule,
+    JwtModule
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository],

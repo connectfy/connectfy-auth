@@ -12,13 +12,14 @@ import { RemoveAllTokensDto } from './dto/remove.all.tokens.dto';
 import { IRemoveAllResponse } from '@common/interfaces/response.interface';
 import { FindTokenDto } from './dto/find.token.dto';
 import { TOKEN_TYPE } from '@common/constants/common.enum';
+import { IReturnedToken } from './interface/token.interface';
 
 @Injectable()
 export class TokenService {
   constructor(private readonly repo: TokenRepository) {}
 
-  async generateToken(data: AddTokenDto) {
-    return await this.repo.save(data);
+  async generateToken(data: AddTokenDto): Promise<IReturnedToken> {
+    return (await this.repo.save(data)).toObject();
   }
 
   async findToken(option: FindTokenDto): Promise<TokenDocument> {
