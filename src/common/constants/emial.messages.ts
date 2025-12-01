@@ -1,5 +1,5 @@
 import i18n from '@/src/i18n';
-import { LANGUAGE } from './common.enum';
+import { LANGUAGE, TOKEN_TYPE } from './common.enum';
 
 const supportMail = 'connectfy.team@gmail.com';
 const supportMailLink = `mailto:${supportMail}`;
@@ -394,7 +394,7 @@ export const changeEmailMessage = (
   token: string,
   lang: LANGUAGE = LANGUAGE.EN,
 ) => {
-  const changeUrl = `http://localhost:4800/auth/change-email?token=${token}`;
+  const changeUrl = `http://localhost:4800/settings/account?action=${TOKEN_TYPE.CHANGE_EMAIL}&token=${token}`;
 
   const team = i18n.t('email_messages.change_email.team', { lng: lang });
   const intro = i18n.t('email_messages.change_email.intro', { lng: lang });
