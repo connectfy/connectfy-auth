@@ -5,13 +5,21 @@ import {
   stringTransform,
 } from '@/src/common/functions/transform';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 
 export class AuthenticateUserDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsOptional()
+  @ValidateIf((obj) => obj.password || obj.type !== TOKEN_TYPE.CHANGE_EMAIL)
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  password: string;
+  password: string | null;
 
   @Transform(({ key, value }) =>
     enumTransform({
@@ -33,4 +41,11 @@ export class AuthenticateUserDto {
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('type') })
   type: TOKEN_TYPE;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsOptional()
+  @ValidateIf((obj) => obj.idToken )
+  @IsString({ message: ValidationMessages.STRING('idToken') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
+  idToken: string | null;
 }

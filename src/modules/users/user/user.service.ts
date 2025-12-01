@@ -28,7 +28,7 @@ import i18n from '@/src/i18n';
 import { changeEmailMessage } from '@/src/common/constants/emial.messages';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
-import { TOKEN_TYPE } from '@/src/common/constants/common.enum';
+import { PROVIDER, TOKEN_TYPE } from '@/src/common/constants/common.enum';
 
 @Injectable()
 export class UserService {
@@ -170,7 +170,7 @@ export class UserService {
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
     const { username, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, username: oldUsername } = user;
+    const { _id, username: oldUsername, provider } = user;
     const { language } = settings.generalSettings;
 
     const isUserExist = await this.repo.existsByField({ _id });
@@ -235,15 +235,21 @@ export class UserService {
   async changeEmail(data: ChangeEmailDto): Promise<{ statusCode: number }> {
     const { email, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, email: oldEmail } = user;
+    const { _id, email: oldEmail, provider } = user;
     const { language } = settings.generalSettings;
 
-    const isUserExist = await this.repo.existsByField({ _id });
+    const isUserExist = await this.repo.findOne({ query: { _id } });
 
     if (!isUserExist)
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
+      );
+
+    if (provider !== PROVIDER.PASSWORD)
+      throw new BaseException(
+        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+        HttpStatus.BAD_REQUEST,
       );
 
     const findToken = await this.tokenRepo.findOne({
@@ -382,7 +388,7 @@ export class UserService {
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
     const { user: me, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = me;
+    const { _id, provider } = me;
     const { language } = settings.generalSettings;
 
     if (password !== confirmPassword)
@@ -400,6 +406,12 @@ export class UserService {
       );
 
     const userObj: IReturnedUser = user.toObject ? user.toObject() : user;
+
+    if (userObj.provider !== PROVIDER.PASSWORD)
+      throw new BaseException(
+        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+        HttpStatus.BAD_REQUEST,
+      );
 
     const findToken = await this.tokenRepo.findOne({
       query: {

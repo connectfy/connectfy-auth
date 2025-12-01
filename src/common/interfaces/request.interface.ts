@@ -59,6 +59,7 @@ export interface IPrivacySettings {
   messageRequest: PRIVACY_SETTINGS_CHOICE;
   birthdayDate: PRIVACY_SETTINGS_CHOICE;
   friendshipRequest: boolean;
+  readReceipts: boolean;
 }
 
 export interface ITimeZone {

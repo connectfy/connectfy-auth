@@ -238,6 +238,7 @@ export class AuthService {
         messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         friendshipRequest: true,
+        readReceipts: true,
       },
     });
 
@@ -548,6 +549,7 @@ export class AuthService {
         messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         friendshipRequest: true,
+        readReceipts: true,
       },
     });
 
@@ -1006,9 +1008,9 @@ export class AuthService {
   async authenticateUser(
     data: AuthenticateUserDto,
   ): Promise<{ statusCode: number; token: string }> {
-    const { password, type } = data;
+    const { password, type, idToken } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = _loggedUser;
+    const { _id, email: userEmail } = _loggedUser;
     const { language } = settings.generalSettings;
 
     const user = await this.userRepo.findOne({ query: { _id } });
@@ -1021,13 +1023,45 @@ export class AuthService {
 
     const userObj: IReturnedUser = user.toObject ? user.toObject() : user;
 
-    const isPasswordMatch = await compare(password, userObj.password);
+    if (userObj.provider === PROVIDER.PASSWORD) {
+      if (!password)
+        throw new BaseException(
+          ExceptionMessages.INVALID_CREDENTIALS(language),
+          HttpStatus.BAD_REQUEST,
+        );
 
-    if (!isPasswordMatch)
-      throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(language),
-        HttpStatus.BAD_REQUEST,
-      );
+      const isPasswordMatch = await compare(password, userObj.password);
+
+      if (!isPasswordMatch)
+        throw new BaseException(
+          ExceptionMessages.INVALID_CREDENTIALS(language),
+          HttpStatus.BAD_REQUEST,
+        );
+    }
+
+    if (userObj.provider === PROVIDER.GOOGLE) {
+      if (!idToken)
+        throw new BaseException(
+          ExceptionMessages.INVALID_CREDENTIALS(language),
+          HttpStatus.BAD_REQUEST,
+        );
+
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken,
+        audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+      });
+
+      const payload = ticket.getPayload();
+
+      const email = payload?.email;
+
+      if (!email || email !== userEmail)
+        throw new BaseException(
+          ExceptionMessages.INVALID_CREDENTIALS(language),
+          HttpStatus.CONFLICT,
+          ExceptionTypes.CONFLICT,
+        );
+    }
 
     const rawToken = crypto.randomBytes(64).toString('hex');
     const hashedToken = crypto
