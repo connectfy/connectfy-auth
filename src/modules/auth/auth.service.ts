@@ -228,9 +228,9 @@ export class AuthService {
       payload: {
         userId: _id,
         _lang,
-        email: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        email: PRIVACY_SETTINGS_CHOICE.NOBODY,
         bio: PRIVACY_SETTINGS_CHOICE.EVERYONE,
-        gender: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        gender: PRIVACY_SETTINGS_CHOICE.NOBODY,
         location: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         socialLinks: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         lastSeen: PRIVACY_SETTINGS_CHOICE.EVERYONE,
@@ -539,9 +539,9 @@ export class AuthService {
       payload: {
         userId: _id,
         _lang,
-        email: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        email: PRIVACY_SETTINGS_CHOICE.NOBODY,
         bio: PRIVACY_SETTINGS_CHOICE.EVERYONE,
-        gender: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        gender: PRIVACY_SETTINGS_CHOICE.NOBODY,
         location: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         socialLinks: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         lastSeen: PRIVACY_SETTINGS_CHOICE.EVERYONE,
