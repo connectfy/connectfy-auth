@@ -4,6 +4,7 @@ import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 
 @Controller('')
 export class UserController {
@@ -37,5 +38,11 @@ export class UserController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async changePassword(@Payload() data: ChangePasswordDto) {
     return await this.service.changePassword(data);
+  }
+
+  @MessagePattern('user/change-phone-number', Transport.TCP)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async changePhoneNumber(@Payload() data: ChangePhoneNumberDto) {
+    return await this.service.changePhoneNumber(data);
   }
 }

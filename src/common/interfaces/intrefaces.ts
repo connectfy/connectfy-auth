@@ -17,3 +17,11 @@ export interface ISendWithContextClientParams extends ISendWithContextParams {
 export interface IEmitWithContextClientParams extends IEmitWithContextParams {
   client: ClientKafka;
 }
+
+export interface ICountry {
+  key: string;
+  name: string;
+  flag: string;
+  code: string;
+  numberLength: number;
+}

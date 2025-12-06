@@ -26,17 +26,19 @@ export class AuthenticateUserDto {
       key,
       value,
       enumObject: {
-        CHANGE_USERNAME: 'CHANGE_USERNAME',
-        CHANGE_EMAIL: 'CHANGE_EMAIL',
-        CHANGE_PASSWORD: 'CHANGE_PASSWORD',
+        CHANGE_USERNAME: TOKEN_TYPE.CHANGE_USERNAME,
+        CHANGE_EMAIL: TOKEN_TYPE.CHANGE_EMAIL,
+        CHANGE_PASSWORD: TOKEN_TYPE.CHANGE_PASSWORD,
+        CHANGE_PHONE_NUMBER: TOKEN_TYPE.CHANGE_PHONE_NUMBER,
       },
     }),
   )
   @IsEnum(TOKEN_TYPE, {
     message: ValidationMessages.ENUM('type', [
-      'CHANGE_USERNAME',
-      'CHANGE_EMAIL',
-      'CHANGE_PASSWORD',
+      TOKEN_TYPE.CHANGE_USERNAME,
+      TOKEN_TYPE.CHANGE_EMAIL,
+      TOKEN_TYPE.CHANGE_PASSWORD,
+      TOKEN_TYPE.CHANGE_PHONE_NUMBER,
     ]),
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('type') })
@@ -44,7 +46,7 @@ export class AuthenticateUserDto {
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsOptional()
-  @ValidateIf((obj) => obj.idToken )
+  @ValidateIf((obj) => obj.idToken)
   @IsString({ message: ValidationMessages.STRING('idToken') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
   idToken: string | null;

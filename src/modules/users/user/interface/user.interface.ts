@@ -8,7 +8,7 @@ export interface IUser {
   role: ROLE;
   provider: PROVIDER;
   password: string;
-  phoneNumber: IPhoneNumber;
+  phoneNumber: IPhoneNumber | null;
   faceDescriptor: string | null;
 }
 

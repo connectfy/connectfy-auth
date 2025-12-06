@@ -1,5 +1,5 @@
 import { BaseUserDto } from './base.user.dto';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import {
   IsArray,
@@ -8,9 +8,15 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { arrayTransform, stringTransform } from '@/src/common/functions/transform';
+import {
+  arrayTransform,
+  objectTransform,
+  stringTransform,
+} from '@/src/common/functions/transform';
+import { PhoneNumberDto } from './nested/phoneNumber.dto';
 
 export class EditUserDto extends PartialType(BaseUserDto) {
   @Transform(({ key, value }) => stringTransform({ key, value }))
@@ -27,4 +33,11 @@ export class EditUserDto extends PartialType(BaseUserDto) {
     { message: ValidationMessages.NUMBER('faceDescriptor') },
   )
   faceDescriptor?: string | null;
+
+  @Transform(({ key, value }) => objectTransform({ key, value }))
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PhoneNumberDto)
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
+  phoneNumber?: PhoneNumberDto | null;
 }

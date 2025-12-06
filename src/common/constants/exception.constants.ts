@@ -96,6 +96,9 @@ export const ExceptionMessages = {
       validValues: validValues.join(', '),
       lng: lang,
     }),
+
+  INVALID_LENGTH_MESSAGE: (field: string, lang: LANGUAGE = LANGUAGE.EN) =>
+    i18n.t('exception_messages.invalid_length', { field, lng: lang }),
 };
 
 export const ExceptionTypes = {

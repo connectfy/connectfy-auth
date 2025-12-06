@@ -3,7 +3,10 @@ import { Document } from 'mongoose';
 import { IUser } from '../interface/user.interface';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { PROVIDER, ROLE } from '@common/constants/common.enum';
-import { PhoneNumberModel } from './nested/phoneNumber.entity';
+import {
+  PhoneNumberModel,
+  PhoneNumberSchema,
+} from './nested/phoneNumber.entity';
 import { ITimestamps } from '@common/interfaces/date.interface';
 
 @Schema({ timestamps: true, collection: 'users' })
@@ -31,7 +34,7 @@ export class UserModel implements IUser {
   @Prop({ type: String, required: true })
   password: string;
 
-  @Prop({ type: PhoneNumberModel, required: false })
+  @Prop({ type: PhoneNumberSchema, required: false, default: null })
   phoneNumber: PhoneNumberModel;
 
   @Prop({ type: String, required: false, default: null })

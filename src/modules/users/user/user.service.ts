@@ -28,7 +28,13 @@ import i18n from '@/src/i18n';
 import { changeEmailMessage } from '@/src/common/constants/emial.messages';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
-import { PROVIDER, TOKEN_TYPE } from '@/src/common/constants/common.enum';
+import {
+  PHONE_NUMBER_ACTION,
+  PROVIDER,
+  TOKEN_TYPE,
+} from '@/src/common/constants/common.enum';
+import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
+import { COUNTRIES } from '@/src/common/constants/constants';
 
 @Injectable()
 export class UserService {
@@ -170,7 +176,7 @@ export class UserService {
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
     const { username, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, username: oldUsername, provider } = user;
+    const { _id, username: oldUsername } = user;
     const { language } = settings.generalSettings;
 
     const isUserExist = await this.repo.existsByField({ _id });
@@ -183,7 +189,11 @@ export class UserService {
 
     const findToken = await this.tokenRepo.findOne({
       query: {
-        $and: [{ token }, { userId: _id }],
+        $and: [
+          { token },
+          { userId: _id },
+          { type: TOKEN_TYPE.CHANGE_USERNAME },
+        ],
       },
     });
 
@@ -254,7 +264,7 @@ export class UserService {
 
     const findToken = await this.tokenRepo.findOne({
       query: {
-        $and: [{ token }, { userId: _id }],
+        $and: [{ token }, { userId: _id }, { type: TOKEN_TYPE.CHANGE_EMAIL }],
       },
     });
 
@@ -357,7 +367,11 @@ export class UserService {
 
     const isTokenExist = await this.tokenRepo.findOne({
       query: {
-        $and: [{ token: hashedToken }, { userId: _id }],
+        $and: [
+          { token: hashedToken },
+          { userId: _id },
+          { type: TOKEN_TYPE.CHANGE_EMAIL },
+        ],
       },
     });
 
@@ -388,7 +402,7 @@ export class UserService {
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
     const { user: me, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, provider } = me;
+    const { _id } = me;
     const { language } = settings.generalSettings;
 
     if (password !== confirmPassword)
@@ -415,7 +429,11 @@ export class UserService {
 
     const findToken = await this.tokenRepo.findOne({
       query: {
-        $and: [{ token }, { userId: _id }],
+        $and: [
+          { token },
+          { userId: _id },
+          { type: TOKEN_TYPE.CHANGE_PASSWORD },
+        ],
       },
     });
 
@@ -448,6 +466,103 @@ export class UserService {
     await this.tokenRepo.removeMany({
       userId: _id,
       type: TOKEN_TYPE.CHANGE_PASSWORD,
+    });
+
+    return updatedObj;
+  }
+
+  // ================== CHANGE PHONE NUMBER
+  async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IReturnedUser> {
+    const { phoneNumber, token, action } = data;
+    const { user, settings } = this.cls.get<ILoggedUser>('user');
+    const { _id, phoneNumber: oldPhoneNumber } = user;
+    const { language } = settings.generalSettings;
+
+    const isUserExist = await this.repo.existsByField({ _id });
+
+    if (!isUserExist)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const findToken = await this.tokenRepo.findOne({
+      query: {
+        $and: [
+          { token },
+          { userId: _id },
+          { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER },
+        ],
+      },
+    });
+
+    if (!findToken)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.BAD_REQUEST,
+      );
+
+    if (phoneNumber?.fullPhoneNumber === oldPhoneNumber?.fullPhoneNumber)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA(phoneNumber.fullPhoneNumber, language),
+        HttpStatus.BAD_REQUEST,
+      );
+
+    if (action === PHONE_NUMBER_ACTION.UPDATE) {
+      const country = COUNTRIES.find((c) => c.code === phoneNumber.countryCode);
+
+      if (!country)
+        throw new BaseException(
+          ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+          HttpStatus.BAD_REQUEST,
+        );
+
+      const { numberLength } = country;
+
+      if (phoneNumber.number.length !== numberLength)
+        throw new BaseException(
+          ExceptionMessages.INVALID_LENGTH_MESSAGE(language),
+          HttpStatus.BAD_REQUEST,
+        );
+
+      const userWithPhoneNumber = await this.repo.findOne({
+        query: { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
+      });
+
+      const deletedUsersWithPhoneNumber = await this.deletedUserRepo.findMany({
+        query: { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
+      });
+
+      checkRecentlyDeletedConflict({
+        user: userWithPhoneNumber,
+        deletedUsers: deletedUsersWithPhoneNumber,
+        value: phoneNumber.fullPhoneNumber,
+        _lang: language,
+      });
+    }
+
+    let updatedUser: UserDocument;
+
+    if (action === PHONE_NUMBER_ACTION.UPDATE) {
+      updatedUser = (await this.repo.update({
+        _id,
+        phoneNumber: phoneNumber,
+      })) as UserDocument;
+    } else {
+      updatedUser = (await this.repo.update({
+        _id,
+        phoneNumber: null,
+      })) as UserDocument;
+    }
+
+    const updatedObj: IReturnedUser = updatedUser.toObject
+      ? updatedUser.toObject()
+      : updatedUser;
+
+    console.log('updatedObj: ', updatedObj);
+
+    await this.tokenRepo.removeMany({
+      $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
     });
 
     return updatedObj;
