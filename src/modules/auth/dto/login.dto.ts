@@ -21,22 +21,15 @@ export class LoginDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifierType') })
   identifierType: IDENTIFIER_TYPE;
 
-  @Transform(({ key, value }) => {
-    if (typeof value === 'string') return stringTransform({ key, value });
-
-    if (Array.isArray(value)) return arrayTransform({ key, value });
-
-    return null;
-  })
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('identifier') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifier') })
   identifier: string;
 
-  @Transform(({ key, value }) => {
-    if (Array.isArray(value)) return arrayTransform({ key, value });
-    return stringTransform({ key, value });
-  })
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  password: string | number[];
+  password: string;
 
   @Transform(({ key, value }) =>
     enumTransform({ key, value, enumObject: LANGUAGE }),

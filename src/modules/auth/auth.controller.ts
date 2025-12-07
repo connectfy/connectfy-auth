@@ -11,7 +11,7 @@ import { VerifySignupDto } from './dto/verify.dto';
 import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { RemoveAccountDto } from './dto/delete-account.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LANGUAGE } from '@common/constants/common.enum';
 import { BaseException } from '@common/exceptions/base.exception';
 import {
@@ -91,14 +91,8 @@ export class AuthController {
 
   @MessagePattern('auth/delete-account', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async deleteAccount() {
-    return await this.service.deleteAccount();
-  }
-
-  @MessagePattern('auth/remove-account', Transport.TCP)
-  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async removeAccount(@Payload() data: RemoveAccountDto) {
-    return await this.service.removeAccount(data);
+  async deleteAccount(@Payload() data: DeleteAccountDto) {
+    return await this.service.deleteAccount(data);
   }
 
   @MessagePattern('auth/refreshToken', Transport.TCP)

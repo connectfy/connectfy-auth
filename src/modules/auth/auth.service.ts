@@ -9,14 +9,13 @@ import {
   ExceptionTypes,
 } from '@common/constants/exception.constants';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
-import { checkRecentlyDeletedConflict } from '@common/functions/check-unique';
 import {
   generateVerifyCode,
   calculateEuclideanDistance,
 } from '@common/functions/function';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import {
-  deleteAccountMessage,
+  accountDeletedMessage,
   emailNotFoundMessage,
   forgotPasswordMessage,
   googleSignInMessage,
@@ -37,6 +36,7 @@ import {
   STARTUP_PAGE,
   TIME_FORMAT,
   TOKEN_TYPE,
+  USER_STATUS,
 } from '@common/constants/common.enum';
 import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser } from '../users/user/interface/user.interface';
@@ -44,10 +44,8 @@ import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo
 import { OAuth2Client } from 'google-auth-library';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import * as crypto from 'crypto';
-import { TokenService } from '../tokens/token/token.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { RemoveAccountDto } from './dto/delete-account.dto';
-import { DeletionOrchestorRepository } from '../orchestrators/deletion-orchestrator/repo/deletion-orchestor.repo';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import i18n from '@/src/i18n';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
@@ -59,6 +57,7 @@ import {
   sendWithContext,
 } from '@/src/common/helpers/microservice-request.helper';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
+import { TokenRepository } from '../tokens/token/repo/token.repo';
 
 @Injectable()
 export class AuthService {
@@ -83,8 +82,7 @@ export class AuthService {
     private readonly bannedUserRepo: BannedUserRepository,
     private readonly deletedUserRepo: DeletedUserRepository,
     private readonly refreshTokenService: RefreshTokenService,
-    private readonly tokenService: TokenService,
-    private readonly deletionOrchestorRepo: DeletionOrchestorRepository,
+    private readonly tokenRepo: TokenRepository,
   ) {
     const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
     this.googleClient = new OAuth2Client(clientId);
@@ -146,27 +144,22 @@ export class AuthService {
     const userWithUsername = await this.userRepo.findOne({
       query: { username },
     });
-    const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
-      username,
-    });
 
-    checkRecentlyDeletedConflict({
-      user: userWithUsername,
-      deletedUsers: deletedUsersWithUsername,
-      value: username,
-      _lang,
-    });
+    if (userWithUsername)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA(username, _lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
 
     const userWithEmail = await this.userRepo.findOne({ query: { email } });
-    const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
-      email,
-    });
-    checkRecentlyDeletedConflict({
-      user: userWithEmail,
-      deletedUsers: deletedUsersWithEmail,
-      value: email,
-      _lang,
-    });
+
+    if (userWithEmail)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA(email, _lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
 
     const verifyCode = generateVerifyCode();
 
@@ -292,12 +285,9 @@ export class AuthService {
   }
 
   // ================== LOGIN
-  async login(
-    data: LoginDto,
-  ): Promise<{ access_token?: string; refresh_token: string }> {
+  async login(data: LoginDto): Promise<{ access_token?: string }> {
     const { identifierType, identifier, password, _lang } = data;
 
-    let isValid: boolean = true;
     let user: IReturnedUser | null;
 
     switch (identifierType) {
@@ -309,10 +299,6 @@ export class AuthService {
         user = await this.userRepo.findOne({ query: { username: identifier } });
         break;
 
-      case IDENTIFIER_TYPE.FACE_DESCRIPTOR:
-        user = await this.userRepo.findOne({ query: { username: identifier } });
-        break;
-
       default:
         user = await this.userRepo.findOne({
           query: { 'phoneNumber.fullPhoneNumber': identifier },
@@ -320,48 +306,23 @@ export class AuthService {
         break;
     }
 
-    if (!user || user.provider !== PROVIDER.PASSWORD) isValid = false;
-
-    if (isValid && identifierType !== IDENTIFIER_TYPE.FACE_DESCRIPTOR) {
-      const isPasswordMatch = await compare(
-        password.toString(),
-        user?.password as string,
+    if (!user)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
       );
 
-      if (!isPasswordMatch) isValid = false;
-    } else if (isValid) {
-      if (!user?.faceDescriptor || !Array.isArray(password)) isValid = false;
-      else {
-        const decryptedDescriptor = decryptPayload(
-          user?.faceDescriptor,
-          this.config.get<string>('FACE_DESCRIPTOR_KEY')!,
-        );
+    if (user.provider !== PROVIDER.PASSWORD)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
 
-        // const descriptor: number[] = JSON.parse(decryptedDescriptor);
+    const isPasswordMatch = await compare(password!, user.password as string);
 
-        // const storedDescriptor: number[] = Array.isArray(descriptor)
-        //   ? descriptor
-        //   : JSON.parse(descriptor);
-
-        const storedDescriptor: number[] = decryptedDescriptor
-          .split(',')
-          .map((num) => parseFloat(num.trim()));
-
-        if (storedDescriptor.length !== password.length) isValid = false;
-        else {
-          const distance = calculateEuclideanDistance(
-            password,
-            storedDescriptor,
-          );
-
-          const THRESOLD = 0.6;
-
-          if (distance > THRESOLD) isValid = false;
-        }
-      }
-    }
-
-    if (!isValid)
+    if (!isPasswordMatch)
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(_lang),
         HttpStatus.CONFLICT,
@@ -369,7 +330,7 @@ export class AuthService {
       );
 
     const isUserBanned = await this.bannedUserRepo.findOne({
-      userId: user?._id,
+      userId: user._id,
     });
 
     if (isUserBanned)
@@ -382,17 +343,24 @@ export class AuthService {
         ExceptionTypes.FORBIDDEN,
       );
 
+    if (user.status !== USER_STATUS.ACTIVE)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
     const { refresh_token, access_token } =
       await this.refreshTokenService.generateTokens({
-        _id: user?._id as string,
+        _id: user._id as string,
       });
 
     await this.refreshTokenService.saveTokens({
       refresh_token,
-      userId: user?._id as string,
+      userId: user._id as string,
     });
 
-    return { access_token, refresh_token };
+    return { access_token };
   }
 
   // ================== GOOGLE LOGIN
@@ -447,6 +415,13 @@ export class AuthService {
         ExceptionTypes.FORBIDDEN,
       );
 
+    if (user.status !== USER_STATUS.ACTIVE)
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
+
     const { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({
         _id: user._id,
@@ -486,30 +461,24 @@ export class AuthService {
       );
 
     const userWithEmail = await this.userRepo.findOne({ query: { email } });
-    const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
-      email,
-    });
 
-    checkRecentlyDeletedConflict({
-      user: userWithEmail,
-      deletedUsers: deletedUsersWithEmail,
-      value: email,
-      _lang,
-    });
+    if (userWithEmail)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA(email, _lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
 
     const userWithUsername = await this.userRepo.findOne({
       query: { username },
     });
-    const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
-      username,
-    });
 
-    checkRecentlyDeletedConflict({
-      user: userWithUsername,
-      deletedUsers: deletedUsersWithUsername,
-      value: username,
-      _lang,
-    });
+    if (userWithUsername)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA(username, _lang),
+        HttpStatus.CONFLICT,
+        ExceptionTypes.CONFLICT,
+      );
 
     const { _id } = await this.userRepo.create({
       email,
@@ -678,7 +647,7 @@ export class AuthService {
     const token = crypto.randomBytes(64).toString('hex');
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-    await this.tokenService.generateToken({
+    await this.tokenRepo.save({
       userId: user._id as string,
       token,
       type: TOKEN_TYPE.PASSWORD_RESET,
@@ -706,7 +675,7 @@ export class AuthService {
   // ================== IS TOKEN VALID
   async isTokenValid(data: ValidateTokenDto): Promise<boolean> {
     const { token, type } = data;
-    const res = await this.tokenService.findToken({
+    const res = await this.tokenRepo.findOne({
       query: { $and: [{ token }, { type }] },
     });
     if (!res) return false;
@@ -725,21 +694,30 @@ export class AuthService {
   async resetPassword(data: ResetPasswordDto): Promise<{ statusCode: 200 }> {
     const { resetToken, password, confirmPassword, _lang } = data;
 
-    const token = await this.tokenService.findToken({
+    const token = await this.tokenRepo.findOne({
       query: {
         $and: [{ token: resetToken }, { type: TOKEN_TYPE.PASSWORD_RESET }],
       },
       populate: [{ path: 'userId', select: '-faceDescriptor' }],
     });
 
+    if (!token)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const tokenObj = token.toObject ? token.toObject() : token;
+
     const expiresAt =
-      token.expiresAt instanceof Date
-        ? token.expiresAt
-        : new Date(token.expiresAt);
+      tokenObj.expiresAt instanceof Date
+        ? tokenObj.expiresAt
+        : new Date(tokenObj.expiresAt);
     const now = new Date();
 
-    if (!token || now >= expiresAt || token.isUsed) {
-      if (token) await this.tokenService.removeToken({ _id: token._id });
+    if (now >= expiresAt || tokenObj.isUsed) {
+      if (tokenObj) await this.tokenRepo.remove({ _id: token._id });
+
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED(_lang),
         HttpStatus.BAD_REQUEST,
@@ -768,7 +746,7 @@ export class AuthService {
 
     await Promise.all([
       this.userRepo.update({ _id: user._id!, password: hashedPassword }),
-      this.tokenService.removeToken({ _id: token._id }),
+      this.tokenRepo.remove({ _id: token._id }),
     ]);
 
     return { statusCode: 200 };
@@ -846,42 +824,23 @@ export class AuthService {
   }
 
   // ================== DELETE ACCOUNT
-  async deleteAccount(): Promise<{ statusCode: 200 }> {
-    const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, email } = user;
-    const { language: _lang } = settings.generalSettings;
-
-    const token = crypto.randomBytes(64).toString('hex');
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    await this.tokenService.generateToken({
-      userId: _id,
-      token,
-      expiresAt: tokenExpiry,
-      type: TOKEN_TYPE.DELETE_ACCOUNT,
-    });
-
-    this.sendEmail(
-      email,
-      i18n.t('email_messages.delete_account.mail_subject', { lang: _lang }),
-      deleteAccountMessage(token, _lang),
-    );
-
-    return { statusCode: 200 };
-  }
-
-  // ================== REMOVE ACCOUNT
-  async removeAccount(data: RemoveAccountDto): Promise<{ statusCode: 200 }> {
+  async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
     const { token } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = _loggedUser;
-    const { language: _lang } = settings.generalSettings;
+    const { _id, email } = _loggedUser;
+    const { language } = settings.generalSettings;
 
-    const deleteToken = await this.tokenService.findToken({
+    const deleteToken = await this.tokenRepo.findOne({
       query: {
-        $and: [{ token }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
+        $and: [{ token }, { userId: _id }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
       },
     });
+
+    if (!deleteToken)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.BAD_REQUEST,
+      );
 
     const deleteTokenObj = deleteToken.toObject
       ? deleteToken.toObject()
@@ -893,78 +852,60 @@ export class AuthService {
         : new Date(deleteTokenObj.expiresAt);
     const now = new Date();
 
-    if (!deleteTokenObj || now >= expiresAt || deleteTokenObj.isUsed) {
-      if (deleteTokenObj)
-        await this.tokenService.removeToken({ _id: deleteTokenObj._id });
+    if (!deleteTokenObj || now >= expiresAt) {
+      if (deleteTokenObj) {
+        await this.tokenRepo.remove({ _id: deleteTokenObj._id });
+      }
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(_lang),
+        ExceptionMessages.TOKEN_EXPIRED(language),
         HttpStatus.BAD_REQUEST,
         ExceptionTypes.BAD_REQUEST,
       );
     }
 
-    const user = await this.userRepo.findOne({ query: { _id } });
+    const user = await this.userRepo.existsByField({ _id });
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
 
-    const userObj = user.toObject ? user.toObject() : user;
-
-    await Promise.all([
-      this.deletedUserRepo.create({
-        userId: _id,
-        ...userObj,
-      }),
-      this.userRepo.remove(_id),
-    ]);
+    await this.deletedUserRepo.create({
+      userId: _id,
+      reason: data.reason,
+      otherReason: data.otherReason,
+    });
 
     const newToken = crypto.randomBytes(64).toString('hex');
     const tokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    await this.deletionOrchestorRepo.create({
-      userId: _id,
-      email: userObj.email,
-      deletionToken: newToken,
-      parts: {
-        account: false,
-        socialLinks: false,
-        privacySettings: false,
-        friendships: false,
-        blocklist: false,
-      },
-      emailSent: false,
-    });
-
-    const payload = { userId: userObj._id, deletionToken: newToken };
-    this.accountServiceKafka.emit('account.deleteAccount.create', payload);
-    this.accountServiceKafka.emit('account.deleteSocialLink.create', payload);
-    this.accountServiceKafka.emit(
-      'account.deletePrivacySetting.create',
-      payload,
-    );
-    this.relationshipServiceKafka.emit(
-      'relationship.deleteFriendship.create',
-      payload,
-    );
-    this.relationshipServiceKafka.emit(
-      'relationship.deleteBlocklist.create',
-      payload,
-    );
-
-    await Promise.all([
-      this.tokenService.generateToken({
+    const [restoreTokenDoc, , ,] = await Promise.all([
+      this.tokenRepo.save({
         userId: _id,
         token: newToken,
         expiresAt: tokenExpiry,
         type: TOKEN_TYPE.RESTORE_ACCOUNT,
       }),
-      this.tokenService.removeTokensByUserId(_id),
+      this.tokenRepo.removeMany({
+        $and: [{ userId: _id }, { type: { $ne: TOKEN_TYPE.RESTORE_ACCOUNT } }],
+      }),
       this.refreshTokenService.removeTokenByUserId(_id),
+      this.userRepo.update({ _id, status: USER_STATUS.DELETED }),
     ]);
+
+    const restoreToken = restoreTokenDoc.toObject
+      ? restoreTokenDoc.toObject()
+      : restoreTokenDoc;
+
+    this.sendEmail(
+      email,
+      i18n.t('email_messages.delete_account_completed.mail_subject', {
+        lang: language,
+      }),
+      accountDeletedMessage(restoreToken.token, language),
+    );
 
     return { statusCode: 200 };
   }
@@ -1071,7 +1012,7 @@ export class AuthService {
 
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-    const { token } = await this.tokenService.generateToken({
+    const { token } = await this.tokenRepo.save({
       userId: _id,
       token: hashedToken,
       type,

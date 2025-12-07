@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { Document } from 'mongoose';
 import { IUser } from '../interface/user.interface';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { PROVIDER, ROLE } from '@common/constants/common.enum';
+import { PROVIDER, ROLE, USER_STATUS } from '@common/constants/common.enum';
 import {
   PhoneNumberModel,
   PhoneNumberSchema,
@@ -39,6 +39,9 @@ export class UserModel implements IUser {
 
   @Prop({ type: String, required: false, default: null })
   faceDescriptor: string | null;
+
+  @Prop({ type: String, required: true, enum: USER_STATUS, default: USER_STATUS.ACTIVE })
+  status: USER_STATUS
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);

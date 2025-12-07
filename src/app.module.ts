@@ -4,7 +4,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TokensModule } from './modules/tokens/tokens.module';
-import { OrchestratorsModule } from './modules/orchestrators/orchestrators.module';
 import { ClsInterceptor, ClsModule } from 'nestjs-cls';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
@@ -29,7 +28,6 @@ import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
     AuthModule,
     UsersModule,
     TokensModule,
-    OrchestratorsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClsInterceptor },

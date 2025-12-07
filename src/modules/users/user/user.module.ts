@@ -8,6 +8,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { DeletedUserModule } from '../deleted-user/deleted-user.module';
 import { TokenModule } from '../../tokens/token/token.module';
 import { JwtModule } from '@nestjs/jwt';
+import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.module';
 
 @Module({
   imports: [
@@ -41,7 +42,9 @@ import { JwtModule } from '@nestjs/jwt';
     ]),
     DeletedUserModule,
     TokenModule,
-    JwtModule
+    JwtModule,
+    RefreshTokenModule,
+    DeletedUserModule,
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository],

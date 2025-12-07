@@ -1,4 +1,4 @@
-import { PROVIDER, ROLE } from '@common/constants/common.enum';
+import { PROVIDER, ROLE, USER_STATUS } from '@common/constants/common.enum';
 import { IPhoneNumber } from './phoneNumber.interface';
 
 export interface IUser {
@@ -10,6 +10,7 @@ export interface IUser {
   password: string;
   phoneNumber: IPhoneNumber | null;
   faceDescriptor: string | null;
+  status: USER_STATUS;
 }
 
 export interface IReturnedUser {
@@ -21,4 +22,5 @@ export interface IReturnedUser {
   password: string;
   phoneNumber: IPhoneNumber;
   faceDescriptor: string | null;
+  status: USER_STATUS;
 }

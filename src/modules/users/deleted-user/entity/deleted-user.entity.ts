@@ -1,44 +1,26 @@
 import { v4 as uuid } from 'uuid';
 import { Document } from 'mongoose';
-import { PROVIDER, ROLE } from '@common/constants/common.enum';
-import { PhoneNumberModel } from './nested/phoneNumber.entity';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ITimestamps } from '@common/interfaces/date.interface';
 import { IDeletedUser } from '../interface/deleted-user.interface';
+import { DELETE_REASON } from '@/src/common/constants/common.enum';
 
 @Schema({ timestamps: true, collection: 'deleted-users' })
 export class DeletedUserModel implements IDeletedUser {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ type: String, required: true, ref: 'User' })
+  @Prop({ type: String, required: true, unique: true, ref: 'User' })
   userId: string;
 
-  @Prop({ type: String, required: true })
-  username: string;
+  @Prop({ type: Date, required: true, default: Date.now })
+  deletedAt: Date;
 
-  @Prop({ type: String, required: true })
-  email: string;
+  @Prop({ type: String, required: true, enum: DELETE_REASON })
+  reason: DELETE_REASON;
 
-  @Prop({ type: String, enum: ROLE, required: true, default: ROLE.USER })
-  role: ROLE;
-
-  @Prop({
-    type: String,
-    enum: PROVIDER,
-    required: true,
-    default: PROVIDER.PASSWORD,
-  })
-  provider: PROVIDER;
-
-  @Prop({ type: String, required: true })
-  password: string;
-
-  @Prop({ type: PhoneNumberModel, required: false })
-  phoneNumber: PhoneNumberModel;
-
-  @Prop({ type: String, required: false })
-  faceDescriptor: string | null;
+  @Prop({ type: String, required: false, default: null })
+  otherReason: string | null;
 }
 
 export const DeletedUserSchema = SchemaFactory.createForClass(DeletedUserModel);

@@ -1,27 +1,17 @@
-import { PROVIDER, ROLE } from "@common/constants/common.enum";
-import { IPhoneNumber } from "./phoneNumber.interface";
+import { DELETE_REASON } from '@/src/common/constants/common.enum';
 
 export interface IDeletedUser {
   _id: string;
   userId: string;
-  username: string;
-  email: string;
-  role: ROLE;
-  provider: PROVIDER;
-  password: string;
-  phoneNumber: IPhoneNumber;
-  faceDescriptor: string | null;
+  deletedAt: Date;
+  reason: DELETE_REASON;
+  otherReason: string | null;
 }
 
 export interface IReturnedDeletedUser {
   _id: string;
   userId: string;
-  username: string;
-  email: string;
-  role: ROLE;
-  provider: PROVIDER;
-  password: string;
-  phoneNumber: IPhoneNumber;
-  faceDescriptor: string | null;
-  createdAt: Date;
+  deletedAt: Date;
+  reason: DELETE_REASON;
+  otherReason: string | null;
 }

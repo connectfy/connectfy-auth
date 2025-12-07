@@ -26,6 +26,8 @@ export class AuthenticateUserDto {
       key,
       value,
       enumObject: {
+        DELETE_ACCOUNT: TOKEN_TYPE.DELETE_ACCOUNT,
+        RESTORE_ACCOUNT: TOKEN_TYPE.RESTORE_ACCOUNT,
         CHANGE_USERNAME: TOKEN_TYPE.CHANGE_USERNAME,
         CHANGE_EMAIL: TOKEN_TYPE.CHANGE_EMAIL,
         CHANGE_PASSWORD: TOKEN_TYPE.CHANGE_PASSWORD,
@@ -35,6 +37,8 @@ export class AuthenticateUserDto {
   )
   @IsEnum(TOKEN_TYPE, {
     message: ValidationMessages.ENUM('type', [
+      TOKEN_TYPE.DELETE_ACCOUNT,
+      TOKEN_TYPE.RESTORE_ACCOUNT,
       TOKEN_TYPE.CHANGE_USERNAME,
       TOKEN_TYPE.CHANGE_EMAIL,
       TOKEN_TYPE.CHANGE_PASSWORD,

@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import {
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -13,10 +14,12 @@ import {
 import { ValidationMessages } from '@common/constants/validation.messages';
 import {
   arrayTransform,
+  enumTransform,
   objectTransform,
   stringTransform,
 } from '@/src/common/functions/transform';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
+import { USER_STATUS } from '@/src/common/constants/common.enum';
 
 export class EditUserDto extends PartialType(BaseUserDto) {
   @Transform(({ key, value }) => stringTransform({ key, value }))
@@ -40,4 +43,13 @@ export class EditUserDto extends PartialType(BaseUserDto) {
   @Type(() => PhoneNumberDto)
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
   phoneNumber?: PhoneNumberDto | null;
+
+  @Transform(({ key, value }) =>
+    enumTransform({ key, value, enumObject: USER_STATUS }),
+  )
+  @IsOptional()
+  @IsEnum(USER_STATUS, {
+    message: ValidationMessages.ENUM('status', Object.keys(USER_STATUS)),
+  })
+  status?: USER_STATUS;
 }

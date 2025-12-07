@@ -1,17 +1,17 @@
 import {
-  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
-  ValidateNested,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
-import { LANGUAGE, ROLE } from '@common/constants/common.enum';
-import { PhoneNumberDto } from './nested/phoneNumber.dto';
+import { Transform } from 'class-transformer';
+import { DELETE_REASON } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { enumTransform, objectTransform, stringTransform } from '@/src/common/functions/transform';
+import {
+  enumTransform,
+  stringTransform,
+} from '@/src/common/functions/transform';
 
 export class BaseUserDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
@@ -20,44 +20,20 @@ export class BaseUserDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('userId') })
   userId: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('username') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
-  username: string;
-
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
-  email: string;
-
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('password') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  password: string;
-  
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => PhoneNumberDto)
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  phoneNumber: PhoneNumberDto;
-
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsEnum(ROLE, { message: ValidationMessages.ENUM('role', Object.keys(ROLE)) })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('role') })
-  role: ROLE;
-
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsOptional()
-  @IsString({ message: ValidationMessages.REQUIRED('faceDescriptor') })
-  faceDescriptor: string | null;
-
   @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
+    enumTransform({ key, value, enumObject: DELETE_REASON }),
   )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @IsEnum(DELETE_REASON, {
+    message: ValidationMessages.ENUM(
+      'reason',
+      Object.values(DELETE_REASON),
+    ),
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
-  _lang?: LANGUAGE;
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('reason') })
+  reason: DELETE_REASON;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsOptional()
+  @IsString({ message: ValidationMessages.STRING('otherReason') })
+  otherReason: string | null;
 }

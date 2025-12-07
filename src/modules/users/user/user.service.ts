@@ -17,8 +17,6 @@ import {
   sendWithContext,
 } from '@/src/common/helpers/microservice-request.helper';
 import { ChangeUsernameDto } from './dto/change-username.dto';
-import { DeletedUserRepository } from '../deleted-user/repo/deleted-user.repo';
-import { checkRecentlyDeletedConflict } from '@/src/common/functions/check-unique';
 import { UserDocument } from './entity/user.entity';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -48,7 +46,6 @@ export class UserService {
     private readonly notificationServiceKafka: ClientKafka,
 
     private readonly cls: ClsService,
-    private readonly deletedUserRepo: DeletedUserRepository,
     private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
   ) {}
@@ -220,16 +217,11 @@ export class UserService {
       query: { username },
     });
 
-    const deletedUsersWithUsername = await this.deletedUserRepo.findMany({
-      username,
-    });
-
-    checkRecentlyDeletedConflict({
-      user: userWithUsername,
-      deletedUsers: deletedUsersWithUsername,
-      value: username,
-      _lang: language,
-    });
+    if (userWithUsername)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA('username', language),
+        HttpStatus.BAD_REQUEST,
+      );
 
     const updatedUser = (await this.repo.update({
       _id,
@@ -291,16 +283,11 @@ export class UserService {
       query: { email },
     });
 
-    const deletedUsersWithEmail = await this.deletedUserRepo.findMany({
-      email,
-    });
-
-    checkRecentlyDeletedConflict({
-      user: userWithEmail,
-      deletedUsers: deletedUsersWithEmail,
-      value: email,
-      _lang: language,
-    });
+    if (userWithEmail)
+      throw new BaseException(
+        ExceptionMessages.SAME_DATA('email', language),
+        HttpStatus.BAD_REQUEST,
+      );
 
     await this.tokenRepo.removeMany({
       userId: _id,
@@ -536,16 +523,11 @@ export class UserService {
         query: { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
       });
 
-      const deletedUsersWithPhoneNumber = await this.deletedUserRepo.findMany({
-        query: { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
-      });
-
-      checkRecentlyDeletedConflict({
-        user: userWithPhoneNumber,
-        deletedUsers: deletedUsersWithPhoneNumber,
-        value: phoneNumber.fullPhoneNumber,
-        _lang: language,
-      });
+      if (userWithPhoneNumber)
+        throw new BaseException(
+          ExceptionMessages.SAME_DATA(phoneNumber.fullPhoneNumber, language),
+          HttpStatus.BAD_REQUEST,
+        );
     }
 
     let updatedUser: UserDocument;
