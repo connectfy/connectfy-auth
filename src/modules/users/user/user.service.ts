@@ -88,26 +88,33 @@ export class UserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const generalSettings = await sendWithContext({
-      client: this.accountServiceTcp,
-      endpoint: 'general-settings/findOne',
-      payload: { query: { userId: _id } },
-    });
-
-    const notificationSettings = await sendWithContext({
-      client: this.accountServiceTcp,
-      endpoint: 'notification-settings/findOne',
-      payload: { query: { userId: _id } },
-    });
-
-    const privacySettings = await sendWithContext({
-      client: this.accountServiceTcp,
-      endpoint: 'privacy-settings/findOne',
-      payload: { query: { userId: _id } },
-    });
+    const [account, generalSettings, notificationSettings, privacySettings] =
+      await Promise.all([
+        sendWithContext({
+          client: this.accountServiceTcp,
+          endpoint: 'account/findOne',
+          payload: { query: { userId: _id } },
+        }),
+        sendWithContext({
+          client: this.accountServiceTcp,
+          endpoint: 'general-settings/findOne',
+          payload: { query: { userId: _id } },
+        }),
+        sendWithContext({
+          client: this.accountServiceTcp,
+          endpoint: 'notification-settings/findOne',
+          payload: { query: { userId: _id } },
+        }),
+        sendWithContext({
+          client: this.accountServiceTcp,
+          endpoint: 'privacy-settings/findOne',
+          payload: { query: { userId: _id } },
+        }),
+      ]);
 
     return {
       user: res,
+      account,
       settings: {
         generalSettings,
         notificationSettings,
