@@ -9,10 +9,7 @@ import {
   ExceptionTypes,
 } from '@common/constants/exception.constants';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
-import {
-  generateVerifyCode,
-  calculateEuclideanDistance,
-} from '@common/functions/function';
+import { generateVerifyCode } from '@common/functions/function';
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
 import {
   accountDeletedMessage,
@@ -48,7 +45,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import i18n from '@/src/i18n';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
-import { decryptPayload, encryptPayload } from '@/src/common/functions/crypto';
+import { encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
@@ -58,6 +55,10 @@ import {
 } from '@/src/common/helpers/microservice-request.helper';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { TokenRepository } from '../tokens/token/repo/token.repo';
+import { RestoreAccountDto } from './dto/restore-account.dto';
+import { JwtService } from '@nestjs/jwt';
+import { IReturnedToken } from '../tokens/token/interface/token.interface';
+import { IReturnedDeletedUser } from '../users/deleted-user/interface/deleted-user.interface';
 
 @Injectable()
 export class AuthService {
@@ -83,6 +84,7 @@ export class AuthService {
     private readonly deletedUserRepo: DeletedUserRepository,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly tokenRepo: TokenRepository,
+    private readonly jwtService: JwtService,
   ) {
     const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
     this.googleClient = new OAuth2Client(clientId);
@@ -644,12 +646,20 @@ export class AuthService {
       return { statusCode: 200 };
     }
 
-    const token = crypto.randomBytes(64).toString('hex');
+    const token = this.jwtService.sign(
+      { userId: user._id, type: TOKEN_TYPE.PASSWORD_RESET },
+      {
+        secret: this.config.get<string>('FORGOT_PASSWORD_SECRET'),
+        expiresIn: '1h',
+      },
+    );
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
     await this.tokenRepo.save({
       userId: user._id as string,
-      token,
+      token: hashedToken,
       type: TOKEN_TYPE.PASSWORD_RESET,
       expiresAt: tokenExpiry,
     });
@@ -694,9 +704,14 @@ export class AuthService {
   async resetPassword(data: ResetPasswordDto): Promise<{ statusCode: 200 }> {
     const { resetToken, password, confirmPassword, _lang } = data;
 
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
     const token = await this.tokenRepo.findOne({
       query: {
-        $and: [{ token: resetToken }, { type: TOKEN_TYPE.PASSWORD_RESET }],
+        $and: [{ token: hashedToken }, { type: TOKEN_TYPE.PASSWORD_RESET }],
       },
       populate: [{ path: 'userId', select: '-faceDescriptor' }],
     });
@@ -708,6 +723,22 @@ export class AuthService {
       );
 
     const tokenObj = token.toObject ? token.toObject() : token;
+
+    const decoded = this.jwtService.verify(resetToken, {
+      secret: this.config.get<string>('FORGOT_PASSWORD_SECRET'),
+    });
+
+    if (decoded.type !== TOKEN_TYPE.PASSWORD_RESET)
+      throw new BaseException(
+        ExceptionMessages.CONFLICT_MESSAGE(_lang),
+        HttpStatus.CONFLICT,
+      );
+
+    if (decoded.userId !== tokenObj.userId)
+      throw new BaseException(
+        ExceptionMessages.FORBIDDEN_MESSAGE(_lang),
+        HttpStatus.FORBIDDEN,
+      );
 
     const expiresAt =
       tokenObj.expiresAt instanceof Date
@@ -872,19 +903,36 @@ export class AuthService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    await this.deletedUserRepo.create({
-      userId: _id,
-      reason: data.reason,
-      otherReason: data.otherReason,
-    });
+    await Promise.all([
+      this.deletedUserRepo.create({
+        userId: _id,
+        reason: data.reason,
+        otherReason: data.otherReason,
+      }),
+      this.tokenRepo.removeMany({ userId: _id }),
+    ]);
 
-    const newToken = crypto.randomBytes(64).toString('hex');
+    const newToken = this.jwtService.sign(
+      {
+        userId: _id.toString(),
+        type: TOKEN_TYPE.RESTORE_ACCOUNT,
+      },
+      {
+        secret: this.config.get<string>('RESTORE_ACCOUNT_SECRET'),
+        expiresIn: '30d',
+      },
+    );
+
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(newToken)
+      .digest('hex');
     const tokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    const [restoreTokenDoc, , ,] = await Promise.all([
+    await Promise.all([
       this.tokenRepo.save({
         userId: _id,
-        token: newToken,
+        token: hashedToken,
         expiresAt: tokenExpiry,
         type: TOKEN_TYPE.RESTORE_ACCOUNT,
       }),
@@ -895,16 +943,12 @@ export class AuthService {
       this.userRepo.update({ _id, status: USER_STATUS.DELETED }),
     ]);
 
-    const restoreToken = restoreTokenDoc.toObject
-      ? restoreTokenDoc.toObject()
-      : restoreTokenDoc;
-
     this.sendEmail(
       email,
       i18n.t('email_messages.delete_account_completed.mail_subject', {
         lang: language,
       }),
-      accountDeletedMessage(restoreToken.token, language),
+      accountDeletedMessage(newToken, language),
     );
 
     return { statusCode: 200 };
@@ -1020,5 +1064,88 @@ export class AuthService {
     });
 
     return { statusCode: 200, token };
+  }
+
+  // ================== RESTORE ACCOUNT
+  async restoreAccount(data: RestoreAccountDto) {
+    const { token, _lang } = data;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const restoreTokenDoc = await this.tokenRepo.findOne({
+      query: { token: hashedToken, type: TOKEN_TYPE.RESTORE_ACCOUNT },
+    });
+
+    if (!restoreTokenDoc)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const restoreToken: IReturnedToken = restoreTokenDoc.toObject
+      ? restoreTokenDoc.toObject()
+      : restoreTokenDoc;
+
+    if (restoreToken.expiresAt && restoreToken.expiresAt < new Date()) {
+      throw new BaseException(
+        ExceptionMessages.TOKEN_EXPIRED(_lang),
+        HttpStatus.GONE,
+      );
+    }
+
+    const decoded = this.jwtService.verify(token, {
+      secret: this.config.get<string>('RESTORE_ACCOUNT_SECRET'),
+    });
+
+    if (decoded.type !== TOKEN_TYPE.RESTORE_ACCOUNT)
+      throw new BaseException(
+        ExceptionMessages.CONFLICT_MESSAGE(_lang),
+        HttpStatus.CONFLICT,
+      );
+
+    if (decoded.userId !== restoreToken.userId)
+      throw new BaseException(
+        ExceptionMessages.FORBIDDEN_MESSAGE(_lang),
+        HttpStatus.FORBIDDEN,
+      );
+
+    const deletedUserDoc = await this.deletedUserRepo.findOne({
+      userId: restoreToken.userId,
+    });
+
+    if (!deletedUserDoc)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const deletedUser: IReturnedDeletedUser = deletedUserDoc.toObject
+      ? deletedUserDoc.toObject()
+      : deletedUserDoc;
+
+    const userDoc = await this.userRepo.findOne({
+      query: { _id: deletedUser.userId },
+    });
+
+    if (!userDoc)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const userObj: IReturnedUser = userDoc.toObject
+      ? userDoc.toObject()
+      : userDoc;
+
+    await Promise.all([
+      this.userRepo.update({ _id: userObj._id, status: USER_STATUS.ACTIVE }),
+      this.tokenRepo.removeMany({ userId: userObj._id }),
+      this.deletedUserRepo.remove(deletedUser._id),
+    ]);
+
+    const { access_token, refresh_token } =
+      await this.refreshTokenService.generateTokens({ _id: userObj._id });
+
+    return { access_token, refresh_token };
   }
 }

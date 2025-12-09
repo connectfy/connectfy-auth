@@ -33,6 +33,7 @@ import {
 } from '@/src/common/constants/common.enum';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { COUNTRIES } from '@/src/common/constants/constants';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -48,6 +49,7 @@ export class UserService {
     private readonly cls: ClsService,
     private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
   async onModuleInit() {
@@ -301,7 +303,7 @@ export class UserService {
         type: TOKEN_TYPE.CHANGE_EMAIL,
       },
       {
-        secret: process.env.EMAIL_CHANGE_SECRET || 'your-email-change-secret',
+        secret: this.config.get<string>('CHANGE_EMAIL_SECRET'),
         expiresIn: '1h',
       },
     );
@@ -344,7 +346,7 @@ export class UserService {
       );
 
     const decoded = this.jwtService.verify(token, {
-      secret: process.env.EMAIL_CHANGE_SECRET || 'your-email-change-secret',
+      secret: this.config.get<string>('CHANGE_EMAIL_SECRET'),
     });
 
     if (

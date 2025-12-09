@@ -21,6 +21,7 @@ import {
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
+import { RestoreAccountDto } from './dto/restore-account.dto';
 
 @Controller('')
 export class AuthController {
@@ -121,5 +122,11 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async authenticateUser(@Payload() data: AuthenticateUserDto) {
     return await this.service.authenticateUser(data);
+  }
+
+  @MessagePattern('auth/restore-account', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async restoreAccount(@Payload() data: RestoreAccountDto) {
+    return await this.service.restoreAccount(data);
   }
 }
