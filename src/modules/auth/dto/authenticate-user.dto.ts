@@ -32,6 +32,7 @@ export class AuthenticateUserDto {
         CHANGE_EMAIL: TOKEN_TYPE.CHANGE_EMAIL,
         CHANGE_PASSWORD: TOKEN_TYPE.CHANGE_PASSWORD,
         CHANGE_PHONE_NUMBER: TOKEN_TYPE.CHANGE_PHONE_NUMBER,
+        DEACTIVATE_ACCOUNT: TOKEN_TYPE.DEACTIVATE_ACCOUNT,
       },
     }),
   )
@@ -43,6 +44,7 @@ export class AuthenticateUserDto {
       TOKEN_TYPE.CHANGE_EMAIL,
       TOKEN_TYPE.CHANGE_PASSWORD,
       TOKEN_TYPE.CHANGE_PHONE_NUMBER,
+      TOKEN_TYPE.DEACTIVATE_ACCOUNT,
     ]),
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('type') })

@@ -59,6 +59,8 @@ import { RestoreAccountDto } from './dto/restore-account.dto';
 import { JwtService } from '@nestjs/jwt';
 import { IReturnedToken } from '../tokens/token/interface/token.interface';
 import { IReturnedDeletedUser } from '../users/deleted-user/interface/deleted-user.interface';
+import { DeactivateAccountDto } from './dto/deactivate-account.dto';
+import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deactivated-user.repo';
 
 @Injectable()
 export class AuthService {
@@ -71,11 +73,11 @@ export class AuthService {
     @Inject('ACCOUNT_SERVICE_TCP')
     private readonly accountServiceTcp: ClientProxy,
 
-    @Inject('ACCOUNT_SERVICE_KAFKA')
-    private readonly accountServiceKafka: ClientKafka,
+    // @Inject('ACCOUNT_SERVICE_KAFKA')
+    // private readonly accountServiceKafka: ClientKafka,
 
-    @Inject('RELATIONSHIP_SERVICE_KAFKA')
-    private readonly relationshipServiceKafka: ClientKafka,
+    // @Inject('RELATIONSHIP_SERVICE_KAFKA')
+    // private readonly relationshipServiceKafka: ClientKafka,
 
     private cls: ClsService,
     private readonly config: ConfigService,
@@ -85,17 +87,14 @@ export class AuthService {
     private readonly refreshTokenService: RefreshTokenService,
     private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
+    private readonly deactivatedUserRepo: DeactivatedUserRepository,
   ) {
     const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
     this.googleClient = new OAuth2Client(clientId);
   }
 
   async onModuleInit() {
-    await Promise.all([
-      this.notificationServiceKafka.connect(),
-      this.accountServiceKafka.connect(),
-      this.relationshipServiceKafka.connect(),
-    ]);
+    await Promise.all([this.notificationServiceKafka.connect()]);
   }
 
   private sendEmail(to: string, subject: string, html: string): void {
@@ -345,12 +344,35 @@ export class AuthService {
         ExceptionTypes.FORBIDDEN,
       );
 
-    if (user.status !== USER_STATUS.ACTIVE)
+    if (
+      user.status !== USER_STATUS.ACTIVE &&
+      user.status !== USER_STATUS.INACTIVE
+    )
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(_lang),
         HttpStatus.CONFLICT,
         ExceptionTypes.CONFLICT,
       );
+
+    if (user.status === USER_STATUS.INACTIVE) {
+      const deactivatedUser = await this.deactivatedUserRepo.findOne({
+        query: { userId: user._id },
+      });
+
+      if (!deactivatedUser)
+        throw new BaseException(
+          ExceptionMessages.INVALID_CREDENTIALS(_lang),
+          HttpStatus.BAD_REQUEST,
+        );
+
+      await Promise.all([
+        this.userRepo.update({
+          _id: user._id,
+          status: USER_STATUS.ACTIVE,
+        }),
+        this.deactivatedUserRepo.remove(deactivatedUser._id),
+      ]);
+    }
 
     const { refresh_token, access_token } =
       await this.refreshTokenService.generateTokens({
@@ -417,12 +439,35 @@ export class AuthService {
         ExceptionTypes.FORBIDDEN,
       );
 
-    if (user.status !== USER_STATUS.ACTIVE)
+    if (
+      user.status !== USER_STATUS.ACTIVE &&
+      user.status !== USER_STATUS.INACTIVE
+    )
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(_lang),
         HttpStatus.CONFLICT,
         ExceptionTypes.CONFLICT,
       );
+
+    if (user.status === USER_STATUS.INACTIVE) {
+      const deactivatedUser = await this.deactivatedUserRepo.findOne({
+        query: { userId: user._id },
+      });
+
+      if (!deactivatedUser)
+        throw new BaseException(
+          ExceptionMessages.INVALID_CREDENTIALS(_lang),
+          HttpStatus.BAD_REQUEST,
+        );
+
+      await Promise.all([
+        this.userRepo.update({
+          _id: user._id,
+          status: USER_STATUS.ACTIVE,
+        }),
+        this.deactivatedUserRepo.remove(deactivatedUser._id),
+      ]);
+    }
 
     const { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({
@@ -1048,13 +1093,13 @@ export class AuthService {
         );
     }
 
-    const rawToken = crypto.randomBytes(64).toString('hex');
+    const rawToken = crypto.randomBytes(128).toString('hex');
     const hashedToken = crypto
       .createHash('sha256')
       .update(rawToken)
       .digest('hex');
 
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+    const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
     const { token } = await this.tokenRepo.save({
       userId: _id,
@@ -1147,5 +1192,49 @@ export class AuthService {
       await this.refreshTokenService.generateTokens({ _id: userObj._id });
 
     return { access_token, refresh_token };
+  }
+
+  // ================== DEACTIVATE ACCOUNT
+  async deactivateAccount(data: DeactivateAccountDto) {
+    const { token } = data;
+    const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
+    const { _id } = _loggedUser;
+    const { language } = settings.generalSettings;
+
+    const deactivateTokenDoc = await this.tokenRepo.findOne({
+      query: {
+        $and: [
+          { token },
+          { userId: _id },
+          { type: TOKEN_TYPE.DEACTIVATE_ACCOUNT },
+        ],
+      },
+    });
+
+    if (!deactivateTokenDoc)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+
+    const deactivateToken: IReturnedToken = deactivateTokenDoc.toObject
+      ? deactivateTokenDoc.toObject()
+      : deactivateTokenDoc;
+
+    if (deactivateToken.expiresAt && deactivateToken.expiresAt < new Date()) {
+      throw new BaseException(
+        ExceptionMessages.TOKEN_EXPIRED(language),
+        HttpStatus.GONE,
+      );
+    }
+
+    await Promise.all([
+      this.deactivatedUserRepo.create({ userId: _id }),
+      this.tokenRepo.removeMany({ userId: _id }),
+      this.refreshTokenService.removeTokenByUserId(_id),
+      this.userRepo.update({ _id, status: USER_STATUS.INACTIVE }),
+    ]);
+
+    return { statusCode: 200 };
   }
 }

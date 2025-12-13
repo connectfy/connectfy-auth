@@ -550,8 +550,6 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
-    console.log('updatedObj: ', updatedObj);
-
     await this.tokenRepo.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
     });

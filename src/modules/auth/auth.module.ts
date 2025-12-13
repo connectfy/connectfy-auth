@@ -9,6 +9,7 @@ import { DeletedUserModule } from '../users/deleted-user/deleted-user.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { BannedUserModule } from '../users/banned-user/banned-user.module';
 import { TokenModule } from '../tokens/token/token.module';
+import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-users.module';
 
 @Module({
   imports: [
@@ -21,23 +22,23 @@ import { TokenModule } from '../tokens/token/token.module';
           port: 5000,
         },
       },
-      {
-        name: 'ACCOUNT_SERVICE_KAFKA',
-        transport: Transport.KAFKA,
-        options: {
-          client: {
-            clientId: 'connectfy-account',
-            brokers: ['kafka-0:9092', 'kafka-1:9092'],
-          },
-          consumer: {
-            groupId: 'consumer-connectfy-account',
-            allowAutoTopicCreation: false,
-          },
-          run: {
-            autoCommit: false,
-          },
-        },
-      },
+      // {
+      //   name: 'ACCOUNT_SERVICE_KAFKA',
+      //   transport: Transport.KAFKA,
+      //   options: {
+      //     client: {
+      //       clientId: 'connectfy-account',
+      //       brokers: ['kafka-0:9092', 'kafka-1:9092'],
+      //     },
+      //     consumer: {
+      //       groupId: 'consumer-connectfy-account',
+      //       allowAutoTopicCreation: false,
+      //     },
+      //     run: {
+      //       autoCommit: false,
+      //     },
+      //   },
+      // },
       {
         name: 'NOTIFICATION_SERVICE_KAFKA',
         transport: Transport.KAFKA,
@@ -55,23 +56,23 @@ import { TokenModule } from '../tokens/token/token.module';
           },
         },
       },
-      {
-        name: 'RELATIONSHIP_SERVICE_KAFKA',
-        transport: Transport.KAFKA,
-        options: {
-          client: {
-            clientId: 'connectfy-relationship',
-            brokers: ['kafka-0:9092', 'kafka-1:9092'],
-          },
-          consumer: {
-            groupId: 'consumer-connectfy-relationship',
-            allowAutoTopicCreation: false,
-          },
-          run: {
-            autoCommit: false,
-          },
-        },
-      },
+      // {
+      //   name: 'RELATIONSHIP_SERVICE_KAFKA',
+      //   transport: Transport.KAFKA,
+      //   options: {
+      //     client: {
+      //       clientId: 'connectfy-relationship',
+      //       brokers: ['kafka-0:9092', 'kafka-1:9092'],
+      //     },
+      //     consumer: {
+      //       groupId: 'consumer-connectfy-relationship',
+      //       allowAutoTopicCreation: false,
+      //     },
+      //     run: {
+      //       autoCommit: false,
+      //     },
+      //   },
+      // },
     ]),
     UsersModule,
     RefreshTokenModule,
@@ -80,6 +81,7 @@ import { TokenModule } from '../tokens/token/token.module';
     DeletedUserModule,
     BannedUserModule,
     TokenModule,
+    DeactivetedUsersModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
