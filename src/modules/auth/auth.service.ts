@@ -862,26 +862,33 @@ export class AuthService {
 
       const { password, ...safeUser } = userObj;
 
-      const generalSettings = await sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'general-settings/findOne',
-        payload: { query: { userId: safeUser._id } },
-      });
-
-      const notificationSettings = await sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'notification-settings/findOne',
-        payload: { query: { userId: safeUser._id } },
-      });
-
-      const privacySettings = await sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'privacy-settings/findOne',
-        payload: { query: { userId: safeUser._id } },
-      });
+      const [account, generalSettings, notificationSettings, privacySettings] =
+        await Promise.all([
+          sendWithContext({
+            client: this.accountServiceTcp,
+            endpoint: 'account/findOne',
+            payload: { query: { userId: safeUser._id } },
+          }),
+          sendWithContext({
+            client: this.accountServiceTcp,
+            endpoint: 'general-settings/findOne',
+            payload: { query: { userId: safeUser._id } },
+          }),
+          sendWithContext({
+            client: this.accountServiceTcp,
+            endpoint: 'notification-settings/findOne',
+            payload: { query: { userId: safeUser._id } },
+          }),
+          sendWithContext({
+            client: this.accountServiceTcp,
+            endpoint: 'privacy-settings/findOne',
+            payload: { query: { userId: safeUser._id } },
+          }),
+        ]);
 
       const result = {
         user: safeUser,
+        account,
         settings: {
           generalSettings,
           notificationSettings,
