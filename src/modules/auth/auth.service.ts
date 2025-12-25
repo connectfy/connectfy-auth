@@ -136,7 +136,9 @@ export class AuthService {
     return avatar;
   }
 
-  // ================== SIGNUP
+  // ========================
+  // SIGNUP
+  // ========================
   async signup(
     data: SignupDto,
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
@@ -176,7 +178,9 @@ export class AuthService {
     };
   }
 
-  // ================== VERIFY SIGNUP
+  // ========================
+  // VERIFY SIGNUP
+  // ========================
   async verifySignup(
     data: VerifySignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
@@ -213,6 +217,7 @@ export class AuthService {
         gender,
         avatar,
         _lang,
+        birthdayDate,
       },
     });
 
@@ -231,6 +236,7 @@ export class AuthService {
         avatar: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        phoneNumber: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         friendshipRequest: true,
         readReceipts: true,
       },
@@ -285,7 +291,9 @@ export class AuthService {
     return { _id, access_token, refresh_token };
   }
 
-  // ================== LOGIN
+  // ========================
+  // LOGIN
+  // ========================
   async login(data: LoginDto): Promise<{ access_token?: string }> {
     const { identifierType, identifier, password, _lang } = data;
 
@@ -387,7 +395,9 @@ export class AuthService {
     return { access_token };
   }
 
-  // ================== GOOGLE LOGIN
+  // ========================
+  // GOOGLE LOGIN
+  // ========================
   async googleLogin(
     data: GoogleAuthloginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
@@ -482,11 +492,13 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  // ================== GOOGLE SINGUP
+  // ========================
+  // GOOGLE SIGNUP
+  // ========================
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
-    const { idToken, username, gender, theme, _lang } = data;
+    const { idToken, username, gender, theme, birthdayDate, _lang } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -546,6 +558,7 @@ export class AuthService {
         gender,
         avatar,
         _lang,
+        birthdayDate,
       },
     });
 
@@ -564,6 +577,7 @@ export class AuthService {
         avatar: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         messageRequest: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         birthdayDate: PRIVACY_SETTINGS_CHOICE.EVERYONE,
+        phoneNumber: PRIVACY_SETTINGS_CHOICE.EVERYONE,
         friendshipRequest: true,
         readReceipts: true,
       },
@@ -618,7 +632,9 @@ export class AuthService {
     return { _id, access_token, refresh_token };
   }
 
-  // ================== UPDATE FACE DESCRIPTOR
+  // ========================
+  // UPDATE FACE DESCRIPTOR
+  // ========================
   async updateFaceDescriptor(data: FaceDescriptorDto) {
     const { faceDescriptor, _loggedUser, _lang } = data;
 
@@ -656,7 +672,9 @@ export class AuthService {
     });
   }
 
-  // ================== FORGOT PASSWORD
+  // ========================
+  // FORGOT PASSWORD
+  // ========================
   async forgotPassword(
     data: ForgotPasswordDto,
   ): Promise<{ statusCode: 200; email?: string }> {
@@ -727,7 +745,9 @@ export class AuthService {
     return { statusCode: 200, email };
   }
 
-  // ================== IS TOKEN VALID
+  // ========================
+  // IS TOKEN VALID
+  // ========================
   async isTokenValid(data: ValidateTokenDto): Promise<boolean> {
     const { token, type } = data;
     const res = await this.tokenRepo.findOne({
@@ -745,7 +765,9 @@ export class AuthService {
     return true;
   }
 
-  // ================== RESET PASSWORD
+  // ========================
+  // RESET PASSWORD
+  // ========================
   async resetPassword(data: ResetPasswordDto): Promise<{ statusCode: 200 }> {
     const { resetToken, password, confirmPassword, _lang } = data;
 
@@ -828,7 +850,9 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
-  // ================== LOGOUT
+  // ========================
+  // LOGOUT
+  // ========================
   async logout(): Promise<{ statusCode: 200 }> {
     const { user } = this.cls.get<ILoggedUser>('user');
 
@@ -837,7 +861,9 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
-  // ================== VERIFY AUTH TOKEN
+  // ========================
+  // VERIFY AUTH TOKEN
+  // ========================
   async verifyAuthToken(token: string, _lang: LANGUAGE) {
     try {
       const payload = await this.refreshTokenService.verifyToken(token, true);
@@ -906,7 +932,9 @@ export class AuthService {
     }
   }
 
-  // ================== DELETE ACCOUNT
+  // ========================
+  // DELETE ACCOUNT
+  // ========================
   async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
     const { token } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
@@ -1006,7 +1034,9 @@ export class AuthService {
     return { statusCode: 200 };
   }
 
-  // ================== REFRESH TOKEN
+  // ========================
+  // REFRESH TOKEN
+  // ========================
   async refreshToken(refreshToken: string, _lang: LANGUAGE) {
     const payload = await this.refreshTokenService.verifyToken(
       refreshToken,
@@ -1041,7 +1071,9 @@ export class AuthService {
     };
   }
 
-  // ================== AUTHENTICATE USER
+  // ========================
+  // AUTHENTICATE USER
+  // ========================
   async authenticateUser(
     data: AuthenticateUserDto,
   ): Promise<{ statusCode: number; token: string }> {
@@ -1118,7 +1150,9 @@ export class AuthService {
     return { statusCode: 200, token };
   }
 
-  // ================== RESTORE ACCOUNT
+  // ========================
+  // RESTORE ACCOUNT
+  // ========================
   async restoreAccount(data: RestoreAccountDto) {
     const { token, _lang } = data;
 
@@ -1201,7 +1235,9 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  // ================== DEACTIVATE ACCOUNT
+  // ========================
+  // DEACTIVATE ACCOUNT
+  // ========================
   async deactivateAccount(data: DeactivateAccountDto) {
     const { token } = data;
     const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');

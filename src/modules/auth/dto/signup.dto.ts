@@ -3,6 +3,7 @@ import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform, Type } from 'class-transformer';
 import {
   IsDate,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
