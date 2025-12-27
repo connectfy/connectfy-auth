@@ -150,7 +150,7 @@ export class AuthService {
 
     if (userWithUsername)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(username, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, _lang),
         HttpStatus.CONFLICT,
         ExceptionTypes.CONFLICT,
       );
@@ -159,7 +159,7 @@ export class AuthService {
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(email, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, _lang),
         HttpStatus.CONFLICT,
         ExceptionTypes.CONFLICT,
       );
@@ -523,7 +523,7 @@ export class AuthService {
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(email, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, _lang),
         HttpStatus.CONFLICT,
         ExceptionTypes.CONFLICT,
       );
@@ -534,7 +534,7 @@ export class AuthService {
 
     if (userWithUsername)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(username, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, _lang),
         HttpStatus.CONFLICT,
         ExceptionTypes.CONFLICT,
       );
