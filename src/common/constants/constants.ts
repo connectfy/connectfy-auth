@@ -1,4 +1,4 @@
-import { ICountry } from 'connectfy-shared';
+import { ICountry } from "../interfaces/intrefaces";
 
 export const COUNTRIES: ICountry[] = [
   {

@@ -13,7 +13,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { ValidationMessages } from 'connectfy-shared';
+import { ValidationMessages } from '@/src/common/constants/validation.messages';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
 
 export class ChangePhoneNumberDto {

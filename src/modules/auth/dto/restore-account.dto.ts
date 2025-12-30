@@ -4,7 +4,8 @@ import {
 } from '@/src/common/functions/transform';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { LANGUAGE, ValidationMessages } from 'connectfy-shared';
+import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { LANGUAGE } from '@/src/common/constants/common.enum';
 
 export class RestoreAccountDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

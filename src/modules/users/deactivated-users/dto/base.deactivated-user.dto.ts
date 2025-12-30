@@ -1,7 +1,7 @@
 import { stringTransform } from '@/src/common/functions/transform';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
-import { ValidationMessages } from 'connectfy-shared';
+import { ValidationMessages } from '@/src/common/constants/validation.messages';
 
 export class BaseDeactivatedUserDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
