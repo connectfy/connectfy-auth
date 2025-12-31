@@ -14,13 +14,30 @@ export class UserModel implements IUser {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ 
+    type: String, 
+    required: true,
+    minlength: 3,
+    maxlength: 30,
+    trim: true,
+  })
   username: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ 
+    type: String, 
+    required: true,
+    maxlength: 254,
+    trim: true,
+    lowercase: true,
+  })
   email: string;
 
-  @Prop({ type: String, enum: ROLE, required: true, default: ROLE.USER })
+  @Prop({ 
+    type: String, 
+    enum: ROLE, 
+    required: true, 
+    default: ROLE.USER 
+  })
   role: ROLE;
 
   @Prop({
@@ -31,18 +48,41 @@ export class UserModel implements IUser {
   })
   provider: PROVIDER;
 
-  @Prop({ type: String, required: true })
+  @Prop({ 
+    type: String, 
+    required: true,
+    maxlength: 100,
+  })
   password: string;
 
-  @Prop({ type: PhoneNumberSchema, required: false, default: null })
+  @Prop({ 
+    type: PhoneNumberSchema, 
+    required: false, 
+    default: null 
+  })
   phoneNumber: PhoneNumberModel;
 
-  @Prop({ type: String, required: false, default: null })
+  @Prop({ 
+    type: String, 
+    required: false, 
+    default: null,
+    maxlength: 20000,
+  })
   faceDescriptor: string | null;
 
-  @Prop({ type: String, required: true, enum: USER_STATUS, default: USER_STATUS.ACTIVE })
-  status: USER_STATUS
+  @Prop({ 
+    type: String, 
+    required: true, 
+    enum: USER_STATUS, 
+    default: USER_STATUS.ACTIVE 
+  })
+  status: USER_STATUS;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);
+
+// Indexes
+UserSchema.index({ username: 1 }, { unique: true });
+UserSchema.index({ email: 1 }, { unique: true });
+
 export type UserDocument = UserModel & Document & ITimestamps;

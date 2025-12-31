@@ -52,6 +52,15 @@ export const ValidationMessages = {
     });
   },
 
+  MAX: (field: string, min: number) => (args: ValidationArguments) => {
+    const lang = getLang(args);
+    return i18n.t('validation_messages.max', {
+      field,
+      min,
+      lng: lang,
+    });
+  },
+
   DATE: (field: string) => (args: ValidationArguments) => {
     const lang = getLang(args);
     return i18n.t('validation_messages.date', {

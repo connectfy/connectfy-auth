@@ -22,7 +22,7 @@ export class VerifySignupDto {
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('code') })
   @Length(6, 6, { message: ValidationMessages.INVALID_LENGTH('code', 6) })
   @Matches(/^\d+$/, {
-    message: ValidationMessages.NUMBER('operators'),
+    message: ValidationMessages.NUMBER('code'),
   })
   code: string;
 

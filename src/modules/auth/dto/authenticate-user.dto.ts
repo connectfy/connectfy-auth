@@ -10,6 +10,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateIf,
 } from 'class-validator';
 
@@ -55,5 +56,6 @@ export class AuthenticateUserDto {
   @ValidateIf((obj) => obj.idToken)
   @IsString({ message: ValidationMessages.STRING('idToken') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
+  @MaxLength(1000, { message: ValidationMessages.MAX('idToken', 1000) })
   idToken: string | null;
 }

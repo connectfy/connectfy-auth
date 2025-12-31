@@ -1,22 +1,19 @@
 import { GENDER, LANGUAGE, THEME } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsDate,
-  IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsString,
   Matches,
   MinLength,
-  ValidateNested,
+  MaxLength,
 } from 'class-validator';
-// import { PhoneNumberDto } from '../../users/user/dto/nested/phoneNumber.dto';
 import {
   dateTransform,
   enumTransform,
-  objectTransform,
   stringTransform,
 } from '@/src/common/functions/transform';
 
@@ -24,16 +21,20 @@ export class SignupDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('firstName') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('firstName') })
+  @MaxLength(50, { message: ValidationMessages.MAX('firstName', 50) })
   firstName: string;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('lastName') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('lastName') })
+  @MaxLength(50, { message: ValidationMessages.MAX('lastName', 50) })
   lastName: string;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('username') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
+  @MinLength(3, { message: ValidationMessages.MIN('username', 3) })
+  @MaxLength(30, { message: ValidationMessages.MAX('username', 30) })
   @Matches(/^[A-Za-z0-9._-]+$/, {
     message: ValidationMessages.MISMATCH(
       'username',
@@ -45,6 +46,7 @@ export class SignupDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
+  @MaxLength(254, { message: ValidationMessages.MAX('email', 254) })
   email: string;
 
   // @Transform(({ key, value }) => objectTransform({ key, value }))
@@ -57,7 +59,8 @@ export class SignupDto {
   @IsString({ message: ValidationMessages.STRING('password') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
   @MinLength(8, { message: ValidationMessages.MIN('password', 8) })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,15}$/, {
+  @MaxLength(30, { message: ValidationMessages.MAX('password', 30) })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,30}$/, {
     message: ValidationMessages.PASSWORD(),
   })
   password: string;
@@ -99,11 +102,14 @@ export class GoogleAuthSignupDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('idToken') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
+  @MaxLength(2048, { message: ValidationMessages.MAX('idToken', 2048) })
   idToken: string;
 
   @Transform(({ key, value }) => stringTransform({ key, value }))
   @IsString({ message: ValidationMessages.STRING('username') })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
+  @MinLength(3, { message: ValidationMessages.MIN('username', 3) })
+  @MaxLength(30, { message: ValidationMessages.MAX('username', 30) })
   @Matches(/^[^\s.,?()$:;"'{}[\]=+&!\\|/<>`~@#№%^]+$/, {
     message: ValidationMessages.MISMATCH(
       'username',
