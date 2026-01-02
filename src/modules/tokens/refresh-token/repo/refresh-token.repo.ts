@@ -33,6 +33,12 @@ export class RefreshTokenRepository extends BaseRepository<
     return await this.model.findOne({ refresh_token }).exec();
   }
 
+  async findOne(
+    query: Record<string, any>,
+  ): Promise<RefreshTokenDocument | null> {
+    return await this.model.findOne(query);
+  }
+
   async update({
     userId,
     refresh_token,

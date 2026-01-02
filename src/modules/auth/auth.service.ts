@@ -294,7 +294,9 @@ export class AuthService {
   // ========================
   // LOGIN
   // ========================
-  async login(data: LoginDto): Promise<{ access_token?: string }> {
+  async login(
+    data: LoginDto,
+  ): Promise<{ access_token?: string; refresh_token: string }> {
     const { identifierType, identifier, password, _lang } = data;
 
     let user: IReturnedUser | null;
@@ -392,7 +394,7 @@ export class AuthService {
       userId: user._id as string,
     });
 
-    return { access_token };
+    return { access_token, refresh_token };
   }
 
   // ========================
@@ -864,26 +866,46 @@ export class AuthService {
   // ========================
   // VERIFY AUTH TOKEN
   // ========================
-  async verifyAuthToken(token: string, _lang: LANGUAGE) {
+  async verifyAuthToken(
+    access_token: string,
+    refresh_token: string,
+    _lang: LANGUAGE,
+  ) {
     try {
-      const payload = await this.refreshTokenService.verifyToken(token, true);
+      const payload = await this.refreshTokenService.verifyToken(
+        access_token,
+        true,
+      );
 
-      if (!payload._id)
+      if (!payload._id) {
         throw new BaseException(
           ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
           HttpStatus.UNAUTHORIZED,
           ExceptionTypes.UNAUTHORIZED,
         );
+      }
+
+      const storedToken =
+        await this.refreshTokenService.findToken(refresh_token);
+
+      if (!storedToken || storedToken.userId !== payload._id) {
+        throw new BaseException(
+          ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+          HttpStatus.UNAUTHORIZED,
+          ExceptionTypes.UNAUTHORIZED,
+        );
+      }
 
       const user = await this.userRepo.findOne({ query: { _id: payload._id } });
 
-      if (!user)
+      if (!user) {
+        console.log('user: ', user);
         throw new BaseException(
           ExceptionMessages.NOT_FOUND_MESSAGE,
           HttpStatus.NOT_FOUND,
           ExceptionTypes.NOT_FOUND,
         );
-
+      }
       const userObj = user.toObject ? user.toObject() : user;
 
       const { password, ...safeUser } = userObj;

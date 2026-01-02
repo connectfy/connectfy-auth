@@ -86,9 +86,17 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async verifyAuthToken(
     @Payload()
-    { access_token, _lang }: { access_token: string; _lang: LANGUAGE },
+    {
+      access_token,
+      refresh_token,
+      _lang,
+    }: {
+      access_token: string;
+      refresh_token: string;
+      _lang: LANGUAGE;
+    },
   ) {
-    return await this.service.verifyAuthToken(access_token, _lang);
+    return await this.service.verifyAuthToken(access_token, refresh_token, _lang);
   }
 
   @MessagePattern('auth/delete-account', Transport.TCP)
