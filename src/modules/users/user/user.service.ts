@@ -9,21 +9,15 @@ import {
   ExceptionMessages,
   ExceptionTypes,
 } from '@common/constants/exception.constants';
-import { ClientKafka, ClientProxy } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
-import {
-  emitWithContext,
-  sendWithContext,
-} from '@/src/common/helpers/microservice-request.helper';
+import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { UserDocument } from './entity/user.entity';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { genSalt, hash, compare } from 'bcrypt';
 import { TokenRepository } from '../../tokens/token/repo/token.repo';
-import i18n from '@/src/i18n';
-import { changeEmailMessage } from '@/src/common/constants/emial.messages';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import {
@@ -34,6 +28,8 @@ import {
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { COUNTRIES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from '@/src/common/services/email.service';
+import { BcryptService } from '@/src/common/services/bcrypt.service';
 
 @Injectable()
 export class UserService {
@@ -43,33 +39,17 @@ export class UserService {
     @Inject('ACCOUNT_SERVICE_TCP')
     private readonly accountServiceTcp: ClientProxy,
 
-    @Inject('NOTIFICATION_SERVICE_KAFKA')
-    private readonly notificationServiceKafka: ClientKafka,
-
     private readonly cls: ClsService,
     private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly emailService: EmailService,
+    private readonly bcryptService: BcryptService,
   ) {}
 
-  async onModuleInit() {
-    await Promise.all([this.notificationServiceKafka.connect()]);
-  }
-
-  private sendEmail(to: string, subject: string, html: string): void {
-    emitWithContext({
-      client: this.notificationServiceKafka,
-      topic: 'mail.send',
-      payload: {
-        from: '"Connectfy Team" <connectfy.team@gmail.com>',
-        sender: 'Connectfy Team',
-        to,
-        subject,
-        html,
-      },
-    });
-  }
-
+  // =======================
+  // GET USER INFORMATIONS
+  // =======================
   async me() {
     const { user, settings } = this.cls.get<ILoggedUser>('user');
     const { _id } = user;
@@ -110,7 +90,7 @@ export class UserService {
           payload: { query: { userId: _id } },
         }),
       ]);
-      
+
     return {
       user: res,
       account,
@@ -122,14 +102,18 @@ export class UserService {
     };
   }
 
-  // ================== CREATE
+  // =======================
+  // CREATE USER
+  // =======================
   async create(data: AddUserDto): Promise<IReturnedUser> {
     const res = await this.repo.create(data);
 
     return res;
   }
 
-  // ================== EDIT
+  // =======================
+  // EDIT USER INFORMATIONS
+  // =======================
   async edit(data: EditUserDto): Promise<IReturnedUser> {
     const { _id, _lang } = data;
 
@@ -147,7 +131,9 @@ export class UserService {
     return newData as IReturnedUser;
   }
 
-  // ================== REMOVE
+  // =======================
+  // REMOVE USER
+  // =======================
   async remove(data: RemoveUserDto): Promise<IReturnedUser> {
     const { _id, _lang } = data;
 
@@ -165,20 +151,26 @@ export class UserService {
     return res as IReturnedUser;
   }
 
-  // ================== FIND ONE
+  // =======================
+  // FIND ONE USER
+  // =======================
   async findOne(query: Record<string, any>): Promise<IReturnedUser | null> {
     const res = await this.repo.findOne({ query });
     return res;
   }
 
-  // ================== EXIST BY FIELD
+  // =======================
+  // CHECK USER IS EXIST BY FIELD
+  // =======================
   async existByField(query: Record<string, any>): Promise<boolean> {
     const res = await this.repo.existsByField(query);
 
     return res;
   }
 
-  // ================== CHANGE USERNAME
+  // =======================
+  // CHANGE USERNAME
+  // =======================
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
     const { username, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
@@ -242,24 +234,26 @@ export class UserService {
     return updatedObj;
   }
 
-  // ================== CHANGE EMAIL
+  // =======================
+  // CHANGE EMAIL
+  // =======================
   async changeEmail(data: ChangeEmailDto): Promise<{ statusCode: number }> {
     const { email, token } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');
     const { _id, email: oldEmail, provider } = user;
-    const { language } = settings.generalSettings;
+    const { language: _lang } = settings.generalSettings;
 
     const isUserExist = await this.repo.findOne({ query: { _id } });
 
     if (!isUserExist)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
       );
 
     if (provider !== PROVIDER.PASSWORD)
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+        ExceptionMessages.BAD_REQUEST_MESSAGE(_lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -271,13 +265,13 @@ export class UserService {
 
     if (!findToken)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
       );
 
     if (email === oldEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('userame', language),
+        ExceptionMessages.SAME_DATA('userame', _lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -287,7 +281,7 @@ export class UserService {
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('email', language),
+        ExceptionMessages.SAME_DATA('email', _lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -321,16 +315,18 @@ export class UserService {
       type: TOKEN_TYPE.CHANGE_EMAIL,
     });
 
-    this.sendEmail(
-      email,
-      i18n.t('email_messages.change_email.mail_subject', { lang: language }),
-      changeEmailMessage(emailChangeToken, language),
-    );
+    this.emailService.changeEmail({
+      to: email,
+      _lang,
+      additional: { token: emailChangeToken },
+    });
 
     return { statusCode: 200 };
   }
 
-  // ================== VERIFY EMAIL CHANGE
+  // =======================
+  // VERIFY CHANGE EMAIL
+  // =======================
   async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IReturnedUser> {
     const { token } = data;
     const { user: me, settings } = this.cls.get<ILoggedUser>('user');
@@ -394,7 +390,9 @@ export class UserService {
     return updatedObj;
   }
 
-  // ================== CHANGE PASSWORD
+  // =======================
+  // CHANGE PASSWORD
+  // =======================
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
     const { user: me, settings } = this.cls.get<ILoggedUser>('user');
@@ -439,7 +437,10 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const isPasswordSame = await compare(password, userObj.password);
+    const isPasswordSame = await this.bcryptService.compare(
+      password,
+      userObj.password,
+    );
 
     if (isPasswordSame)
       throw new BaseException(
@@ -447,8 +448,7 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const salt = await genSalt();
-    const hashedPassword = await hash(password, salt);
+    const hashedPassword = await this.bcryptService.hash(password);
 
     const updatedUser = (await this.repo.update({
       _id,
@@ -467,7 +467,9 @@ export class UserService {
     return updatedObj;
   }
 
-  // ================== CHANGE PHONE NUMBER
+  // =======================
+  // CHANGE PHONE NUMBER
+  // =======================
   async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IReturnedUser> {
     const { phoneNumber, token, action } = data;
     const { user, settings } = this.cls.get<ILoggedUser>('user');

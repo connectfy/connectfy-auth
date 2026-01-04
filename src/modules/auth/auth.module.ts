@@ -10,6 +10,8 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { BannedUserModule } from '../users/banned-user/banned-user.module';
 import { TokenModule } from '../tokens/token/token.module';
 import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-users.module';
+import { EmailService } from '@/src/common/services/email.service';
+import { BcryptService } from '@/src/common/services/bcrypt.service';
 
 @Module({
   imports: [
@@ -84,7 +86,6 @@ import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-u
     DeactivetedUsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [JwtModule, RefreshTokenModule, UsersModule],
+  providers: [AuthService, EmailService, BcryptService],
 })
 export class AuthModule {}

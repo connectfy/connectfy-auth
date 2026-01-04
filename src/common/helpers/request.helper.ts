@@ -444,7 +444,7 @@ export class RequestHelper {
   // ==========================================
   // Extract IP address from request data
   // ==========================================
-  private static extractIpFromRequestData(
+  static extractIpFromRequestData(
     requestData: Record<string, any>,
   ): string {
     const headers = requestData.headers;

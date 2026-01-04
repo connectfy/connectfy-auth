@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RefreshTokenDocument } from './entity/refresh-token.entity';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
+import { RequestHelper } from '@/src/common/helpers/request.helper';
 
 @Injectable()
 export class RefreshTokenService {
@@ -39,16 +40,44 @@ export class RefreshTokenService {
     return { access_token, refresh_token };
   }
 
-  async saveTokens(data: IUpdateRefreshToken): Promise<RefreshTokenDocument> {
-    const { userId, deviceId, refresh_token } = data;
+  async saveTokens(data: {
+    userId: string;
+    deviceId: string;
+    refresh_token: string;
+    requestData: Record<string, any>;
+  }): Promise<RefreshTokenDocument> {
+    const { userId, deviceId, refresh_token, requestData } = data;
 
     const findToken = await this.repo.findOne({
       $and: [{ userId }, { deviceId }, { refresh_token }],
     });
 
-    if (findToken) return await this.repo.update(data);
+    const deviceInfo =
+      RequestHelper.parseDeviceInfoFromRequestData(requestData);
 
-    return await this.repo.save(data);
+    const finalData: IUpdateRefreshToken = {
+      userId,
+      refresh_token,
+      deviceId,
+      deviceName: deviceInfo.deviceName,
+      userAgent: deviceInfo.userAgent,
+      browser: deviceInfo.browser,
+      os: deviceInfo.os,
+      platform: deviceInfo.platform,
+      ipAddress: deviceInfo.ipAddress,
+      country: deviceInfo.country,
+      countryCode: deviceInfo.countryCode,
+      city: deviceInfo.city,
+      region: deviceInfo.region,
+      longitude: deviceInfo.longitude,
+      latitude: deviceInfo.latitude,
+      timezone: deviceInfo.timezone,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    };
+
+    if (findToken) return await this.repo.update(finalData);
+
+    return await this.repo.save(finalData);
   }
 
   async findToken(refresh_token: string): Promise<RefreshTokenDocument | null> {

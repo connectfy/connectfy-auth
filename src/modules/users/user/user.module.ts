@@ -9,6 +9,8 @@ import { DeletedUserModule } from '../deleted-user/deleted-user.module';
 import { TokenModule } from '../../tokens/token/token.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.module';
+import { EmailService } from '@/src/common/services/email.service';
+import { BcryptService } from '@/src/common/services/bcrypt.service';
 
 @Module({
   imports: [
@@ -47,7 +49,7 @@ import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.mod
     DeletedUserModule,
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [UserService, UserRepository, EmailService, BcryptService],
   exports: [UserService, UserRepository],
 })
 export class UserModule {}
