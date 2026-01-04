@@ -66,6 +66,7 @@ export enum LANGUAGE {
 export enum THEME {
   DARK = 'dark',
   LIGHT = 'light',
+  DEVICE = 'device',
 }
 
 export enum STARTUP_PAGE {
