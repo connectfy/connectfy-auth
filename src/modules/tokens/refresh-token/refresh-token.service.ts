@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IRefreshToken,
+  IGenerateRefreshToken,
   IRefreshTokenPayload,
   IUpdateRefreshToken,
 } from './interface/refresh-token.interface';
@@ -17,7 +17,9 @@ export class RefreshTokenService {
     private readonly config: ConfigService,
   ) {}
 
-  async generateTokens(payload: IRefreshTokenPayload): Promise<IRefreshToken> {
+  async generateTokens(
+    payload: IRefreshTokenPayload,
+  ): Promise<IGenerateRefreshToken> {
     const accessSecretKey = this.config.get<string>('JWT_ACCESS_SECRET');
     const accessExpiry = this.config.get<string>('ACCESS_EXPIRED');
 
@@ -38,13 +40,15 @@ export class RefreshTokenService {
   }
 
   async saveTokens(data: IUpdateRefreshToken): Promise<RefreshTokenDocument> {
-    const { userId, refresh_token } = data;
+    const { userId, deviceId, refresh_token } = data;
 
-    const findToken = await this.repo.findTokenByUserId(userId);
+    const findToken = await this.repo.findOne({
+      $and: [{ userId }, { deviceId }, { refresh_token }],
+    });
 
-    if (findToken) return await this.repo.update({ userId, refresh_token });
+    if (findToken) return await this.repo.update(data);
 
-    return await this.repo.save({ userId, refresh_token });
+    return await this.repo.save(data);
   }
 
   async findToken(refresh_token: string): Promise<RefreshTokenDocument | null> {
@@ -62,7 +66,9 @@ export class RefreshTokenService {
     });
   }
 
-  async removeTokenByUserId(userId: string): Promise<RefreshTokenDocument | null> {
+  async removeTokenByUserId(
+    userId: string,
+  ): Promise<RefreshTokenDocument | null> {
     return await this.repo.remove({ userId });
   }
 }

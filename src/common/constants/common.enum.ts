@@ -115,3 +115,31 @@ export enum DELETE_REASON {
   ADMIN_ACTION = 'ADMIN_ACTION',
   OTHER = 'OTHER',
 }
+
+export enum DEVICE_TYPE {
+  WEB = 'WEB',
+  MOBILE = 'MOBILE',
+  TABLET = 'TABLET',
+  DESKTOP = 'DESKTOP',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export enum BROWSER_TYPE {
+  CHROME = 'CHROME',
+  FIREFOX = 'FIREFOX',
+  SAFARI = 'SAFARI',
+  EDGE = 'EDGE',
+  OPERA = 'OPERA',
+  BRAVE = 'BRAVE',
+  SAMSUNG = 'SAMSUNG',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export enum OS_TYPE {
+  WINDOWS = 'WINDOWS',
+  MACOS = 'MACOS',
+  LINUX = 'LINUX',
+  ANDROID = 'ANDROID',
+  IOS = 'IOS',
+  UNKNOWN = 'UNKNOWN',
+}

@@ -96,7 +96,11 @@ export class AuthController {
       _lang: LANGUAGE;
     },
   ) {
-    return await this.service.verifyAuthToken(access_token, refresh_token, _lang);
+    return await this.service.verifyAuthToken(
+      access_token,
+      refresh_token,
+      _lang,
+    );
   }
 
   @MessagePattern('auth/delete-account', Transport.TCP)
@@ -107,18 +111,16 @@ export class AuthController {
 
   @MessagePattern('auth/refreshToken', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async refreshToken(
-    @Payload()
-    { refresh_token, _lang }: { refresh_token: string; _lang: LANGUAGE },
-  ) {
-    if (!refresh_token)
+  async refreshToken(@Payload() data: Record<string, any>) {
+    if (!data.refresh_token)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
+        { nagivate: true },
       );
 
-    return await this.service.refreshToken(refresh_token, _lang);
+    return await this.service.refreshToken(data, LANGUAGE.EN);
   }
 
   @MessagePattern('auth/faceDescriptor', Transport.TCP)

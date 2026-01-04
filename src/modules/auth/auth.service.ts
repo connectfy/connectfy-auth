@@ -48,7 +48,10 @@ import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
-import { ILoggedUser } from '@/src/common/interfaces/request.interface';
+import {
+  IDeviceInfoWithLocation,
+  ILoggedUser,
+} from '@/src/common/interfaces/request.interface';
 import {
   emitWithContext,
   sendWithContext,
@@ -61,6 +64,8 @@ import { IReturnedToken } from '../tokens/token/interface/token.interface';
 import { IReturnedDeletedUser } from '../users/deleted-user/interface/deleted-user.interface';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deactivated-user.repo';
+import { Request } from 'express';
+import { RequestHelper } from '@/src/common/helpers/request.helper';
 
 @Injectable()
 export class AuthService {
@@ -91,10 +96,6 @@ export class AuthService {
   ) {
     const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
     this.googleClient = new OAuth2Client(clientId);
-  }
-
-  async onModuleInit() {
-    await Promise.all([this.notificationServiceKafka.connect()]);
   }
 
   private sendEmail(to: string, subject: string, html: string): void {
@@ -134,6 +135,36 @@ export class AuthService {
     }
 
     return avatar;
+  }
+
+  private async saveToken(
+    userId: string,
+    refresh_token: string,
+    deviceId: string,
+    requestData: Record<string, any>,
+  ): Promise<void> {
+    const deviceInfo =
+      RequestHelper.parseDeviceInfoFromRequestData(requestData);
+
+    await this.refreshTokenService.saveTokens({
+      userId,
+      refresh_token,
+      deviceId,
+      deviceName: deviceInfo.deviceName,
+      userAgent: deviceInfo.userAgent,
+      browser: deviceInfo.browser,
+      os: deviceInfo.os,
+      platform: deviceInfo.platform,
+      ipAddress: deviceInfo.ipAddress,
+      country: deviceInfo.country,
+      countryCode: deviceInfo.countryCode,
+      city: deviceInfo.city,
+      region: deviceInfo.region,
+      longitude: deviceInfo.longitude,
+      latitude: deviceInfo.latitude,
+      timezone: deviceInfo.timezone,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
   }
 
   // ========================
@@ -184,7 +215,8 @@ export class AuthService {
   async verifySignup(
     data: VerifySignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
-    const { code, verifyCode, unverifiedUser, _lang } = data;
+    const { code, verifyCode, unverifiedUser, _lang, deviceId, requestData } =
+      data;
 
     if (verifyCode !== code)
       throw new BaseException(
@@ -288,6 +320,8 @@ export class AuthService {
       userId: _id,
     });
 
+    await this.saveToken(_id, refresh_token, deviceId, requestData);
+
     return { _id, access_token, refresh_token };
   }
 
@@ -297,7 +331,14 @@ export class AuthService {
   async login(
     data: LoginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
-    const { identifierType, identifier, password, _lang } = data;
+    const {
+      identifierType,
+      identifier,
+      password,
+      _lang,
+      requestData,
+      deviceId,
+    } = data;
 
     let user: IReturnedUser | null;
 
@@ -389,10 +430,7 @@ export class AuthService {
         _id: user._id as string,
       });
 
-    await this.refreshTokenService.saveTokens({
-      refresh_token,
-      userId: user._id as string,
-    });
+    await this.saveToken(user._id, refresh_token, deviceId, requestData);
 
     return { access_token, refresh_token };
   }
@@ -403,7 +441,7 @@ export class AuthService {
   async googleLogin(
     data: GoogleAuthloginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
-    const { idToken, _lang } = data;
+    const { idToken, _lang, deviceId, requestData } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -491,6 +529,8 @@ export class AuthService {
       userId: user._id,
     });
 
+    await this.saveToken(user._id, refresh_token, deviceId, requestData);
+
     return { access_token, refresh_token };
   }
 
@@ -500,7 +540,16 @@ export class AuthService {
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
-    const { idToken, username, gender, theme, birthdayDate, _lang } = data;
+    const {
+      idToken,
+      username,
+      gender,
+      theme,
+      birthdayDate,
+      _lang,
+      deviceId,
+      requestData,
+    } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -630,6 +679,8 @@ export class AuthService {
       refresh_token,
       userId: _id as string,
     });
+
+    await this.saveToken(_id, refresh_token, deviceId, requestData);
 
     return { _id, access_token, refresh_token };
   }
@@ -899,7 +950,6 @@ export class AuthService {
       const user = await this.userRepo.findOne({ query: { _id: payload._id } });
 
       if (!user) {
-        console.log('user: ', user);
         throw new BaseException(
           ExceptionMessages.NOT_FOUND_MESSAGE,
           HttpStatus.NOT_FOUND,
@@ -1059,9 +1109,9 @@ export class AuthService {
   // ========================
   // REFRESH TOKEN
   // ========================
-  async refreshToken(refreshToken: string, _lang: LANGUAGE) {
+  async refreshToken(data: Record<string, any>, _lang: LANGUAGE) {
     const payload = await this.refreshTokenService.verifyToken(
-      refreshToken,
+      data.refresh_token,
       false,
     );
 
@@ -1076,15 +1126,19 @@ export class AuthService {
         ExceptionTypes.UNAUTHORIZED,
       );
 
+    const userObj = user.toObject ? user.toObject() : user;
+
     let { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({
-        _id: user._id,
+        _id: userObj._id,
       });
 
-    await this.refreshTokenService.saveTokens({
-      userId: user._id,
+    await this.saveToken(
+      userObj._id,
       refresh_token,
-    });
+      data.deviceId,
+      data.requestData,
+    );
 
     return {
       user_id: user._id,

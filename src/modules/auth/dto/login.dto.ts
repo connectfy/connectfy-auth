@@ -1,12 +1,21 @@
 import {
   arrayTransform,
   enumTransform,
+  objectTransform,
   stringTransform,
 } from '@/src/common/functions/transform';
 import { IDENTIFIER_TYPE, LANGUAGE } from '@common/constants/common.enum';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+import { Request } from 'express';
 
 export class LoginDto {
   @Transform(({ key, value }) =>
@@ -39,6 +48,25 @@ export class LoginDto {
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('deviceId') })
+  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  deviceId: string;
+
+  @Transform(({ key, value }) => objectTransform({ key, value }))
+  @IsOptional()
+  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  requestData: {
+    headers: {
+      'user-agent'?: string | string[];
+      'x-forwarded-for'?: string | string[];
+      'x-real-ip'?: string | string[];
+      'cf-connecting-ip'?: string | string[];
+    };
+    ip?: string;
+  };
 }
 
 export class GoogleAuthloginDto {
@@ -55,4 +83,23 @@ export class GoogleAuthloginDto {
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('deviceId') })
+  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  deviceId: string;
+
+  @Transform(({ key, value }) => objectTransform({ key, value }))
+  @IsOptional()
+  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  requestData: {
+    headers: {
+      'user-agent'?: string | string[];
+      'x-forwarded-for'?: string | string[];
+      'x-real-ip'?: string | string[];
+      'cf-connecting-ip'?: string | string[];
+    };
+    ip?: string;
+  };
 }

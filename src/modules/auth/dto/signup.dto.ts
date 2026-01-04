@@ -10,10 +10,14 @@ import {
   Matches,
   MinLength,
   MaxLength,
+  IsObject,
+  IsOptional,
+  IsUUID,
 } from 'class-validator';
 import {
   dateTransform,
   enumTransform,
+  objectTransform,
   stringTransform,
 } from '@/src/common/functions/transform';
 
@@ -155,4 +159,23 @@ export class GoogleAuthSignupDto {
   })
   @IsNotEmpty({ message: ValidationMessages.REQUIRED('theme') })
   theme: THEME;
+
+  @Transform(({ key, value }) => stringTransform({ key, value }))
+  @IsString({ message: ValidationMessages.STRING('deviceId') })
+  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
+  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  deviceId: string;
+
+  @Transform(({ key, value }) => objectTransform({ key, value }))
+  @IsOptional()
+  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  requestData: {
+    headers: {
+      'user-agent'?: string | string[];
+      'x-forwarded-for'?: string | string[];
+      'x-real-ip'?: string | string[];
+      'cf-connecting-ip'?: string | string[];
+    };
+    ip?: string;
+  };
 }
