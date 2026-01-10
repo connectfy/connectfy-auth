@@ -24,7 +24,7 @@ import {
   TOKEN_TYPE,
 } from '@/src/common/constants/common.enum';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
-import { COUNTRIES, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
+import { COUNTRIES, EXPIRE_DATES, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
@@ -288,8 +288,8 @@ export class UserService {
       _id,
       TOKEN_TYPE.CHANGE_EMAIL,
       'CHANGE_EMAIL_SECRET',
-      '1h',
-      60 * 60 * 1000,
+      EXPIRE_DATES.JWT.ONE_HOUR,
+      EXPIRE_DATES.TOKEN.ONE_HOUR,
     );
 
     this.emailService.changeEmail({

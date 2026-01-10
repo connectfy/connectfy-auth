@@ -46,7 +46,11 @@ import { RequestHelper } from '@/src/common/helpers/request.helper';
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
-import { ENV, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
+import {
+  ENV,
+  EXPIRE_DATES,
+  MICROSERVICE_NAMES,
+} from '@/src/common/constants/constants';
 
 @Injectable()
 export class AuthService {
@@ -614,8 +618,8 @@ export class AuthService {
       user._id,
       TOKEN_TYPE.PASSWORD_RESET,
       'FORGOT_PASSWORD_SECRET',
-      '1h',
-      60 * 60 * 1000,
+      EXPIRE_DATES.JWT.ONE_HOUR,
+      EXPIRE_DATES.TOKEN.ONE_HOUR,
     );
 
     this.emailService.forgotPassword({
@@ -901,8 +905,8 @@ export class AuthService {
         _id,
         TOKEN_TYPE.RESTORE_ACCOUNT,
         'RESTORE_ACCOUNT_SECRET',
-        '30d',
-        30 * 24 * 60 * 60 * 1000,
+        EXPIRE_DATES.JWT.ONE_MONTH,
+        EXPIRE_DATES.TOKEN.ONE_MONTH,
       ),
       this.tokenService.removeMany({
         $and: [{ userId: _id }, { type: { $ne: TOKEN_TYPE.RESTORE_ACCOUNT } }],

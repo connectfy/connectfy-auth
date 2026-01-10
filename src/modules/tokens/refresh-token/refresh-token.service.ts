@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { RefreshTokenDocument } from './entity/refresh-token.entity';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
-import { ENV } from '@/src/common/constants/constants';
+import { ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
 
 @Injectable()
 export class RefreshTokenService {
@@ -26,7 +26,7 @@ export class RefreshTokenService {
     const accessExpiry = this.config.get<string>(ENV.AUTH.JWT.ACCESS.EXPIRES_IN);
 
     const refreshSecretKey = this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET);
-    const refreshExpiry = this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET);
+    const refreshExpiry = this.config.get<string>(ENV.AUTH.JWT.REFRESH.EXPIRES_IN);
 
     const access_token = await this.jwtService.signAsync(payload, {
       secret: accessSecretKey,
@@ -73,7 +73,7 @@ export class RefreshTokenService {
       longitude: deviceInfo.longitude,
       latitude: deviceInfo.latitude,
       timezone: deviceInfo.timezone,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + EXPIRE_DATES.TOKEN.ONE_MONTH),
     };
 
     if (findToken) return await this.repo.update(finalData);
