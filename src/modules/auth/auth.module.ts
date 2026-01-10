@@ -10,14 +10,15 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { BannedUserModule } from '../users/banned-user/banned-user.module';
 import { TokenModule } from '../tokens/token/token.module';
 import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-users.module';
-import { EmailService } from '@/src/common/services/email.service';
-import { BcryptService } from '@/src/common/services/bcrypt.service';
+import { EmailService } from '@/src/common/services/utils/email.service';
+import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
+import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
 
 @Module({
   imports: [
     ClientsModule.register([
       {
-        name: 'ACCOUNT_SERVICE_TCP',
+        name: MICROSERVICE_NAMES.ACCOUNT.TCP,
         transport: Transport.TCP,
         options: {
           host: 'account-service',
@@ -25,7 +26,7 @@ import { BcryptService } from '@/src/common/services/bcrypt.service';
         },
       },
       // {
-      //   name: 'ACCOUNT_SERVICE_KAFKA',
+      //   name: MICROSERVICE_NAMES.ACCOUNT.KAFKA,
       //   transport: Transport.KAFKA,
       //   options: {
       //     client: {
@@ -42,7 +43,7 @@ import { BcryptService } from '@/src/common/services/bcrypt.service';
       //   },
       // },
       {
-        name: 'NOTIFICATION_SERVICE_KAFKA',
+        name: MICROSERVICE_NAMES.NOTIFICATION.KAFKA,
         transport: Transport.KAFKA,
         options: {
           client: {
@@ -59,7 +60,7 @@ import { BcryptService } from '@/src/common/services/bcrypt.service';
         },
       },
       // {
-      //   name: 'RELATIONSHIP_SERVICE_KAFKA',
+      //   name: MICROSERVICE_NAMES.RELATIONSHIP.KAFKA
       //   transport: Transport.KAFKA,
       //   options: {
       //     client: {

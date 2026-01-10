@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { RefreshTokenDocument } from './entity/refresh-token.entity';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
+import { ENV } from '@/src/common/constants/constants';
 
 @Injectable()
 export class RefreshTokenService {
@@ -21,11 +22,11 @@ export class RefreshTokenService {
   async generateTokens(
     payload: IRefreshTokenPayload,
   ): Promise<IGenerateRefreshToken> {
-    const accessSecretKey = this.config.get<string>('JWT_ACCESS_SECRET');
-    const accessExpiry = this.config.get<string>('ACCESS_EXPIRED');
+    const accessSecretKey = this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET);
+    const accessExpiry = this.config.get<string>(ENV.AUTH.JWT.ACCESS.EXPIRES_IN);
 
-    const refreshSecretKey = this.config.get<string>('JWT_REFRESH_SECRET');
-    const refreshExpiry = this.config.get<string>('REFRESH_EXPIRED');
+    const refreshSecretKey = this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET);
+    const refreshExpiry = this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET);
 
     const access_token = await this.jwtService.signAsync(payload, {
       secret: accessSecretKey,
@@ -90,8 +91,8 @@ export class RefreshTokenService {
   ): Promise<any> {
     return await this.jwtService.verifyAsync(token, {
       secret: isAccessToken
-        ? this.config.get<string>('JWT_ACCESS_SECRET')
-        : this.config.get<string>('JWT_REFRESH_SECRET'),
+        ? this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET)
+        : this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET),
     });
   }
 

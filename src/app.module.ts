@@ -7,6 +7,7 @@ import { TokensModule } from './modules/tokens/tokens.module';
 import { ClsInterceptor, ClsModule } from 'nestjs-cls';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
+import { ENV } from './common/constants/constants';
 
 @Module({
   imports: [
@@ -17,8 +18,8 @@ import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('MONGO_URI'),
-        dbName: 'authDb',
+        uri: config.get<string>(ENV.CORE.DATABASE.MONGO.URI),
+        dbName: ENV.CORE.DATABASE.MONGO.DB_NAME,
       }),
     }),
     ClsModule.forRoot({

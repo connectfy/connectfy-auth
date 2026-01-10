@@ -17,19 +17,17 @@ import { ChangeUsernameDto } from './dto/change-username.dto';
 import { UserDocument } from './entity/user.entity';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { TokenRepository } from '../../tokens/token/repo/token.repo';
 import { JwtService } from '@nestjs/jwt';
-import * as crypto from 'crypto';
 import {
   PHONE_NUMBER_ACTION,
   PROVIDER,
   TOKEN_TYPE,
 } from '@/src/common/constants/common.enum';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
-import { COUNTRIES } from '@/src/common/constants/constants';
+import { COUNTRIES, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
-import { EmailService } from '@/src/common/services/email.service';
-import { BcryptService } from '@/src/common/services/bcrypt.service';
+import { EmailService } from '@/src/common/services/utils/email.service';
+import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
 
@@ -38,7 +36,7 @@ export class UserService {
   constructor(
     private readonly repo: UserRepository,
 
-    @Inject('ACCOUNT_SERVICE_TCP')
+    @Inject(MICROSERVICE_NAMES.ACCOUNT.TCP)
     private readonly accountServiceTcp: ClientProxy,
 
     private readonly cls: ClsService,

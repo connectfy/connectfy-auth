@@ -9,15 +9,16 @@ import { DeletedUserModule } from '../deleted-user/deleted-user.module';
 import { TokenModule } from '../../tokens/token/token.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.module';
-import { EmailService } from '@/src/common/services/email.service';
-import { BcryptService } from '@/src/common/services/bcrypt.service';
+import { EmailService } from '@/src/common/services/utils/email.service';
+import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
+import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     ClientsModule.register([
       {
-        name: 'ACCOUNT_SERVICE_TCP',
+        name: MICROSERVICE_NAMES.ACCOUNT.TCP,
         transport: Transport.TCP,
         options: {
           host: 'account-service',
@@ -25,7 +26,7 @@ import { BcryptService } from '@/src/common/services/bcrypt.service';
         },
       },
       {
-        name: 'NOTIFICATION_SERVICE_KAFKA',
+        name: MICROSERVICE_NAMES.NOTIFICATION.KAFKA,
         transport: Transport.KAFKA,
         options: {
           client: {

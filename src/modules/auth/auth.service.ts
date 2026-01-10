@@ -43,16 +43,17 @@ import { IReturnedDeletedUser } from '../users/deleted-user/interface/deleted-us
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deactivated-user.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
-import { EmailService } from '@/src/common/services/email.service';
-import { BcryptService } from '@/src/common/services/bcrypt.service';
+import { EmailService } from '@/src/common/services/utils/email.service';
+import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
+import { ENV, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
 
 @Injectable()
 export class AuthService {
   private googleClient: OAuth2Client;
 
   constructor(
-    @Inject('ACCOUNT_SERVICE_TCP')
+    @Inject(MICROSERVICE_NAMES.ACCOUNT.TCP)
     private readonly accountServiceTcp: ClientProxy,
 
     private cls: ClsService,
@@ -67,7 +68,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly bcryptService: BcryptService,
   ) {
-    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const clientId = this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID);
     this.googleClient = new OAuth2Client(clientId);
   }
 
@@ -359,7 +360,7 @@ export class AuthService {
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
-      audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+      audience: this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID),
     });
 
     const payload = ticket.getPayload();
@@ -467,7 +468,7 @@ export class AuthService {
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
-      audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+      audience: this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID),
     });
 
     const payload = ticket.getPayload();
@@ -570,7 +571,7 @@ export class AuthService {
     const updatedFaceDescriptor = faceDescriptor
       ? encryptPayload(
           JSON.stringify(faceDescriptor),
-          this.config.get<string>('FACE_DESCRIPTOR_KEY')!,
+          this.config.get<string>(ENV.AUTH.KEYS.FACE_DESCRIPTOR)!,
         )
       : null;
 
@@ -679,7 +680,7 @@ export class AuthService {
     const tokenObj = token.toObject ? token.toObject() : token;
 
     const decoded = this.jwtService.verify(resetToken, {
-      secret: this.config.get<string>('FORGOT_PASSWORD_SECRET'),
+      secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.FORGOT_PASSWORD),
     });
 
     if (decoded.type !== TOKEN_TYPE.PASSWORD_RESET)
@@ -1009,7 +1010,7 @@ export class AuthService {
 
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
-        audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+        audience: this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID),
       });
 
       const payload = ticket.getPayload();
@@ -1057,7 +1058,7 @@ export class AuthService {
     }
 
     const decoded = this.jwtService.verify(token, {
-      secret: this.config.get<string>('RESTORE_ACCOUNT_SECRET'),
+      secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.RESTORE_ACCOUNT),
     });
 
     if (decoded.type !== TOKEN_TYPE.RESTORE_ACCOUNT)
