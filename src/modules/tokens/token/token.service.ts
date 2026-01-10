@@ -11,25 +11,90 @@ import { BaseException } from '@common/exceptions/base.exception';
 import { RemoveAllTokensDto } from './dto/remove.all.tokens.dto';
 import { IRemoveAllResponse } from '@common/interfaces/response.interface';
 import { FindTokenDto } from './dto/find.token.dto';
-import { TOKEN_TYPE } from '@common/constants/common.enum';
+import { LANGUAGE, TOKEN_TYPE } from '@common/constants/common.enum';
 import { IReturnedToken } from './interface/token.interface';
+import * as crypto from 'crypto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { ClsService } from 'nestjs-cls';
+import { IUser } from '../../users/user/interface/user.interface';
+import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 
 @Injectable()
 export class TokenService {
-  constructor(private readonly repo: TokenRepository) {}
+  constructor(
+    private readonly repo: TokenRepository,
+    private readonly config: ConfigService,
+    private readonly jwtService: JwtService,
+    private readonly cls: ClsService
+  ) {}
 
-  async generateToken(data: AddTokenDto): Promise<IReturnedToken> {
-    return (await this.repo.save(data)).toObject();
+  // async generateToken(data: AddTokenDto): Promise<IReturnedToken> {
+  //   return (await this.repo.save(data)).toObject();
+  // }
+
+  hashToken(token: string): string {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    return hashedToken;
+  }
+
+  async generateAndSaveToken(
+    userId: string,
+    type: TOKEN_TYPE,
+    expiresInMs: number,
+  ): Promise<{ rawToken: string; hashedToken: string }> {
+    const rawToken = crypto.randomBytes(128).toString('hex');
+    const hashedToken = this.hashToken(rawToken);
+    const tokenExpiry = new Date(Date.now() + expiresInMs);
+
+    await this.repo.save({
+      userId,
+      token: hashedToken,
+      type,
+      expiresAt: tokenExpiry,
+    });
+
+    return { rawToken, hashedToken };
+  }
+
+  async generateAndSaveJwtToken(
+    userId: string,
+    type: TOKEN_TYPE,
+    secret: string,
+    jwtExp: string,
+    tokenExp: number,
+  ): Promise<string> {
+    const token = this.jwtService.sign(
+      { userId, type },
+      {
+        secret: this.config.get<string>(secret),
+        expiresIn: jwtExp,
+      },
+    );
+
+    const hashedToken = this.hashToken(token);
+    const expiresAt = new Date(Date.now() + tokenExp);
+
+    await this.repo.save({
+      userId,
+      type,
+      token: hashedToken,
+      expiresAt,
+    });
+
+    return token;
   }
 
   async findToken(option: FindTokenDto): Promise<TokenDocument> {
-    const { _lang, ...options } = option;
+    const { settings } = this.cls.get<ILoggedUser>("user");
+    const { language } = settings.generalSettings;
 
-    const token = await this.repo.findOne(options);
+    const token = await this.repo.findOne(option);
 
     if (!token)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -42,13 +107,15 @@ export class TokenService {
   }
 
   async removeToken(data: RemoveTokenDto): Promise<TokenDocument> {
-    const { _id, _lang } = data;
+    const { settings } = this.cls.get<ILoggedUser>("user");
+    const { language } = settings.generalSettings;
+    const { _id } = data;
 
     const res = await this.repo.remove({ _id });
 
     if (!res)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -99,5 +166,42 @@ export class TokenService {
       notDeleted: [],
       deletedIds: removableIds,
     };
+  }
+
+  async removeMany(
+    query: Record<string, any>,
+  ): Promise<IRemoveAllResponse> {
+    const allTokens = await this.repo.findMany({
+      query,
+    });
+
+    if (!allTokens.length)
+      return { deletedCount: 0, notDeleted: [], deletedIds: [] };
+
+    const removableIds = allTokens.map((token) => token._id);
+
+    await this.repo.removeMany({ _id: { $in: removableIds } });
+
+    return {
+      deletedCount: removableIds.length,
+      notDeleted: [],
+      deletedIds: removableIds,
+    };
+  }
+  
+  async remove(query: Record<string, any>) {
+    const { settings } = this.cls.get<ILoggedUser>("user")
+    const { language } = settings.generalSettings;
+
+    const res = await this.repo.remove(query);
+
+    if (!res)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language ?? LANGUAGE.EN),
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+      );
+
+    return res
   }
 }

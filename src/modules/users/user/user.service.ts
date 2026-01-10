@@ -30,6 +30,8 @@ import { COUNTRIES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '@/src/common/services/email.service';
 import { BcryptService } from '@/src/common/services/bcrypt.service';
+import { TokenService } from '../../tokens/token/token.service';
+import i18n from '@/src/i18n';
 
 @Injectable()
 export class UserService {
@@ -40,11 +42,11 @@ export class UserService {
     private readonly accountServiceTcp: ClientProxy,
 
     private readonly cls: ClsService,
-    private readonly tokenRepo: TokenRepository,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly emailService: EmailService,
     private readonly bcryptService: BcryptService,
+    private readonly tokenService: TokenService,
   ) {}
 
   // =======================
@@ -185,25 +187,21 @@ export class UserService {
         HttpStatus.NOT_FOUND,
       );
 
-    const findToken = await this.tokenRepo.findOne({
+    const hashedToken = this.tokenService.hashToken(token);
+
+    await this.tokenService.findToken({
       query: {
         $and: [
-          { token },
+          { token: hashedToken },
           { userId: _id },
           { type: TOKEN_TYPE.CHANGE_USERNAME },
         ],
       },
     });
 
-    if (!findToken)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.BAD_REQUEST,
-      );
-
     if (username === oldUsername)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('userame', language),
+        ExceptionMessages.SAME_DATA(i18n.t('common.username', { lng: language }), language),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -213,7 +211,7 @@ export class UserService {
 
     if (userWithUsername)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('username', language),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, language),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -226,9 +224,8 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
-    await this.tokenRepo.removeMany({
-      userId: _id,
-      type: TOKEN_TYPE.CHANGE_USERNAME,
+    await this.tokenService.removeMany({
+      $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_USERNAME }],
     });
 
     return updatedObj;
@@ -257,21 +254,21 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const findToken = await this.tokenRepo.findOne({
+    const hashedToken = this.tokenService.hashToken(token);
+
+    await this.tokenService.findToken({
       query: {
-        $and: [{ token }, { userId: _id }, { type: TOKEN_TYPE.CHANGE_EMAIL }],
+        $and: [
+          { token: hashedToken },
+          { userId: _id },
+          { type: TOKEN_TYPE.CHANGE_EMAIL },
+        ],
       },
     });
 
-    if (!findToken)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
-        HttpStatus.NOT_FOUND,
-      );
-
     if (email === oldEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('userame', _lang),
+        ExceptionMessages.SAME_DATA(i18n.t('common.username', { lng: _lang }), _lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -281,39 +278,21 @@ export class UserService {
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('email', _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, _lang),
         HttpStatus.BAD_REQUEST,
       );
 
-    await this.tokenRepo.removeMany({
-      userId: _id,
-      type: TOKEN_TYPE.CHANGE_EMAIL,
+    await this.tokenService.removeMany({
+      $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_EMAIL }],
     });
 
-    const emailChangeToken = this.jwtService.sign(
-      {
-        userId: _id.toString(),
-        email: email,
-        type: TOKEN_TYPE.CHANGE_EMAIL,
-      },
-      {
-        secret: this.config.get<string>('CHANGE_EMAIL_SECRET'),
-        expiresIn: '1h',
-      },
+    const emailChangeToken = await this.tokenService.generateAndSaveJwtToken(
+      _id,
+      TOKEN_TYPE.CHANGE_EMAIL,
+      'CHANGE_EMAIL_SECRET',
+      '1h',
+      60 * 60 * 1000,
     );
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(emailChangeToken)
-      .digest('hex');
-
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    await this.tokenRepo.save({
-      userId: _id,
-      token: hashedToken,
-      expiresAt: tokenExpiry,
-      type: TOKEN_TYPE.CHANGE_EMAIL,
-    });
 
     this.emailService.changeEmail({
       to: email,
@@ -355,9 +334,9 @@ export class UserService {
       );
     }
 
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = this.tokenService.hashToken(token);
 
-    const isTokenExist = await this.tokenRepo.findOne({
+    await this.tokenService.findToken({
       query: {
         $and: [
           { token: hashedToken },
@@ -367,19 +346,13 @@ export class UserService {
       },
     });
 
-    if (!isTokenExist)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.NOT_FOUND,
-      );
-
     const [updatedUser] = await Promise.all([
       await this.repo.update({
         _id,
         email: decoded.email,
       }),
-      await this.tokenRepo.remove({
-        $and: [{ token: hashedToken }, { userId: _id }],
+      await this.tokenService.remove({
+        $and: [{ type: TOKEN_TYPE.CHANGE_EMAIL }, { userId: _id }],
       }),
     ]);
 
@@ -421,21 +394,17 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const findToken = await this.tokenRepo.findOne({
+    const hashedToken = this.tokenService.hashToken(token);
+
+    await this.tokenService.findToken({
       query: {
         $and: [
-          { token },
+          { token: hashedToken },
           { userId: _id },
           { type: TOKEN_TYPE.CHANGE_PASSWORD },
         ],
       },
     });
-
-    if (!findToken)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.BAD_REQUEST,
-      );
 
     const isPasswordSame = await this.bcryptService.compare(
       password,
@@ -444,7 +413,7 @@ export class UserService {
 
     if (isPasswordSame)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('password'),
+        ExceptionMessages.SAME_DATA(i18n.t("common.password", { lng: language }), language),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -459,9 +428,8 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
-    await this.tokenRepo.removeMany({
-      userId: _id,
-      type: TOKEN_TYPE.CHANGE_PASSWORD,
+    await this.tokenService.removeMany({
+      $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PASSWORD }],
     });
 
     return updatedObj;
@@ -484,21 +452,17 @@ export class UserService {
         HttpStatus.NOT_FOUND,
       );
 
-    const findToken = await this.tokenRepo.findOne({
+    const hashedToken = this.tokenService.hashToken(token);
+
+    await this.tokenService.findToken({
       query: {
         $and: [
-          { token },
+          { token: hashedToken },
           { userId: _id },
           { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER },
         ],
       },
     });
-
-    if (!findToken)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.BAD_REQUEST,
-      );
 
     if (phoneNumber?.fullPhoneNumber === oldPhoneNumber?.fullPhoneNumber)
       throw new BaseException(
@@ -529,7 +493,7 @@ export class UserService {
 
       if (userWithPhoneNumber)
         throw new BaseException(
-          ExceptionMessages.SAME_DATA(phoneNumber.fullPhoneNumber, language),
+          ExceptionMessages.ALREADY_EXISTS_MESSAGE(phoneNumber.fullPhoneNumber, language),
           HttpStatus.BAD_REQUEST,
         );
     }
@@ -552,7 +516,7 @@ export class UserService {
       ? updatedUser.toObject()
       : updatedUser;
 
-    await this.tokenRepo.removeMany({
+    await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
     });
 

@@ -36,7 +36,6 @@ import { ClsService } from 'nestjs-cls';
 import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
-import { TokenRepository } from '../tokens/token/repo/token.repo';
 import { RestoreAccountDto } from './dto/restore-account.dto';
 import { JwtService } from '@nestjs/jwt';
 import { IReturnedToken } from '../tokens/token/interface/token.interface';
@@ -46,6 +45,7 @@ import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deact
 import { RequestHelper } from '@/src/common/helpers/request.helper';
 import { EmailService } from '@/src/common/services/email.service';
 import { BcryptService } from '@/src/common/services/bcrypt.service';
+import { TokenService } from '../tokens/token/token.service';
 
 @Injectable()
 export class AuthService {
@@ -61,7 +61,7 @@ export class AuthService {
     private readonly bannedUserRepo: BannedUserRepository,
     private readonly deletedUserRepo: DeletedUserRepository,
     private readonly refreshTokenService: RefreshTokenService,
-    private readonly tokenRepo: TokenRepository,
+    private readonly tokenService: TokenService,
     private readonly jwtService: JwtService,
     private readonly deactivatedUserRepo: DeactivatedUserRepository,
     private readonly emailService: EmailService,
@@ -609,23 +609,13 @@ export class AuthService {
       return { statusCode: 200 };
     }
 
-    const token = this.jwtService.sign(
-      { userId: user._id, type: TOKEN_TYPE.PASSWORD_RESET },
-      {
-        secret: this.config.get<string>('FORGOT_PASSWORD_SECRET'),
-        expiresIn: '1h',
-      },
+    const token = await this.tokenService.generateAndSaveJwtToken(
+      user._id,
+      TOKEN_TYPE.PASSWORD_RESET,
+      'FORGOT_PASSWORD_SECRET',
+      '1h',
+      60 * 60 * 1000,
     );
-
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    await this.tokenRepo.save({
-      userId: user._id as string,
-      token: hashedToken,
-      type: TOKEN_TYPE.PASSWORD_RESET,
-      expiresAt: tokenExpiry,
-    });
 
     this.emailService.forgotPassword({
       to: identifier,
@@ -649,20 +639,23 @@ export class AuthService {
   // IS TOKEN VALID
   // =================================
   async isTokenValid(data: ValidateTokenDto): Promise<boolean> {
-    const { token, type } = data;
-    const res = await this.tokenRepo.findOne({
-      query: { $and: [{ token }, { type }] },
-    });
-    if (!res) return false;
+    try {
+      const { token, type } = data;
+      const res = await this.tokenService.findToken({
+        query: { $and: [{ token }, { type }] },
+      });
 
-    const expiresAt =
-      res.expiresAt instanceof Date ? res.expiresAt : new Date(res.expiresAt);
-    const now = new Date();
+      const expiresAt =
+        res.expiresAt instanceof Date ? res.expiresAt : new Date(res.expiresAt);
+      const now = new Date();
 
-    if (now >= expiresAt) return false;
-    if (res.isUsed) return false;
+      if (now >= expiresAt) return false;
+      if (res.isUsed) return false;
 
-    return true;
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   // =================================
@@ -676,18 +669,12 @@ export class AuthService {
       .update(resetToken)
       .digest('hex');
 
-    const token = await this.tokenRepo.findOne({
+    const token = await this.tokenService.findToken({
       query: {
         $and: [{ token: hashedToken }, { type: TOKEN_TYPE.PASSWORD_RESET }],
       },
       populate: [{ path: 'userId', select: '-faceDescriptor' }],
     });
-
-    if (!token)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
-        HttpStatus.NOT_FOUND,
-      );
 
     const tokenObj = token.toObject ? token.toObject() : token;
 
@@ -714,7 +701,7 @@ export class AuthService {
     const now = new Date();
 
     if (now >= expiresAt || tokenObj.isUsed) {
-      if (tokenObj) await this.tokenRepo.remove({ _id: token._id });
+      if (tokenObj) await this.tokenService.removeToken({ _id: token._id });
 
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED(_lang),
@@ -747,7 +734,7 @@ export class AuthService {
 
     await Promise.all([
       this.userRepo.update({ _id: user._id!, password: hashedPassword }),
-      this.tokenRepo.remove({ _id: token._id }),
+      this.tokenService.removeToken({ _id: token._id }),
     ]);
 
     return { statusCode: 200 };
@@ -863,17 +850,11 @@ export class AuthService {
     const { _id, email } = _loggedUser;
     const { language } = settings.generalSettings;
 
-    const deleteToken = await this.tokenRepo.findOne({
+    const deleteToken = await this.tokenService.findToken({
       query: {
         $and: [{ token }, { userId: _id }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
       },
     });
-
-    if (!deleteToken)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.BAD_REQUEST,
-      );
 
     const deleteTokenObj = deleteToken.toObject
       ? deleteToken.toObject()
@@ -887,7 +868,7 @@ export class AuthService {
 
     if (!deleteTokenObj || now >= expiresAt) {
       if (deleteTokenObj) {
-        await this.tokenRepo.remove({ _id: deleteTokenObj._id });
+        await this.tokenService.removeToken({ _id: deleteTokenObj._id });
       }
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED(language),
@@ -911,34 +892,18 @@ export class AuthService {
         reason: data.reason,
         otherReason: data.otherReason,
       }),
-      this.tokenRepo.removeMany({ userId: _id }),
+      this.tokenService.removeTokensByUserId(_id),
     ]);
 
-    const newToken = this.jwtService.sign(
-      {
-        userId: _id.toString(),
-        type: TOKEN_TYPE.RESTORE_ACCOUNT,
-      },
-      {
-        secret: this.config.get<string>('RESTORE_ACCOUNT_SECRET'),
-        expiresIn: '30d',
-      },
-    );
-
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(newToken)
-      .digest('hex');
-    const tokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-    await Promise.all([
-      this.tokenRepo.save({
-        userId: _id,
-        token: hashedToken,
-        expiresAt: tokenExpiry,
-        type: TOKEN_TYPE.RESTORE_ACCOUNT,
-      }),
-      this.tokenRepo.removeMany({
+    const [newToken, , ,] = await Promise.all([
+      this.tokenService.generateAndSaveJwtToken(
+        _id,
+        TOKEN_TYPE.RESTORE_ACCOUNT,
+        'RESTORE_ACCOUNT_SECRET',
+        '30d',
+        30 * 24 * 60 * 60 * 1000,
+      ),
+      this.tokenService.removeMany({
         $and: [{ userId: _id }, { type: { $ne: TOKEN_TYPE.RESTORE_ACCOUNT } }],
       }),
       this.refreshTokenService.removeTokenByUserId(_id),
@@ -1059,20 +1024,11 @@ export class AuthService {
         );
     }
 
-    const rawToken = crypto.randomBytes(128).toString('hex');
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(rawToken)
-      .digest('hex');
-
-    const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
-    const { token } = await this.tokenRepo.save({
-      userId: _id,
-      token: hashedToken,
+    const { rawToken: token } = await this.tokenService.generateAndSaveToken(
+      _id,
       type,
-      expiresAt: tokenExpiry,
-    });
+      10 * 60 * 60,
+    );
 
     return { statusCode: 200, token };
   }
@@ -1085,15 +1041,9 @@ export class AuthService {
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const restoreTokenDoc = await this.tokenRepo.findOne({
+    const restoreTokenDoc = await this.tokenService.findToken({
       query: { token: hashedToken, type: TOKEN_TYPE.RESTORE_ACCOUNT },
     });
-
-    if (!restoreTokenDoc)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
-        HttpStatus.NOT_FOUND,
-      );
 
     const restoreToken: IReturnedToken = restoreTokenDoc.toObject
       ? restoreTokenDoc.toObject()
@@ -1152,7 +1102,7 @@ export class AuthService {
 
     await Promise.all([
       this.userRepo.update({ _id: userObj._id, status: USER_STATUS.ACTIVE }),
-      this.tokenRepo.removeMany({ userId: userObj._id }),
+      this.tokenService.removeTokensByUserId(userObj._id),
       this.deletedUserRepo.remove(deletedUser._id),
     ]);
 
@@ -1171,7 +1121,7 @@ export class AuthService {
     const { _id } = _loggedUser;
     const { language } = settings.generalSettings;
 
-    const deactivateTokenDoc = await this.tokenRepo.findOne({
+    const deactivateTokenDoc = await this.tokenService.findToken({
       query: {
         $and: [
           { token },
@@ -1180,12 +1130,6 @@ export class AuthService {
         ],
       },
     });
-
-    if (!deactivateTokenDoc)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.NOT_FOUND,
-      );
 
     const deactivateToken: IReturnedToken = deactivateTokenDoc.toObject
       ? deactivateTokenDoc.toObject()
@@ -1200,7 +1144,7 @@ export class AuthService {
 
     await Promise.all([
       this.deactivatedUserRepo.create({ userId: _id }),
-      this.tokenRepo.removeMany({ userId: _id }),
+      this.tokenService.removeTokensByUserId(_id),
       this.refreshTokenService.removeTokenByUserId(_id),
       this.userRepo.update({ _id, status: USER_STATUS.INACTIVE }),
     ]);
