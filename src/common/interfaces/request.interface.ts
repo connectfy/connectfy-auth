@@ -3,6 +3,7 @@ import {
   BROWSER_TYPE,
   DATE_FORMAT,
   DEVICE_TYPE,
+  GENDER,
   LANGUAGE,
   NOTIFICATION_CONTENT_MODE,
   NOTIFICATION_SOUND_MODE,
@@ -15,11 +16,25 @@ import {
 
 export interface ILoggedUser {
   user: IUser;
+  account: IAccount;
   settings: {
     generalSettings: IGeneralSettings;
     notificationSettings: INotificationSettings;
     privacySettings: IPrivacySettings;
   };
+}
+
+export interface IAccount {
+  _id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  gender: GENDER;
+  bio: string | null;
+  location: string | null;
+  avatar: string | null;
+  lastSeen: Date;
+  birthdayDate: Date;
 }
 
 export interface IGeneralSettings {

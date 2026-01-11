@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { UserRepository } from '../users/user/repo/user.repo';
 import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
@@ -10,11 +10,9 @@ import {
 } from '@common/constants/exception.constants';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
 import { generateVerifyCode } from '@common/functions/function';
-import { ClientProxy } from '@nestjs/microservices';
 import { VerifySignupDto } from './dto/verify.dto';
 import {
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
-  GENDER,
   IDENTIFIER_TYPE,
   LANGUAGE,
   PROVIDER,
@@ -22,19 +20,16 @@ import {
   USER_STATUS,
 } from '@common/constants/common.enum';
 import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
-import { IReturnedUser } from '../users/user/interface/user.interface';
+import { IReturnedUser, IUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
 import { OAuth2Client } from 'google-auth-library';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import * as crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
-import { ILoggedUser } from '@/src/common/interfaces/request.interface';
-import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -46,20 +41,14 @@ import { RequestHelper } from '@/src/common/helpers/request.helper';
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
-import {
-  ENV,
-  EXPIRE_DATES,
-  MICROSERVICE_NAMES,
-} from '@/src/common/constants/constants';
+import { ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
+import { AccountService } from '@/src/common/services/projects/account.service';
 
 @Injectable()
 export class AuthService {
   private googleClient: OAuth2Client;
 
   constructor(
-    @Inject(MICROSERVICE_NAMES.ACCOUNT.TCP)
-    private readonly accountServiceTcp: ClientProxy,
-
     private cls: ClsService,
     private readonly config: ConfigService,
     private readonly userRepo: UserRepository,
@@ -71,71 +60,10 @@ export class AuthService {
     private readonly deactivatedUserRepo: DeactivatedUserRepository,
     private readonly emailService: EmailService,
     private readonly bcryptService: BcryptService,
+    private readonly accountService: AccountService,
   ) {
     const clientId = this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID);
     this.googleClient = new OAuth2Client(clientId);
-  }
-
-  // =================================
-  // CREATE USER ACCOUNT AND SETTINGS
-  // =================================
-  private async createAccountRelatedServices(opts: {
-    userId: string;
-    username: string;
-    firstName?: string;
-    lastName?: string;
-    gender?: GENDER;
-    avatar?: string | null;
-    _lang: string;
-    birthdayDate?: Date | null;
-    theme?: string | null;
-    location?: string | null;
-  }) {
-    const {
-      userId,
-      firstName = '',
-      lastName = '',
-      gender,
-      avatar,
-      _lang,
-      birthdayDate,
-      theme,
-    } = opts;
-
-    await Promise.all([
-      // account create
-      sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'account/create',
-        payload: {
-          userId,
-          firstName,
-          lastName,
-          gender,
-          avatar,
-          _lang,
-          birthdayDate,
-        },
-      }),
-      // privacy-settings/create
-      sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'privacy-settings/create',
-        payload: { userId, _lang },
-      }),
-      // general-settings/create
-      sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'general-settings/create',
-        payload: { userId, _lang, theme, language: _lang },
-      }),
-      // notification-settings/create
-      sendWithContext({
-        client: this.accountServiceTcp,
-        endpoint: 'notification-settings/create',
-        payload: { userId, _lang },
-      }),
-    ]);
   }
 
   // =================================
@@ -211,7 +139,7 @@ export class AuthService {
     const userIp = RequestHelper.extractIpFromRequestData(requestData);
     const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
 
-    await this.createAccountRelatedServices({
+    await this.accountService.createAccountRelatedServices({
       userId: _id,
       username,
       firstName,
@@ -519,7 +447,7 @@ export class AuthService {
     const userIp = RequestHelper.extractIpFromRequestData(requestData);
     const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
 
-    await this.createAccountRelatedServices({
+    await this.accountService.createAccountRelatedServices({
       userId: _id,
       username,
       firstName,
@@ -669,10 +597,7 @@ export class AuthService {
   async resetPassword(data: ResetPasswordDto): Promise<{ statusCode: 200 }> {
     const { resetToken, password, confirmPassword, _lang } = data;
 
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
+    const hashedToken = this.tokenService.hashToken(resetToken);
 
     const token = await this.tokenService.findToken({
       query: {
@@ -749,9 +674,9 @@ export class AuthService {
   // LOGOUT
   // =================================
   async logout(): Promise<{ statusCode: 200 }> {
-    const { user } = this.cls.get<ILoggedUser>('user');
+    const { _id } = this.cls.get<IUser>('user');
 
-    await this.refreshTokenService.removeTokenByUserId(user._id);
+    await this.refreshTokenService.removeTokenByUserId(_id);
 
     return { statusCode: 200 };
   }
@@ -764,10 +689,8 @@ export class AuthService {
     refresh_token: string,
     _lang: LANGUAGE,
   ) {
-    try {
       const payload = await this.refreshTokenService.verifyToken(
         access_token,
-        true,
       );
 
       if (!payload._id) {
@@ -775,6 +698,7 @@ export class AuthService {
           ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
           HttpStatus.UNAUTHORIZED,
           ExceptionTypes.UNAUTHORIZED,
+          { navigate: true }
         );
       }
 
@@ -786,6 +710,7 @@ export class AuthService {
           ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
           HttpStatus.UNAUTHORIZED,
           ExceptionTypes.UNAUTHORIZED,
+          { navigate: true }
         );
       }
 
@@ -793,37 +718,23 @@ export class AuthService {
 
       if (!user) {
         throw new BaseException(
-          ExceptionMessages.NOT_FOUND_MESSAGE,
-          HttpStatus.NOT_FOUND,
-          ExceptionTypes.NOT_FOUND,
+          ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+          HttpStatus.UNAUTHORIZED,
+          ExceptionTypes.UNAUTHORIZED,
+          { navigate: true }
         );
       }
       const userObj = user.toObject ? user.toObject() : user;
 
       const { password, ...safeUser } = userObj;
+      const searchPayload = { query: { userId: safeUser._id } };
 
       const [account, generalSettings, notificationSettings, privacySettings] =
         await Promise.all([
-          sendWithContext({
-            client: this.accountServiceTcp,
-            endpoint: 'account/findOne',
-            payload: { query: { userId: safeUser._id } },
-          }),
-          sendWithContext({
-            client: this.accountServiceTcp,
-            endpoint: 'general-settings/findOne',
-            payload: { query: { userId: safeUser._id } },
-          }),
-          sendWithContext({
-            client: this.accountServiceTcp,
-            endpoint: 'notification-settings/findOne',
-            payload: { query: { userId: safeUser._id } },
-          }),
-          sendWithContext({
-            client: this.accountServiceTcp,
-            endpoint: 'privacy-settings/findOne',
-            payload: { query: { userId: safeUser._id } },
-          }),
+          this.accountService.findAccount(searchPayload),
+          this.accountService.findGeneralSettings(searchPayload),
+          this.accountService.findNotificationSettings(searchPayload),
+          this.accountService.findPrivacySettings(searchPayload),
         ]);
 
       const result = {
@@ -837,13 +748,6 @@ export class AuthService {
       };
 
       return { status: 200, user: result };
-    } catch (error) {
-      throw new BaseException(
-        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
-        HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
-      );
-    }
   }
 
   // =================================
@@ -851,9 +755,8 @@ export class AuthService {
   // =================================
   async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
     const { token } = data;
-    const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, email } = _loggedUser;
-    const { language } = settings.generalSettings;
+    const { _id, email } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const deleteToken = await this.tokenService.findToken({
       query: {
@@ -876,7 +779,7 @@ export class AuthService {
         await this.tokenService.removeToken({ _id: deleteTokenObj._id });
       }
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(language),
+        ExceptionMessages.TOKEN_EXPIRED(lang),
         HttpStatus.BAD_REQUEST,
         ExceptionTypes.BAD_REQUEST,
       );
@@ -886,7 +789,7 @@ export class AuthService {
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -917,7 +820,7 @@ export class AuthService {
 
     this.emailService.deleteAccountCompleted({
       to: email,
-      _lang: language,
+      _lang: lang,
       additional: { token: newToken },
     });
 
@@ -972,15 +875,14 @@ export class AuthService {
     data: AuthenticateUserDto,
   ): Promise<{ statusCode: number; token: string }> {
     const { password, type, idToken } = data;
-    const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, email: userEmail } = _loggedUser;
-    const { language } = settings.generalSettings;
+    const { _id, email: userEmail } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const user = await this.userRepo.findOne({ query: { _id } });
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
 
@@ -989,7 +891,7 @@ export class AuthService {
     if (userObj.provider === PROVIDER.PASSWORD) {
       if (!password)
         throw new BaseException(
-          ExceptionMessages.INVALID_CREDENTIALS(language),
+          ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.BAD_REQUEST,
         );
 
@@ -1000,7 +902,7 @@ export class AuthService {
 
       if (!isPasswordMatch)
         throw new BaseException(
-          ExceptionMessages.INVALID_CREDENTIALS(language),
+          ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.BAD_REQUEST,
         );
     }
@@ -1008,7 +910,7 @@ export class AuthService {
     if (userObj.provider === PROVIDER.GOOGLE) {
       if (!idToken)
         throw new BaseException(
-          ExceptionMessages.INVALID_CREDENTIALS(language),
+          ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.BAD_REQUEST,
         );
 
@@ -1023,7 +925,7 @@ export class AuthService {
 
       if (!email || email !== userEmail)
         throw new BaseException(
-          ExceptionMessages.INVALID_CREDENTIALS(language),
+          ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.CONFLICT,
           ExceptionTypes.CONFLICT,
         );
@@ -1044,7 +946,7 @@ export class AuthService {
   async restoreAccount(data: RestoreAccountDto) {
     const { token, _lang } = data;
 
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = this.tokenService.hashToken(token);
 
     const restoreTokenDoc = await this.tokenService.findToken({
       query: { token: hashedToken, type: TOKEN_TYPE.RESTORE_ACCOUNT },
@@ -1122,9 +1024,8 @@ export class AuthService {
   // =================================
   async deactivateAccount(data: DeactivateAccountDto) {
     const { token } = data;
-    const { user: _loggedUser, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = _loggedUser;
-    const { language } = settings.generalSettings;
+    const { _id } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const deactivateTokenDoc = await this.tokenService.findToken({
       query: {
@@ -1142,7 +1043,7 @@ export class AuthService {
 
     if (deactivateToken.expiresAt && deactivateToken.expiresAt < new Date()) {
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(language),
+        ExceptionMessages.TOKEN_EXPIRED(lang),
         HttpStatus.GONE,
       );
     }

@@ -23,10 +23,15 @@ import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
+import { ClsService } from 'nestjs-cls';
+import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 
 @Controller('')
 export class AuthController {
-  constructor(private readonly service: AuthService) {}
+  constructor(
+    private readonly service: AuthService,
+    private readonly cls: ClsService,
+  ) {}
 
   @MessagePattern('auth/signup', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
@@ -112,7 +117,7 @@ export class AuthController {
   @MessagePattern('auth/refreshToken', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async refreshToken(@Payload() data: Record<string, any>) {
-    if (!data.refresh_token)
+    if (!data.refresh_token || !data.deviceId || !data.requestData)
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
         HttpStatus.NOT_FOUND,

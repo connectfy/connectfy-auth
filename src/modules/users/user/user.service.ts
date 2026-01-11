@@ -1,7 +1,7 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { UserRepository } from './repo/user.repo';
 import { AddUserDto } from './dto/add.user.dto';
-import { IReturnedUser } from './interface/user.interface';
+import { IReturnedUser, IUser } from './interface/user.interface';
 import { EditUserDto } from './dto/edit.user.dto';
 import { BaseException } from '@common/exceptions/base.exception';
 import { RemoveUserDto } from './dto/remove.user.dto';
@@ -9,51 +9,50 @@ import {
   ExceptionMessages,
   ExceptionTypes,
 } from '@common/constants/exception.constants';
-import { ClientProxy } from '@nestjs/microservices';
 import { ClsService } from 'nestjs-cls';
-import { ILoggedUser } from '@/src/common/interfaces/request.interface';
-import { sendWithContext } from '@/src/common/helpers/microservice-request.helper';
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { UserDocument } from './entity/user.entity';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtService } from '@nestjs/jwt';
 import {
+  LANGUAGE,
   PHONE_NUMBER_ACTION,
   PROVIDER,
   TOKEN_TYPE,
 } from '@/src/common/constants/common.enum';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
-import { COUNTRIES, EXPIRE_DATES, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
+import {
+  COUNTRIES,
+  ENV,
+  EXPIRE_DATES,
+} from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
+import { AccountService } from '@/src/common/services/projects/account.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly repo: UserRepository,
-
-    @Inject(MICROSERVICE_NAMES.ACCOUNT.TCP)
-    private readonly accountServiceTcp: ClientProxy,
-
     private readonly cls: ClsService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly emailService: EmailService,
     private readonly bcryptService: BcryptService,
     private readonly tokenService: TokenService,
+    private readonly accountService: AccountService
   ) {}
 
   // =======================
   // GET USER INFORMATIONS
   // =======================
   async me() {
-    const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = user;
-    const { language: _lang } = settings.generalSettings;
+    const { _id } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const res = await this.repo.findOne({
       query: { _id },
@@ -62,33 +61,19 @@ export class UserService {
 
     if (!res)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
 
+    const payload = { query: { userId: _id } };
+
     const [account, generalSettings, notificationSettings, privacySettings] =
       await Promise.all([
-        sendWithContext({
-          client: this.accountServiceTcp,
-          endpoint: 'account/findOne',
-          payload: { query: { userId: _id } },
-        }),
-        sendWithContext({
-          client: this.accountServiceTcp,
-          endpoint: 'general-settings/findOne',
-          payload: { query: { userId: _id } },
-        }),
-        sendWithContext({
-          client: this.accountServiceTcp,
-          endpoint: 'notification-settings/findOne',
-          payload: { query: { userId: _id } },
-        }),
-        sendWithContext({
-          client: this.accountServiceTcp,
-          endpoint: 'privacy-settings/findOne',
-          payload: { query: { userId: _id } },
-        }),
+        this.accountService.findAccount(payload),
+        this.accountService.findGeneralSettings(payload),
+        this.accountService.findNotificationSettings(payload),
+        this.accountService.findPrivacySettings(payload),
       ]);
 
     return {
@@ -173,15 +158,14 @@ export class UserService {
   // =======================
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
     const { username, token } = data;
-    const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, username: oldUsername } = user;
-    const { language } = settings.generalSettings;
+    const { _id, username: oldUsername } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const isUserExist = await this.repo.existsByField({ _id });
 
     if (!isUserExist)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
 
@@ -199,7 +183,10 @@ export class UserService {
 
     if (username === oldUsername)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(i18n.t('common.username', { lng: language }), language),
+        ExceptionMessages.SAME_DATA(
+          i18n.t('common.username', { lng: lang }),
+          lang,
+        ),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -209,7 +196,7 @@ export class UserService {
 
     if (userWithUsername)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, language),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -234,21 +221,20 @@ export class UserService {
   // =======================
   async changeEmail(data: ChangeEmailDto): Promise<{ statusCode: number }> {
     const { email, token } = data;
-    const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, email: oldEmail, provider } = user;
-    const { language: _lang } = settings.generalSettings;
+    const { _id, email: oldEmail, provider } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const isUserExist = await this.repo.findOne({ query: { _id } });
 
     if (!isUserExist)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
 
     if (provider !== PROVIDER.PASSWORD)
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(_lang),
+        ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -266,7 +252,10 @@ export class UserService {
 
     if (email === oldEmail)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(i18n.t('common.username', { lng: _lang }), _lang),
+        ExceptionMessages.SAME_DATA(
+          i18n.t('common.username', { lng: lang }),
+          lang,
+        ),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -276,7 +265,7 @@ export class UserService {
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -294,7 +283,7 @@ export class UserService {
 
     this.emailService.changeEmail({
       to: email,
-      _lang,
+      _lang: lang,
       additional: { token: emailChangeToken },
     });
 
@@ -306,20 +295,19 @@ export class UserService {
   // =======================
   async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IReturnedUser> {
     const { token } = data;
-    const { user: me, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = me;
-    const { language } = settings.generalSettings;
+    const { _id } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const user = await this.repo.findOne({ query: { _id } });
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
 
     const decoded = this.jwtService.verify(token, {
-      secret: this.config.get<string>('CHANGE_EMAIL_SECRET'),
+      secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.CHANGE_EMAIL),
     });
 
     if (
@@ -327,7 +315,7 @@ export class UserService {
       decoded.userId !== _id.toString()
     ) {
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(language),
+        ExceptionMessages.TOKEN_EXPIRED(lang),
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -366,13 +354,12 @@ export class UserService {
   // =======================
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
-    const { user: me, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id } = me;
-    const { language } = settings.generalSettings;
+    const { _id } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     if (password !== confirmPassword)
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+        ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -380,7 +367,7 @@ export class UserService {
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
 
@@ -388,7 +375,7 @@ export class UserService {
 
     if (userObj.provider !== PROVIDER.PASSWORD)
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+        ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -411,7 +398,10 @@ export class UserService {
 
     if (isPasswordSame)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(i18n.t("common.password", { lng: language }), language),
+        ExceptionMessages.SAME_DATA(
+          i18n.t('common.password', { lng: lang }),
+          lang,
+        ),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -438,15 +428,14 @@ export class UserService {
   // =======================
   async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IReturnedUser> {
     const { phoneNumber, token, action } = data;
-    const { user, settings } = this.cls.get<ILoggedUser>('user');
-    const { _id, phoneNumber: oldPhoneNumber } = user;
-    const { language } = settings.generalSettings;
+    const { _id, phoneNumber: oldPhoneNumber } = this.cls.get<IUser>('user');
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const isUserExist = await this.repo.existsByField({ _id });
 
     if (!isUserExist)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
 
@@ -464,7 +453,7 @@ export class UserService {
 
     if (phoneNumber?.fullPhoneNumber === oldPhoneNumber?.fullPhoneNumber)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA(phoneNumber.fullPhoneNumber, language),
+        ExceptionMessages.SAME_DATA(phoneNumber.fullPhoneNumber, lang),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -473,7 +462,7 @@ export class UserService {
 
       if (!country)
         throw new BaseException(
-          ExceptionMessages.BAD_REQUEST_MESSAGE(language),
+          ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
           HttpStatus.BAD_REQUEST,
         );
 
@@ -481,7 +470,7 @@ export class UserService {
 
       if (phoneNumber.number.length !== numberLength)
         throw new BaseException(
-          ExceptionMessages.INVALID_LENGTH_MESSAGE(language),
+          ExceptionMessages.INVALID_LENGTH_MESSAGE(lang),
           HttpStatus.BAD_REQUEST,
         );
 
@@ -491,7 +480,10 @@ export class UserService {
 
       if (userWithPhoneNumber)
         throw new BaseException(
-          ExceptionMessages.ALREADY_EXISTS_MESSAGE(phoneNumber.fullPhoneNumber, language),
+          ExceptionMessages.ALREADY_EXISTS_MESSAGE(
+            phoneNumber.fullPhoneNumber,
+            lang,
+          ),
           HttpStatus.BAD_REQUEST,
         );
     }

@@ -50,7 +50,7 @@ export class RefreshTokenService {
     const { userId, deviceId, refresh_token, requestData } = data;
 
     const findToken = await this.repo.findOne({
-      $and: [{ userId }, { deviceId }, { refresh_token }],
+      $and: [{ userId }, { deviceId }],
     });
 
     const deviceInfo =
@@ -88,11 +88,13 @@ export class RefreshTokenService {
   async verifyToken(
     token: string,
     isAccessToken: boolean = true,
+    ignoreExpiration: boolean = true
   ): Promise<any> {
     return await this.jwtService.verifyAsync(token, {
       secret: isAccessToken
         ? this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET)
         : this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET),
+      ignoreExpiration
     });
   }
 

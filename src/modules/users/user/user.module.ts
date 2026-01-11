@@ -12,6 +12,7 @@ import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.mod
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
+import { AccountService } from '@/src/common/services/projects/account.service';
 
 @Module({
   imports: [
@@ -50,7 +51,13 @@ import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
     DeletedUserModule,
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository, EmailService, BcryptService],
+  providers: [
+    UserService,
+    UserRepository,
+    EmailService,
+    BcryptService,
+    AccountService,
+  ],
   exports: [UserService, UserRepository],
 })
 export class UserModule {}

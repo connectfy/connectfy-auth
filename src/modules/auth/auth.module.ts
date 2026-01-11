@@ -13,6 +13,7 @@ import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-u
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
 import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
+import { AccountService } from '@/src/common/services/projects/account.service';
 
 @Module({
   imports: [
@@ -87,6 +88,6 @@ import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
     DeactivetedUsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, EmailService, BcryptService],
+  providers: [AuthService, EmailService, BcryptService, AccountService],
 })
 export class AuthModule {}

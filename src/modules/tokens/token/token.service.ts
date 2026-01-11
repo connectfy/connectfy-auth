@@ -4,7 +4,6 @@ import {
 } from '@common/constants/exception.constants';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { TokenRepository } from './repo/token.repo';
-import { AddTokenDto } from './dto/add.token.dto';
 import { RemoveTokenDto } from './dto/remove.token.dto';
 import { TokenDocument } from './entity/token.entity';
 import { BaseException } from '@common/exceptions/base.exception';
@@ -12,13 +11,10 @@ import { RemoveAllTokensDto } from './dto/remove.all.tokens.dto';
 import { IRemoveAllResponse } from '@common/interfaces/response.interface';
 import { FindTokenDto } from './dto/find.token.dto';
 import { LANGUAGE, TOKEN_TYPE } from '@common/constants/common.enum';
-import { IReturnedToken } from './interface/token.interface';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
-import { IUser } from '../../users/user/interface/user.interface';
-import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 
 @Injectable()
 export class TokenService {
@@ -26,7 +22,7 @@ export class TokenService {
     private readonly repo: TokenRepository,
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly cls: ClsService
+    private readonly cls: ClsService,
   ) {}
 
   // async generateToken(data: AddTokenDto): Promise<IReturnedToken> {
@@ -87,14 +83,13 @@ export class TokenService {
   }
 
   async findToken(option: FindTokenDto): Promise<TokenDocument> {
-    const { settings } = this.cls.get<ILoggedUser>("user");
-    const { language } = settings.generalSettings;
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const token = await this.repo.findOne(option);
 
     if (!token)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -107,15 +102,14 @@ export class TokenService {
   }
 
   async removeToken(data: RemoveTokenDto): Promise<TokenDocument> {
-    const { settings } = this.cls.get<ILoggedUser>("user");
-    const { language } = settings.generalSettings;
     const { _id } = data;
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const res = await this.repo.remove({ _id });
 
     if (!res)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
@@ -168,9 +162,7 @@ export class TokenService {
     };
   }
 
-  async removeMany(
-    query: Record<string, any>,
-  ): Promise<IRemoveAllResponse> {
+  async removeMany(query: Record<string, any>): Promise<IRemoveAllResponse> {
     const allTokens = await this.repo.findMany({
       query,
     });
@@ -188,20 +180,19 @@ export class TokenService {
       deletedIds: removableIds,
     };
   }
-  
+
   async remove(query: Record<string, any>) {
-    const { settings } = this.cls.get<ILoggedUser>("user")
-    const { language } = settings.generalSettings;
+    const lang = this.cls.get<LANGUAGE>('lang');
 
     const res = await this.repo.remove(query);
 
     if (!res)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language ?? LANGUAGE.EN),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang ?? LANGUAGE.EN),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
 
-    return res
+    return res;
   }
 }
