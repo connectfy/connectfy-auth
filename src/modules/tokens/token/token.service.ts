@@ -10,7 +10,7 @@ import { BaseException } from '@common/exceptions/base.exception';
 import { RemoveAllTokensDto } from './dto/remove.all.tokens.dto';
 import { IRemoveAllResponse } from '@common/interfaces/response.interface';
 import { FindTokenDto } from './dto/find.token.dto';
-import { LANGUAGE, TOKEN_TYPE } from '@common/constants/common.enum';
+import { LANGUAGE, TOKEN_TYPE } from '@/src/common/enums/enums';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';

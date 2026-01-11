@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ITimestamps } from '@common/interfaces/date.interface';
 import { IDeletedUser } from '../interface/deleted-user.interface';
-import { DELETE_REASON } from '@/src/common/constants/common.enum';
+import { DELETE_REASON } from '@/src/common/enums/enums';
 
 @Schema({ timestamps: true, collection: 'deleted-users' })
 export class DeletedUserModel implements IDeletedUser {

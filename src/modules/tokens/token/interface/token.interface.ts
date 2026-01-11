@@ -1,4 +1,4 @@
-import { TOKEN_TYPE } from '@common/constants/common.enum';
+import { TOKEN_TYPE } from '@/src/common/enums/enums';
 
 export interface IToken {
   _id: string;

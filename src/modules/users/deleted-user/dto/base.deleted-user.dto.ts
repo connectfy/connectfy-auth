@@ -6,7 +6,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { DELETE_REASON } from '@common/constants/common.enum';
+import { DELETE_REASON } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import {
   enumTransform,

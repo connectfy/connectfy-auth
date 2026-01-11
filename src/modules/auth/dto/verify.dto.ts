@@ -12,7 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { SignupDto } from './signup.dto';
-import { LANGUAGE } from '@common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 import {
   enumTransform,
   objectTransform,

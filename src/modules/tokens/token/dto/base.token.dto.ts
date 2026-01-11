@@ -3,7 +3,7 @@ import {
   enumTransform,
   stringTransform,
 } from '@/src/common/functions/transform';
-import { TOKEN_TYPE } from '@common/constants/common.enum';
+import { TOKEN_TYPE } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsDate, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';

@@ -11,7 +11,7 @@ import {
   enumTransform,
   stringTransform,
 } from '@/src/common/functions/transform';
-import { DELETE_REASON } from '@/src/common/constants/common.enum';
+import { DELETE_REASON } from '@/src/common/enums/enums';
 
 export class DeleteAccountDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

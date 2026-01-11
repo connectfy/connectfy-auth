@@ -1,6 +1,6 @@
 import { UAParser } from 'ua-parser-js';
 import * as geoip from 'geoip-lite';
-import { BROWSER_TYPE, DEVICE_TYPE, OS_TYPE } from '../constants/common.enum';
+import { BROWSER_TYPE, DEVICE_TYPE, OS_TYPE } from '../enums/enums';
 import {
   IDeviceInfo,
   IDeviceInfoWithLocation,

@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { Document } from 'mongoose';
 import { IUser } from '../interface/user.interface';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { PROVIDER, ROLE, USER_STATUS } from '@common/constants/common.enum';
+import { PROVIDER, ROLE, USER_STATUS } from '@/src/common/enums/enums';
 import {
   PhoneNumberModel,
   PhoneNumberSchema,

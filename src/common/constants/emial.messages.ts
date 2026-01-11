@@ -1,5 +1,5 @@
 import i18n from '@/src/i18n';
-import { LANGUAGE, TOKEN_TYPE } from './common.enum';
+import { LANGUAGE, TOKEN_TYPE } from '../enums/enums';
 
 const supportMail = 'connectfy.team@gmail.com';
 const supportMailLink = `mailto:${supportMail}`;

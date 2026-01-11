@@ -12,7 +12,7 @@ import {
   ExceptionTypes,
 } from '@common/constants/exception.constants';
 import { HttpStatus } from '@nestjs/common';
-import { LANGUAGE } from '../common/constants/common.enum';
+import { LANGUAGE } from '../common/enums/enums';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

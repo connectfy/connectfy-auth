@@ -1,6 +1,6 @@
 import { IReturnedUser } from '@modules/users/user/interface/user.interface';
 import { IReturnedDeletedUser } from '@modules/users/deleted-user/interface/deleted-user.interface';
-import { LANGUAGE } from '../constants/common.enum';
+import { LANGUAGE } from '../enums/enums';
 
 export interface ITimestamps {
   createdAt: Date;

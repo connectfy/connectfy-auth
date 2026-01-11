@@ -1,4 +1,4 @@
-import { GENDER, LANGUAGE, THEME } from '@common/constants/common.enum';
+import { GENDER, LANGUAGE, THEME } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import {

@@ -1,5 +1,5 @@
 import { enumTransform, stringTransform } from '@/src/common/functions/transform';
-import { LANGUAGE } from '@common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';

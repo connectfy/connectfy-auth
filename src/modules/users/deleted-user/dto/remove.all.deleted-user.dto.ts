@@ -8,7 +8,7 @@ import {
   IsNotEmpty,
   IsString,
 } from 'class-validator';
-import { LANGUAGE } from '@common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 
 export class RemoveAllDeletedUsersDto {
   @Transform(({ key, value }) => arrayTransform({ key, value }))

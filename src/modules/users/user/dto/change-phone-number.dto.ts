@@ -1,4 +1,4 @@
-import { PHONE_NUMBER_ACTION } from '@/src/common/constants/common.enum';
+import { PHONE_NUMBER_ACTION } from '@/src/common/enums/enums';
 import {
   enumTransform,
   objectTransform,

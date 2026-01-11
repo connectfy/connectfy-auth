@@ -1,4 +1,4 @@
-import { TOKEN_TYPE } from '@/src/common/constants/common.enum';
+import { TOKEN_TYPE } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@/src/common/constants/validation.messages';
 import {
   enumTransform,

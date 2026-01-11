@@ -6,7 +6,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { LANGUAGE } from '@/src/common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@/src/common/constants/validation.messages';
 import { arrayTransform, enumTransform } from '@/src/common/functions/transform';
 

@@ -5,7 +5,7 @@ import {
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ValidationMessages } from '@/src/common/constants/validation.messages';
-import { LANGUAGE } from '@/src/common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 
 export class RestoreAccountDto {
   @Transform(({ key, value }) => stringTransform({ key, value }))

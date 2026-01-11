@@ -1,7 +1,7 @@
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { LANGUAGE } from '@common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 import {
   enumTransform,
   stringTransform,

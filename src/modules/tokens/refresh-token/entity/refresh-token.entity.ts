@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 import * as geoip from 'geoip-lite';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IRefreshToken } from '../interface/refresh-token.interface';
-import { DEVICE_TYPE } from '@/src/common/constants/common.enum';
+import { DEVICE_TYPE } from '@/src/common/enums/enums';
 
 @Schema({ timestamps: true, collection: 'refresh_tokens' })
 export class RefreshTokenModel implements IRefreshToken {

@@ -2,7 +2,7 @@ import { IsEnum, IsNotEmpty } from 'class-validator';
 import { BaseUserDto } from './base.user.dto';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
-import { PROVIDER } from '@common/constants/common.enum';
+import { PROVIDER } from '@/src/common/enums/enums';
 import { enumTransform } from '@/src/common/functions/transform';
 
 export class AddUserDto extends BaseUserDto {

@@ -1,5 +1,5 @@
 import i18n from '@/src/i18n';
-import { LANGUAGE } from './common.enum';
+import { LANGUAGE } from '../enums/enums';
 
 export const ExceptionMessages = {
   INTERNAL_SERVER_ERROR_MESSAGE: (lang: LANGUAGE = LANGUAGE.EN) =>

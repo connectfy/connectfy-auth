@@ -20,7 +20,7 @@ import {
   PHONE_NUMBER_ACTION,
   PROVIDER,
   TOKEN_TYPE,
-} from '@/src/common/constants/common.enum';
+} from '@/src/common/enums/enums';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import {
   COUNTRIES,

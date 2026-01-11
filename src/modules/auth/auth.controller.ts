@@ -12,7 +12,7 @@ import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
-import { LANGUAGE } from '@common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 import { BaseException } from '@common/exceptions/base.exception';
 import {
   ExceptionMessages,

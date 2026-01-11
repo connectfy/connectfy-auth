@@ -1,4 +1,4 @@
-import { LANGUAGE } from '@common/constants/common.enum';
+import { LANGUAGE } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { BaseFindDto } from '@common/dto/base.find.dto';
 import { IsEnum, IsNotEmpty } from 'class-validator';

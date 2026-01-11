@@ -1,4 +1,4 @@
-import { PROVIDER, ROLE, USER_STATUS } from '@common/constants/common.enum';
+import { PROVIDER, ROLE, USER_STATUS } from '@/src/common/enums/enums';
 import { IPhoneNumber } from './phoneNumber.interface';
 
 export interface IUser {

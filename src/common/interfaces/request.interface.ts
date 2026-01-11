@@ -12,7 +12,7 @@ import {
   STARTUP_PAGE,
   THEME,
   TIME_FORMAT,
-} from '../constants/common.enum';
+} from '../enums/enums';
 
 export interface ILoggedUser {
   user: IUser;

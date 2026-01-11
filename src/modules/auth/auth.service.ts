@@ -18,7 +18,7 @@ import {
   PROVIDER,
   TOKEN_TYPE,
   USER_STATUS,
-} from '@common/constants/common.enum';
+} from '@/src/common/enums/enums';
 import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser, IUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';

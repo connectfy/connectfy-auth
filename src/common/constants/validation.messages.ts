@@ -1,6 +1,6 @@
 import i18n from '@/src/i18n';
 import { ValidationArguments } from 'class-validator';
-import { LANGUAGE } from './common.enum';
+import { LANGUAGE } from '../enums/enums';
 
 export const getLang = (args: ValidationArguments): LANGUAGE => {
   return ((args.object as any)._lang || LANGUAGE.EN) as LANGUAGE;

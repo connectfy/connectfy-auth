@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { Document } from 'mongoose';
 import { IToken } from '../interface/token.interface';
-import { TOKEN_TYPE } from '@common/constants/common.enum';
+import { TOKEN_TYPE } from '@/src/common/enums/enums';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IUser } from '@modules/users/user/interface/user.interface';
 

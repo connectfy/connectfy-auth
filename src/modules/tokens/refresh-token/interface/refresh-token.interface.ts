@@ -1,4 +1,4 @@
-import { DEVICE_TYPE } from '@/src/common/constants/common.enum';
+import { DEVICE_TYPE } from '@/src/common/enums/enums';
 
 export interface IRefreshToken {
   _id: string;

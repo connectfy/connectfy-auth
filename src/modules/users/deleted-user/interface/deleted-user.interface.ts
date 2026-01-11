@@ -1,4 +1,4 @@
-import { DELETE_REASON } from '@/src/common/constants/common.enum';
+import { DELETE_REASON } from '@/src/common/enums/enums';
 
 export interface IDeletedUser {
   _id: string;

@@ -19,7 +19,7 @@ import {
   stringTransform,
 } from '@/src/common/functions/transform';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
-import { USER_STATUS } from '@/src/common/constants/common.enum';
+import { USER_STATUS } from '@/src/common/enums/enums';
 
 export class EditUserDto extends PartialType(BaseUserDto) {
   @Transform(({ key, value }) => stringTransform({ key, value }))

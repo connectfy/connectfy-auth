@@ -2,7 +2,7 @@ import { enumTransform, stringTransform } from '@/src/common/functions/transform
 import {
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
   LANGUAGE,
-} from '@common/constants/common.enum';
+} from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
