@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { BaseRepository } from '../shared/base.repository';
 import { AddBannedUserDto } from '../dto/add.banned-user.dto';
 import { BannedUserDocument } from '../entity/banned-user.entity';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Injectable()
 export class BannedUserRepository extends BaseRepository<
@@ -11,7 +12,8 @@ export class BannedUserRepository extends BaseRepository<
   AddBannedUserDto
 > {
   constructor(
-    @InjectModel('BannedUser') private readonly model: Model<BannedUserDocument>,
+    @InjectModel(COLLECTIONS.AUTH.USER.BANNED)
+    private readonly model: Model<BannedUserDocument>,
   ) {
     super();
   }

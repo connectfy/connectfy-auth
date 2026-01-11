@@ -5,6 +5,7 @@ import { UpdateTokenDto } from '../dto/edit.token.dto';
 import { TokenDocument } from '../entity/token.entity';
 import { BaseRepository } from '../shared/base.repository';
 import { FindTokenDto } from '../dto/find.token.dto';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 export class TokenRepository extends BaseRepository<
   TokenDocument,
@@ -12,7 +13,8 @@ export class TokenRepository extends BaseRepository<
   UpdateTokenDto
 > {
   constructor(
-    @InjectModel('Token') private readonly model: Model<TokenDocument>,
+    @InjectModel(COLLECTIONS.AUTH.TOKEN.TOKENS)
+    private readonly model: Model<TokenDocument>,
   ) {
     super();
   }

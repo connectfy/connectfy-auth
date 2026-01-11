@@ -5,11 +5,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TokenSchema } from './entity/token.entity';
 import { TokenRepository } from './repo/token.repo';
 import { JwtModule } from '@nestjs/jwt';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'Token', schema: TokenSchema }]),
-    JwtModule
+    MongooseModule.forFeature([
+      { name: COLLECTIONS.AUTH.TOKEN.TOKENS, schema: TokenSchema },
+    ]),
+    JwtModule,
   ],
   controllers: [TokenController],
   providers: [TokenService, TokenRepository],

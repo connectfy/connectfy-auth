@@ -4,13 +4,14 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ITimestamps } from '@common/interfaces/date.interface';
 import { IDeletedUser } from '../interface/deleted-user.interface';
 import { DELETE_REASON } from '@/src/common/enums/enums';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
-@Schema({ timestamps: true, collection: 'deleted-users' })
+@Schema({ timestamps: true, collection: COLLECTIONS.AUTH.USER.DELETED })
 export class DeletedUserModel implements IDeletedUser {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ type: String, required: true, unique: true, ref: 'User' })
+  @Prop({ type: String, required: true, unique: true, ref: COLLECTIONS.AUTH.USER.USERS })
   userId: string;
 
   @Prop({ type: Date, required: true, default: Date.now })

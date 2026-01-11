@@ -5,11 +5,12 @@ import { DeactivatedUserDocument } from '../entity/deactivated-user.entity';
 import { AddDeactivatedUserDto } from '../dto/add.deactivated-user.dto';
 import { IReturnedDeactivatedUser } from '../interface/deactivated-user.intreface';
 import { FindDeactivatedUserDto } from '../dto/find.deactivated-user.dto';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Injectable()
 export class DeactivatedUserRepository {
   constructor(
-    @InjectModel('DeactivatedUser')
+    @InjectModel(COLLECTIONS.AUTH.USER.DEACTIVATED)
     private readonly model: Model<DeactivatedUserDocument>,
   ) {}
 

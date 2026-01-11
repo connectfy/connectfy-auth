@@ -4,11 +4,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RefreshTokenSchema } from './entity/refresh-token.entity';
 import { RefreshTokenService } from './refresh-token.service';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: 'RefreshToken', schema: RefreshTokenSchema },
+      {
+        name: COLLECTIONS.AUTH.TOKEN.REFRESH_TOKENS,
+        schema: RefreshTokenSchema,
+      },
     ]),
     JwtModule,
   ],

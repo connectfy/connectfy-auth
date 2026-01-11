@@ -8,14 +8,15 @@ import {
   PhoneNumberSchema,
 } from './nested/phoneNumber.entity';
 import { ITimestamps } from '@common/interfaces/date.interface';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
-@Schema({ timestamps: true, collection: 'users' })
+@Schema({ timestamps: true, collection: COLLECTIONS.AUTH.USER.USERS })
 export class UserModel implements IUser {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ 
-    type: String, 
+  @Prop({
+    type: String,
     required: true,
     minlength: 3,
     maxlength: 30,
@@ -23,8 +24,8 @@ export class UserModel implements IUser {
   })
   username: string;
 
-  @Prop({ 
-    type: String, 
+  @Prop({
+    type: String,
     required: true,
     maxlength: 254,
     trim: true,
@@ -32,11 +33,11 @@ export class UserModel implements IUser {
   })
   email: string;
 
-  @Prop({ 
-    type: String, 
-    enum: ROLE, 
-    required: true, 
-    default: ROLE.USER 
+  @Prop({
+    type: String,
+    enum: ROLE,
+    required: true,
+    default: ROLE.USER,
   })
   role: ROLE;
 
@@ -48,33 +49,33 @@ export class UserModel implements IUser {
   })
   provider: PROVIDER;
 
-  @Prop({ 
-    type: String, 
+  @Prop({
+    type: String,
     required: true,
     maxlength: 100,
   })
   password: string;
 
-  @Prop({ 
-    type: PhoneNumberSchema, 
-    required: false, 
-    default: null 
+  @Prop({
+    type: PhoneNumberSchema,
+    required: false,
+    default: null,
   })
   phoneNumber: PhoneNumberModel;
 
-  @Prop({ 
-    type: String, 
-    required: false, 
+  @Prop({
+    type: String,
+    required: false,
     default: null,
     maxlength: 20000,
   })
   faceDescriptor: string | null;
 
-  @Prop({ 
-    type: String, 
-    required: true, 
-    enum: USER_STATUS, 
-    default: USER_STATUS.ACTIVE 
+  @Prop({
+    type: String,
+    required: true,
+    enum: USER_STATUS,
+    default: USER_STATUS.ACTIVE,
   })
   status: USER_STATUS;
 }

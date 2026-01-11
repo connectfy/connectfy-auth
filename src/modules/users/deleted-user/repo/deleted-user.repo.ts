@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeletedUserDocument } from '../entity/deleted-user.entity';
 import { AddDeletedUserDto } from '../dto/add.deleted-user.dto';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Injectable()
 export class DeletedUserRepository extends BaseRepository<
@@ -11,7 +12,8 @@ export class DeletedUserRepository extends BaseRepository<
   AddDeletedUserDto
 > {
   constructor(
-    @InjectModel('DeletedUser') private readonly model: Model<DeletedUserDocument>,
+    @InjectModel(COLLECTIONS.AUTH.USER.DELETED)
+    private readonly model: Model<DeletedUserDocument>,
   ) {
     super();
   }
@@ -25,7 +27,9 @@ export class DeletedUserRepository extends BaseRepository<
     return await this.model.findByIdAndDelete(id).exec();
   }
 
-  async findOne(query: Record<string, any>): Promise<DeletedUserDocument | null> {
+  async findOne(
+    query: Record<string, any>,
+  ): Promise<DeletedUserDocument | null> {
     return await this.model.findOne(query).exec();
   }
 

@@ -4,13 +4,14 @@ import * as geoip from 'geoip-lite';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IRefreshToken } from '../interface/refresh-token.interface';
 import { DEVICE_TYPE } from '@/src/common/enums/enums';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
-@Schema({ timestamps: true, collection: 'refresh_tokens' })
+@Schema({ timestamps: true, collection: COLLECTIONS.AUTH.TOKEN.REFRESH_TOKENS })
 export class RefreshTokenModel implements IRefreshToken {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ type: String, required: true, ref: 'User' })
+  @Prop({ type: String, required: true, ref: COLLECTIONS.AUTH.USER.USERS })
   userId: string;
 
   @Prop({ type: String, required: true })

@@ -4,13 +4,14 @@ import { IToken } from '../interface/token.interface';
 import { TOKEN_TYPE } from '@/src/common/enums/enums';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IUser } from '@modules/users/user/interface/user.interface';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
-@Schema({ timestamps: true, collection: 'tokens' })
+@Schema({ timestamps: true, collection: COLLECTIONS.AUTH.TOKEN.TOKENS })
 export class TokenModel implements IToken {
   @Prop({ type: String, default: () => uuid() })
   _id: string;
 
-  @Prop({ type: String, required: true, ref: 'User' })
+  @Prop({ type: String, required: true, ref: COLLECTIONS.AUTH.USER.USERS })
   userId: string;
 
   @Prop({ type: String, required: true })

@@ -11,12 +11,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.module';
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
-import { MICROSERVICE_NAMES } from '@/src/common/constants/constants';
+import { COLLECTIONS, MICROSERVICE_NAMES } from '@/src/common/constants/constants';
 import { AccountService } from '@/src/common/services/projects/account.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: COLLECTIONS.AUTH.USER.USERS, schema: UserSchema }]),
     ClientsModule.register([
       {
         name: MICROSERVICE_NAMES.ACCOUNT.TCP,

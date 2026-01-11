@@ -7,6 +7,7 @@ import {
   ISaveRefreshToken,
   IUpdateRefreshToken,
 } from '../interface/refresh-token.interface';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Injectable()
 export class RefreshTokenRepository extends BaseRepository<
@@ -15,7 +16,7 @@ export class RefreshTokenRepository extends BaseRepository<
   IUpdateRefreshToken
 > {
   constructor(
-    @InjectModel('RefreshToken')
+    @InjectModel(COLLECTIONS.AUTH.TOKEN.REFRESH_TOKENS)
     private readonly model: Model<RefreshTokenDocument>,
   ) {
     super();
@@ -43,11 +44,7 @@ export class RefreshTokenRepository extends BaseRepository<
     const { userId, ...rest } = data;
 
     return (await this.model
-      .findOneAndUpdate(
-        { userId },
-        rest,
-        { new: true, runValidators: true },
-      )
+      .findOneAndUpdate({ userId }, rest, { new: true, runValidators: true })
       .exec()) as RefreshTokenDocument;
   }
 

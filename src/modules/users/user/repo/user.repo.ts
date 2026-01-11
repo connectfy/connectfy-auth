@@ -6,6 +6,7 @@ import { EditUserDto } from '../dto/edit.user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Query } from 'mongoose';
 import { FindUserDto } from '../dto/find.user.dto';
+import { COLLECTIONS } from '@/src/common/constants/constants';
 
 @Injectable()
 export class UserRepository extends BaseRepository<
@@ -14,7 +15,8 @@ export class UserRepository extends BaseRepository<
   EditUserDto
 > {
   constructor(
-    @InjectModel('User') private readonly model: Model<UserDocument>,
+    @InjectModel(COLLECTIONS.AUTH.USER.USERS)
+    private readonly model: Model<UserDocument>,
   ) {
     super();
   }

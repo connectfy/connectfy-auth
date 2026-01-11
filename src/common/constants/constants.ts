@@ -164,3 +164,27 @@ export const EXPIRE_DATES = {
     ONE_MONTH: 30 * 60 * 60 * 1000,
   },
 };
+
+export const COLLECTIONS = {
+  AUTH: {
+    USER: {
+      USERS: 'users',
+      BANNED: 'banned_users',
+      DELETED: 'deleted_users',
+      DEACTIVATED: 'deactivated_users',
+    },
+    TOKEN: {
+      TOKENS: 'tokens',
+      REFRESH_TOKENS: 'refresh_tokens',
+    },
+  },
+  ACCOUNT: {
+    ACCOUNTS: 'accounts',
+    SOCIAL_LINKS: 'social_links',
+    SETTINGS: {
+      GENERAL: 'general_settings',
+      PRIVACY: 'privacy_settings',
+      NOTIFICATION: 'notification_settings',
+    },
+  },
+};
