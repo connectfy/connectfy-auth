@@ -6,6 +6,8 @@ export interface IDeletedUser {
   deletedAt: Date;
   reason: DELETE_REASON;
   otherReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IReturnedDeletedUser {
@@ -14,4 +16,6 @@ export interface IReturnedDeletedUser {
   deletedAt: Date;
   reason: DELETE_REASON;
   otherReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -4,34 +4,19 @@ import { Model } from 'mongoose';
 import { DeactivatedUserDocument } from '../entity/deactivated-user.entity';
 import { AddDeactivatedUserDto } from '../dto/add.deactivated-user.dto';
 import { IReturnedDeactivatedUser } from '../interface/deactivated-user.intreface';
-import { FindDeactivatedUserDto } from '../dto/find.deactivated-user.dto';
 import { COLLECTIONS } from '@/src/common/constants/constants';
+import { BaseRepository } from '@common/repo/base.repository';
 
 @Injectable()
-export class DeactivatedUserRepository {
+export class DeactivatedUserRepository extends BaseRepository<
+  DeactivatedUserDocument,
+  IReturnedDeactivatedUser,
+  AddDeactivatedUserDto
+> {
   constructor(
     @InjectModel(COLLECTIONS.AUTH.USER.DEACTIVATED)
-    private readonly model: Model<DeactivatedUserDocument>,
-  ) {}
-
-  async create(data: AddDeactivatedUserDto): Promise<IReturnedDeactivatedUser> {
-    const newData = new this.model(data);
-    return (await newData.save()).toObject();
-  }
-
-  async findOne(
-    data: FindDeactivatedUserDto,
-  ): Promise<IReturnedDeactivatedUser | null> {
-    const { query = {} } = data;
-    const doc = await this.model.findOne(query).exec();
-
-    if (doc) return doc.toObject();
-    return null;
-  }
-
-  async remove(id: string): Promise<IReturnedDeactivatedUser | null> {
-    const removedUser = await this.model.findByIdAndDelete(id).exec();
-
-    return removedUser!.toObject();
+    protected readonly model: Model<DeactivatedUserDocument>,
+  ) {
+    super(model);
   }
 }

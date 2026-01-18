@@ -1,12 +1,3 @@
-import { stringTransform } from '@/src/common/functions/transform';
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { BaseRemoveDto } from '@common/dto/base.remove.dto';
 
-export class RemoveDeactivatedUserRepo {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsUUID('4', { message: ValidationMessages.UUID('_id') })
-  @IsString({ message: ValidationMessages.STRING('_id') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_id') })
-  _id: string;
-}
+export class RemoveDeactivatedUserRepo extends BaseRemoveDto {}

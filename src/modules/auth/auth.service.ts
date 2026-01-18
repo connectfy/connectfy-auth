@@ -33,8 +33,6 @@ import { ClsService } from 'nestjs-cls';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';
 import { JwtService } from '@nestjs/jwt';
-import { IReturnedToken } from '../tokens/token/interface/token.interface';
-import { IReturnedDeletedUser } from '../users/deleted-user/interface/deleted-user.interface';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deactivated-user.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
@@ -124,16 +122,12 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
-    const { password, ...otherDatas } = unverifiedUser;
     const { firstName, lastName, birthdayDate, gender, theme, ...authDatas } =
-      otherDatas;
-
-    const hashedPassword = await this.bcryptService.hash(password);
+      unverifiedUser;
 
     const { _id, username } = await this.userRepo.create({
       ...authDatas,
       provider: PROVIDER.PASSWORD,
-      password: hashedPassword,
     });
 
     const userIp = RequestHelper.extractIpFromRequestData(requestData);
@@ -183,16 +177,23 @@ export class AuthService {
 
     switch (identifierType) {
       case IDENTIFIER_TYPE.EMAIL:
-        user = await this.userRepo.findOne({ query: { email: identifier } });
+        user = await this.userRepo.findOne({
+          query: { email: identifier },
+          fields: 'password provider status',
+        });
         break;
 
       case IDENTIFIER_TYPE.USERNAME:
-        user = await this.userRepo.findOne({ query: { username: identifier } });
+        user = await this.userRepo.findOne({
+          query: { username: identifier },
+          fields: 'password provider status',
+        });
         break;
 
       default:
         user = await this.userRepo.findOne({
           query: { 'phoneNumber.fullPhoneNumber': identifier },
+          fields: 'password provider status',
         });
         break;
     }
@@ -212,8 +213,8 @@ export class AuthService {
       );
 
     const isPasswordMatch = await this.bcryptService.compare(
-      password!,
-      user.password as string,
+      password,
+      user.password,
     );
 
     if (!isPasswordMatch)
@@ -259,17 +260,22 @@ export class AuthService {
         );
 
       await Promise.all([
-        this.userRepo.update({
-          _id: user._id,
-          status: USER_STATUS.ACTIVE,
-        }),
-        this.deactivatedUserRepo.remove(deactivatedUser._id),
+        this.userRepo.update(
+          {
+            _id: user._id,
+          },
+          {
+            _id: user._id,
+            status: USER_STATUS.ACTIVE,
+          },
+        ),
+        this.deactivatedUserRepo.remove({ _id: deactivatedUser._id }),
       ]);
     }
 
     const { refresh_token, access_token } =
       await this.refreshTokenService.generateTokens({
-        _id: user._id as string,
+        _id: user._id,
       });
 
     await this.refreshTokenService.saveTokens({
@@ -358,11 +364,16 @@ export class AuthService {
         );
 
       await Promise.all([
-        this.userRepo.update({
-          _id: user._id,
-          status: USER_STATUS.ACTIVE,
-        }),
-        this.deactivatedUserRepo.remove(deactivatedUser._id),
+        this.userRepo.update(
+          {
+            _id: user._id,
+          },
+          {
+            _id: user._id,
+            status: USER_STATUS.ACTIVE,
+          },
+        ),
+        this.deactivatedUserRepo.remove({ _id: deactivatedUser._id }),
       ]);
     }
 
@@ -408,7 +419,7 @@ export class AuthService {
     const email = payload?.email;
     const firstName = payload?.given_name || '';
     const lastName = payload?.family_name || '';
-    let avatar = payload?.picture || null;
+    const avatar = payload?.picture || null;
 
     if (!email)
       throw new BaseException(
@@ -507,10 +518,13 @@ export class AuthService {
         )
       : null;
 
-    await this.userRepo.update({
-      _id: user._id,
-      faceDescriptor: updatedFaceDescriptor,
-    });
+    await this.userRepo.update(
+      { _id: user._id },
+      {
+        _id: user._id,
+        faceDescriptor: updatedFaceDescriptor,
+      },
+    );
   }
 
   // =================================
@@ -574,19 +588,18 @@ export class AuthService {
   async isTokenValid(data: ValidateTokenDto): Promise<boolean> {
     try {
       const { token, type } = data;
+      const hashedToken = this.tokenService.hashToken(token);
+
       const res = await this.tokenService.findToken({
-        query: { $and: [{ token }, { type }] },
+        query: { $and: [{ token: hashedToken }, { type }] },
       });
 
-      const expiresAt =
-        res.expiresAt instanceof Date ? res.expiresAt : new Date(res.expiresAt);
+      const expiresAt = res.expiresAt ? res.expiresAt : new Date(res.expiresAt);
       const now = new Date();
 
       if (now >= expiresAt) return false;
-      if (res.isUsed) return false;
-
-      return true;
-    } catch (error) {
+      return !res.isUsed;
+    } catch {
       return false;
     }
   }
@@ -603,10 +616,8 @@ export class AuthService {
       query: {
         $and: [{ token: hashedToken }, { type: TOKEN_TYPE.PASSWORD_RESET }],
       },
-      populate: [{ path: 'userId', select: '-faceDescriptor' }],
+      populate: [{ path: 'userId', select: '_id, password' }],
     });
-
-    const tokenObj = token.toObject ? token.toObject() : token;
 
     const decoded = this.jwtService.verify(resetToken, {
       secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.FORGOT_PASSWORD),
@@ -618,20 +629,18 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
 
-    if (decoded.userId !== tokenObj.userId)
+    const user = token.userId as IReturnedUser;
+
+    if (decoded.userId !== user._id)
       throw new BaseException(
         ExceptionMessages.FORBIDDEN_MESSAGE(_lang),
         HttpStatus.FORBIDDEN,
       );
 
-    const expiresAt =
-      tokenObj.expiresAt instanceof Date
-        ? tokenObj.expiresAt
-        : new Date(tokenObj.expiresAt);
     const now = new Date();
 
-    if (now >= expiresAt || tokenObj.isUsed) {
-      if (tokenObj) await this.tokenService.removeToken({ _id: token._id });
+    if (now >= token.expiresAt || token.isUsed) {
+      if (token) await this.tokenService.removeToken({ _id: token._id });
 
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED(_lang),
@@ -647,11 +656,9 @@ export class AuthService {
         ExceptionTypes.BAD_REQUEST,
       );
 
-    const user = token.userId as IReturnedUser;
-
     const isPasswordSame = await this.bcryptService.compare(
       password,
-      user.password!,
+      user.password,
     );
 
     if (isPasswordSame)
@@ -663,10 +670,12 @@ export class AuthService {
     const hashedPassword = await this.bcryptService.hash(password);
 
     await Promise.all([
-      this.userRepo.update({ _id: user._id!, password: hashedPassword }),
+      this.userRepo.update(
+        { _id: user._id },
+        { _id: user._id, password: hashedPassword },
+      ),
       this.tokenService.removeToken({ _id: token._id }),
     ]);
-
     return { statusCode: 200 };
   }
 
@@ -689,65 +698,64 @@ export class AuthService {
     refresh_token: string,
     _lang: LANGUAGE,
   ) {
-      const payload = await this.refreshTokenService.verifyToken(
-        access_token,
+    const payload = await this.refreshTokenService.verifyToken(access_token);
+
+    if (!payload._id) {
+      throw new BaseException(
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        HttpStatus.UNAUTHORIZED,
+        ExceptionTypes.UNAUTHORIZED,
+        { navigate: true },
       );
+    }
 
-      if (!payload._id) {
-        throw new BaseException(
-          ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
-          HttpStatus.UNAUTHORIZED,
-          ExceptionTypes.UNAUTHORIZED,
-          { navigate: true }
-        );
-      }
+    const storedToken = await this.refreshTokenService.findToken(
+      refresh_token,
+      _lang,
+    );
 
-      const storedToken =
-        await this.refreshTokenService.findToken(refresh_token);
+    if (!storedToken || storedToken.userId !== payload._id) {
+      throw new BaseException(
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        HttpStatus.UNAUTHORIZED,
+        ExceptionTypes.UNAUTHORIZED,
+        { navigate: true },
+      );
+    }
 
-      if (!storedToken || storedToken.userId !== payload._id) {
-        throw new BaseException(
-          ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
-          HttpStatus.UNAUTHORIZED,
-          ExceptionTypes.UNAUTHORIZED,
-          { navigate: true }
-        );
-      }
+    const user = await this.userRepo.findOne({ query: { _id: payload._id } });
 
-      const user = await this.userRepo.findOne({ query: { _id: payload._id } });
+    if (!user) {
+      throw new BaseException(
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        HttpStatus.UNAUTHORIZED,
+        ExceptionTypes.UNAUTHORIZED,
+        { navigate: true },
+      );
+    }
 
-      if (!user) {
-        throw new BaseException(
-          ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
-          HttpStatus.UNAUTHORIZED,
-          ExceptionTypes.UNAUTHORIZED,
-          { navigate: true }
-        );
-      }
-      const userObj = user.toObject ? user.toObject() : user;
+    const { password, ...safeUser } = user;
+    const searchPayload = { query: { userId: safeUser._id } };
 
-      const { password, ...safeUser } = userObj;
-      const searchPayload = { query: { userId: safeUser._id } };
+    const [account, generalSettings, notificationSettings, privacySettings] =
+      await Promise.all([
+        this.accountService.findAccount(searchPayload),
+        this.accountService.findGeneralSettings(searchPayload),
+        this.accountService.findNotificationSettings(searchPayload),
+        this.accountService.findPrivacySettings(searchPayload),
+      ]);
 
-      const [account, generalSettings, notificationSettings, privacySettings] =
-        await Promise.all([
-          this.accountService.findAccount(searchPayload),
-          this.accountService.findGeneralSettings(searchPayload),
-          this.accountService.findNotificationSettings(searchPayload),
-          this.accountService.findPrivacySettings(searchPayload),
-        ]);
+    const result = {
+      user: safeUser,
+      account,
+      settings: {
+        generalSettings,
+        notificationSettings,
+        privacySettings,
+      },
+    };
 
-      const result = {
-        user: safeUser,
-        account,
-        settings: {
-          generalSettings,
-          notificationSettings,
-          privacySettings,
-        },
-      };
-
-      return { status: 200, user: result };
+    return { status: 200, user: result };
   }
 
   // =================================
@@ -764,19 +772,11 @@ export class AuthService {
       },
     });
 
-    const deleteTokenObj = deleteToken.toObject
-      ? deleteToken.toObject()
-      : deleteToken;
-
-    const expiresAt =
-      deleteTokenObj.expiresAt instanceof Date
-        ? deleteTokenObj.expiresAt
-        : new Date(deleteTokenObj.expiresAt);
     const now = new Date();
 
-    if (!deleteTokenObj || now >= expiresAt) {
-      if (deleteTokenObj) {
-        await this.tokenService.removeToken({ _id: deleteTokenObj._id });
+    if (!deleteToken || now >= deleteToken.expiresAt) {
+      if (deleteToken) {
+        await this.tokenService.removeToken({ _id: deleteToken._id });
       }
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED(lang),
@@ -815,7 +815,7 @@ export class AuthService {
         $and: [{ userId: _id }, { type: { $ne: TOKEN_TYPE.RESTORE_ACCOUNT } }],
       }),
       this.refreshTokenService.removeTokenByUserId(_id),
-      this.userRepo.update({ _id, status: USER_STATUS.DELETED }),
+      this.userRepo.update({ _id }, { _id, status: USER_STATUS.DELETED }),
     ]);
 
     this.emailService.deleteAccountCompleted({
@@ -847,16 +847,14 @@ export class AuthService {
         ExceptionTypes.UNAUTHORIZED,
       );
 
-    const userObj = user.toObject ? user.toObject() : user;
-
-    let { access_token, refresh_token } =
+    const { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({
-        _id: userObj._id,
+        _id: user._id,
       });
 
     await this.refreshTokenService.saveTokens({
       refresh_token,
-      userId: userObj._id,
+      userId: user._id,
       deviceId: data.deviceId,
       requestData: data.requestData,
     });
@@ -886,9 +884,7 @@ export class AuthService {
         HttpStatus.NOT_FOUND,
       );
 
-    const userObj: IReturnedUser = user.toObject ? user.toObject() : user;
-
-    if (userObj.provider === PROVIDER.PASSWORD) {
+    if (user.provider === PROVIDER.PASSWORD) {
       if (!password)
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
@@ -897,7 +893,7 @@ export class AuthService {
 
       const isPasswordMatch = await this.bcryptService.compare(
         password,
-        userObj.password,
+        user.password,
       );
 
       if (!isPasswordMatch)
@@ -907,7 +903,7 @@ export class AuthService {
         );
     }
 
-    if (userObj.provider === PROVIDER.GOOGLE) {
+    if (user.provider === PROVIDER.GOOGLE) {
       if (!idToken)
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
@@ -948,13 +944,9 @@ export class AuthService {
 
     const hashedToken = this.tokenService.hashToken(token);
 
-    const restoreTokenDoc = await this.tokenService.findToken({
+    const restoreToken = await this.tokenService.findToken({
       query: { token: hashedToken, type: TOKEN_TYPE.RESTORE_ACCOUNT },
     });
-
-    const restoreToken: IReturnedToken = restoreTokenDoc.toObject
-      ? restoreTokenDoc.toObject()
-      : restoreTokenDoc;
 
     if (restoreToken.expiresAt && restoreToken.expiresAt < new Date()) {
       throw new BaseException(
@@ -979,42 +971,37 @@ export class AuthService {
         HttpStatus.FORBIDDEN,
       );
 
-    const deletedUserDoc = await this.deletedUserRepo.findOne({
-      userId: restoreToken.userId,
+    const deletedUser = await this.deletedUserRepo.findOne({
+      query: { userId: restoreToken.userId },
     });
 
-    if (!deletedUserDoc)
+    if (!deletedUser)
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
       );
 
-    const deletedUser: IReturnedDeletedUser = deletedUserDoc.toObject
-      ? deletedUserDoc.toObject()
-      : deletedUserDoc;
-
-    const userDoc = await this.userRepo.findOne({
+    const user = await this.userRepo.findOne({
       query: { _id: deletedUser.userId },
     });
 
-    if (!userDoc)
+    if (!user)
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
       );
 
-    const userObj: IReturnedUser = userDoc.toObject
-      ? userDoc.toObject()
-      : userDoc;
-
     await Promise.all([
-      this.userRepo.update({ _id: userObj._id, status: USER_STATUS.ACTIVE }),
-      this.tokenService.removeTokensByUserId(userObj._id),
-      this.deletedUserRepo.remove(deletedUser._id),
+      this.userRepo.update(
+        { _id: user._id },
+        { _id: user._id, status: USER_STATUS.ACTIVE },
+      ),
+      this.tokenService.removeTokensByUserId(user._id),
+      this.deletedUserRepo.remove({ _id: deletedUser._id }),
     ]);
 
     const { access_token, refresh_token } =
-      await this.refreshTokenService.generateTokens({ _id: userObj._id });
+      await this.refreshTokenService.generateTokens({ _id: user._id });
 
     return { access_token, refresh_token };
   }
@@ -1027,7 +1014,7 @@ export class AuthService {
     const { _id } = this.cls.get<IUser>('user');
     const lang = this.cls.get<LANGUAGE>('lang');
 
-    const deactivateTokenDoc = await this.tokenService.findToken({
+    const deactivateToken = await this.tokenService.findToken({
       query: {
         $and: [
           { token },
@@ -1036,10 +1023,6 @@ export class AuthService {
         ],
       },
     });
-
-    const deactivateToken: IReturnedToken = deactivateTokenDoc.toObject
-      ? deactivateTokenDoc.toObject()
-      : deactivateTokenDoc;
 
     if (deactivateToken.expiresAt && deactivateToken.expiresAt < new Date()) {
       throw new BaseException(
@@ -1052,7 +1035,7 @@ export class AuthService {
       this.deactivatedUserRepo.create({ userId: _id }),
       this.tokenService.removeTokensByUserId(_id),
       this.refreshTokenService.removeTokenByUserId(_id),
-      this.userRepo.update({ _id, status: USER_STATUS.INACTIVE }),
+      this.userRepo.update({ _id }, { _id, status: USER_STATUS.INACTIVE }),
     ]);
 
     return { statusCode: 200 };

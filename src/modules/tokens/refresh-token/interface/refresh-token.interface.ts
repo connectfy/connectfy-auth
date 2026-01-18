@@ -28,10 +28,46 @@ export interface IRefreshToken {
 
   // Metadata
   metadata: Record<string, any> | null;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IReturnedRefreshToken {
+  _id: string;
+  userId: string;
+  refresh_token: string;
+
+  deviceId: string | null;
+  userAgent: string | null;
+  deviceName: string | null;
+  platform: DEVICE_TYPE;
+  browser: string | null;
+  os: string | null;
+
+  ipAddress: string | null;
+  country: string | null;
+  countryCode: string | null;
+  city: string | null;
+  longitude: number | null;
+  latitude: number | null;
+  region: string | null;
+  timezone: string | null;
+
+  // Security
+  lastUsedAt: Date;
+  expiresAt: Date;
+  isActive: boolean;
+
+  // Metadata
+  metadata: Record<string, any> | null;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IGenerateRefreshToken {
-  access_token?: string;
+  access_token: string;
   refresh_token: string;
 }
 

@@ -52,7 +52,10 @@ async function bootstrap() {
 
   await tcpApp.listen();
 
-  console.log(`i18n is working... should be used like this ==> `, i18n.t("email_messages.signup_verify.greeting", { lng: "en" }))
+  console.log(
+    `i18n is working... should be used like this ==> `,
+    i18n.t('email_messages.signup_verify.greeting', { lng: 'en' }),
+  );
   console.log(`✅ NODE_ENV => `, NODE_ENV);
   console.log(`✅ Server is working on ${PORT} port`);
 }

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IPhoneNumber } from '../../interface/phoneNumber.interface';
+import { IPhoneNumber } from '../../interface/nested/phoneNumber.interface';
 
 @Schema({ _id: false, timestamps: false })
 export class PhoneNumberModel implements IPhoneNumber {

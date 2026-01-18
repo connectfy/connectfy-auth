@@ -7,13 +7,17 @@ export interface IToken {
   type: TOKEN_TYPE;
   expiresAt: Date;
   isUsed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IReturnedToken {
   _id: string;
-  userId: string;
+  userId: string | Record<string, any>;
   token: string;
   type: TOKEN_TYPE;
   expiresAt: Date;
   isUsed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

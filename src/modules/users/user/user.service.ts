@@ -11,7 +11,6 @@ import {
 } from '@common/constants/exception.constants';
 import { ClsService } from 'nestjs-cls';
 import { ChangeUsernameDto } from './dto/change-username.dto';
-import { UserDocument } from './entity/user.entity';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -22,11 +21,7 @@ import {
   TOKEN_TYPE,
 } from '@/src/common/enums/enums';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
-import {
-  COUNTRIES,
-  ENV,
-  EXPIRE_DATES,
-} from '@/src/common/constants/constants';
+import { COUNTRIES, ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '@/src/common/services/utils/email.service';
 import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
@@ -44,7 +39,7 @@ export class UserService {
     private readonly emailService: EmailService,
     private readonly bcryptService: BcryptService,
     private readonly tokenService: TokenService,
-    private readonly accountService: AccountService
+    private readonly accountService: AccountService,
   ) {}
 
   // =======================
@@ -55,8 +50,7 @@ export class UserService {
     const lang = this.cls.get<LANGUAGE>('lang');
 
     const res = await this.repo.findOne({
-      query: { _id },
-      fields: '-password -faceDescriptor',
+      query: { _id }
     });
 
     if (!res)
@@ -111,9 +105,9 @@ export class UserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const newData = await this.repo.update(data);
+    const newData = await this.repo.update({ _id: data._id }, data);
 
-    return newData as IReturnedUser;
+    return newData;
   }
 
   // =======================
@@ -131,9 +125,9 @@ export class UserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const res = await this.repo.remove(_id);
+    const res = await this.repo.remove({ _id });
 
-    return res as IReturnedUser;
+    return res;
   }
 
   // =======================
@@ -200,20 +194,19 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const updatedUser = (await this.repo.update({
-      _id,
-      username,
-    })) as UserDocument;
-
-    const updatedObj: IReturnedUser = updatedUser.toObject
-      ? updatedUser.toObject()
-      : updatedUser;
+    const updatedUser = await this.repo.update(
+      { _id },
+      {
+        _id,
+        username,
+      },
+    );
 
     await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_USERNAME }],
     });
 
-    return updatedObj;
+    return updatedUser;
   }
 
   // =======================
@@ -333,20 +326,21 @@ export class UserService {
     });
 
     const [updatedUser] = await Promise.all([
-      await this.repo.update({
-        _id,
-        email: decoded.email,
-      }),
+      await this.repo.update(
+        {
+          _id,
+        },
+        {
+          _id,
+          email: decoded.email,
+        },
+      ),
       await this.tokenService.remove({
         $and: [{ type: TOKEN_TYPE.CHANGE_EMAIL }, { userId: _id }],
       }),
     ]);
 
-    const updatedObj = updatedUser?.toObject
-      ? updatedUser?.toObject()
-      : updatedUser;
-
-    return updatedObj;
+    return updatedUser;
   }
 
   // =======================
@@ -371,9 +365,7 @@ export class UserService {
         HttpStatus.NOT_FOUND,
       );
 
-    const userObj: IReturnedUser = user.toObject ? user.toObject() : user;
-
-    if (userObj.provider !== PROVIDER.PASSWORD)
+    if (user.provider !== PROVIDER.PASSWORD)
       throw new BaseException(
         ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
         HttpStatus.BAD_REQUEST,
@@ -393,7 +385,7 @@ export class UserService {
 
     const isPasswordSame = await this.bcryptService.compare(
       password,
-      userObj.password,
+      user.password,
     );
 
     if (isPasswordSame)
@@ -407,20 +399,21 @@ export class UserService {
 
     const hashedPassword = await this.bcryptService.hash(password);
 
-    const updatedUser = (await this.repo.update({
-      _id,
-      password: hashedPassword,
-    })) as UserDocument;
-
-    const updatedObj: IReturnedUser = updatedUser.toObject
-      ? updatedUser.toObject()
-      : updatedUser;
+    const updatedUser = await this.repo.update(
+      {
+        _id,
+      },
+      {
+        _id,
+        password: hashedPassword,
+      },
+    );
 
     await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PASSWORD }],
     });
 
-    return updatedObj;
+    return updatedUser;
   }
 
   // =======================
@@ -488,28 +481,30 @@ export class UserService {
         );
     }
 
-    let updatedUser: UserDocument;
+    let updatedUser: IReturnedUser;
 
     if (action === PHONE_NUMBER_ACTION.UPDATE) {
-      updatedUser = (await this.repo.update({
-        _id,
-        phoneNumber: phoneNumber,
-      })) as UserDocument;
+      updatedUser = await this.repo.update(
+        { _id },
+        {
+          _id,
+          phoneNumber: phoneNumber,
+        },
+      );
     } else {
-      updatedUser = (await this.repo.update({
-        _id,
-        phoneNumber: null,
-      })) as UserDocument;
+      updatedUser = await this.repo.update(
+        { _id },
+        {
+          _id,
+          phoneNumber: null,
+        },
+      );
     }
-
-    const updatedObj: IReturnedUser = updatedUser.toObject
-      ? updatedUser.toObject()
-      : updatedUser;
 
     await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
     });
 
-    return updatedObj;
+    return updatedUser;
   }
 }

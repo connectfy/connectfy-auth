@@ -1,65 +1,26 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { BaseRepository } from '../shared/base.repository';
 import { RefreshTokenDocument } from '../entity/refresh-token.entity';
 import {
+  IReturnedRefreshToken,
   ISaveRefreshToken,
   IUpdateRefreshToken,
 } from '../interface/refresh-token.interface';
 import { COLLECTIONS } from '@/src/common/constants/constants';
+import { BaseRepository } from '@common/repo/base.repository';
 
 @Injectable()
 export class RefreshTokenRepository extends BaseRepository<
   RefreshTokenDocument,
+  IReturnedRefreshToken,
   ISaveRefreshToken,
   IUpdateRefreshToken
 > {
   constructor(
     @InjectModel(COLLECTIONS.AUTH.TOKEN.REFRESH_TOKENS)
-    private readonly model: Model<RefreshTokenDocument>,
+    protected readonly model: Model<RefreshTokenDocument>,
   ) {
-    super();
-  }
-
-  async findTokenByUserId(
-    userId: string,
-  ): Promise<RefreshTokenDocument | null> {
-    return await this.model.findOne({ userId }).exec();
-  }
-
-  async findByRefreshToken(
-    refresh_token: string,
-  ): Promise<RefreshTokenDocument | null> {
-    return await this.model.findOne({ refresh_token }).exec();
-  }
-
-  async findOne(
-    query: Record<string, any>,
-  ): Promise<RefreshTokenDocument | null> {
-    return await this.model.findOne(query);
-  }
-
-  async update(data: IUpdateRefreshToken): Promise<RefreshTokenDocument> {
-    const { userId, ...rest } = data;
-
-    return (await this.model
-      .findOneAndUpdate({ userId }, rest, { new: true, runValidators: true })
-      .exec()) as RefreshTokenDocument;
-  }
-
-  async save(data: ISaveRefreshToken): Promise<RefreshTokenDocument> {
-    const newData = new this.model(data);
-    return await newData.save();
-  }
-
-  async remove(
-    query: Record<string, any>,
-  ): Promise<RefreshTokenDocument | null> {
-    return await this.model.findOneAndDelete(query).exec();
-  }
-
-  async removeMany(query: Record<string, any>): Promise<void> {
-    await this.model.deleteMany(query).exec();
+    super(model);
   }
 }

@@ -1,5 +1,5 @@
 import { PROVIDER, ROLE, USER_STATUS } from '@/src/common/enums/enums';
-import { IPhoneNumber } from './phoneNumber.interface';
+import { IPhoneNumber } from './nested/phoneNumber.interface';
 
 export interface IUser {
   _id: string;
@@ -11,6 +11,8 @@ export interface IUser {
   phoneNumber: IPhoneNumber | null;
   faceDescriptor: string | null;
   status: USER_STATUS;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IReturnedUser {
@@ -23,4 +25,6 @@ export interface IReturnedUser {
   phoneNumber: IPhoneNumber;
   faceDescriptor: string | null;
   status: USER_STATUS;
+  createdAt: Date;
+  updatedAt: Date;
 }

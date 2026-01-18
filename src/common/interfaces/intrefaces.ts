@@ -1,4 +1,5 @@
 import { ClientKafka, ClientProxy } from '@nestjs/microservices';
+import { PopulateOptions } from 'mongoose';
 
 interface ISendWithContextParams {
   endpoint: string;
@@ -24,4 +25,22 @@ export interface ICountry {
   flag: string;
   code: string;
   numberLength: number;
+}
+
+export interface IBaseRepositoryOptions {
+  lean?: boolean;
+  populate?: string | PopulateOptions | string[] | PopulateOptions[];
+}
+
+export interface IBaseRepositoryUpdateOptions extends IBaseRepositoryOptions {
+  new?: boolean;
+  upsert?: boolean;
+  runValidators?: boolean;
+}
+
+export interface IBaseRepositoryRemoveOptions extends IBaseRepositoryOptions {}
+
+export interface IBaseRepositoryInterface {
+  _id: string;
+  [key: string]: any;
 }

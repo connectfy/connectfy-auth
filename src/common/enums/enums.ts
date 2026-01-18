@@ -144,3 +144,10 @@ export enum OS_TYPE {
   IOS = 'IOS',
   UNKNOWN = 'UNKNOWN',
 }
+
+export enum TIME_DIFFERENCE_TYPE {
+  NOW = 'just_now',
+  MINUTE = 'minutes_ago',
+  HOUR = 'hours_ago',
+  DAY = 'days_ago',
+}

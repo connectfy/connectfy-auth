@@ -1,16 +1,11 @@
-import { enumTransform, stringTransform } from '@/src/common/functions/transform';
+import { enumTransform } from '@/src/common/functions/transform';
 import { LANGUAGE } from '@/src/common/enums/enums';
 import { ValidationMessages } from '@common/constants/validation.messages';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { BaseRemoveDto } from '@common/dto/base.remove.dto';
 
-export class RemoveDeletedUserDto {
-  @IsUUID('4', { message: ValidationMessages.UUID('_id') })
-  @IsString({ message: ValidationMessages.STRING('_id') })
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_id') })
-  _id: string;
-
+export class RemoveDeletedUserDto extends BaseRemoveDto {
   @Transform(({ key, value }) =>
     enumTransform({ key, value, enumObject: LANGUAGE }),
   )

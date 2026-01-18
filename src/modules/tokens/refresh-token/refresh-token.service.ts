@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   IGenerateRefreshToken,
   IRefreshTokenPayload,
+  IReturnedRefreshToken,
   IUpdateRefreshToken,
 } from './interface/refresh-token.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { RefreshTokenDocument } from './entity/refresh-token.entity';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
 import { ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
+import { BaseException } from '@common/exceptions/base.exception';
+import {
+  ExceptionMessages,
+  ExceptionTypes,
+} from '@common/constants/exception.constants';
+import { LANGUAGE } from '@common/enums/enums';
 
 @Injectable()
 export class RefreshTokenService {
@@ -23,10 +29,16 @@ export class RefreshTokenService {
     payload: IRefreshTokenPayload,
   ): Promise<IGenerateRefreshToken> {
     const accessSecretKey = this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET);
-    const accessExpiry = this.config.get<string>(ENV.AUTH.JWT.ACCESS.EXPIRES_IN);
+    const accessExpiry = this.config.get<string>(
+      ENV.AUTH.JWT.ACCESS.EXPIRES_IN,
+    );
 
-    const refreshSecretKey = this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET);
-    const refreshExpiry = this.config.get<string>(ENV.AUTH.JWT.REFRESH.EXPIRES_IN);
+    const refreshSecretKey = this.config.get<string>(
+      ENV.AUTH.JWT.REFRESH.SECRET,
+    );
+    const refreshExpiry = this.config.get<string>(
+      ENV.AUTH.JWT.REFRESH.EXPIRES_IN,
+    );
 
     const access_token = await this.jwtService.signAsync(payload, {
       secret: accessSecretKey,
@@ -46,11 +58,13 @@ export class RefreshTokenService {
     deviceId: string;
     refresh_token: string;
     requestData: Record<string, any>;
-  }): Promise<RefreshTokenDocument> {
+  }): Promise<IReturnedRefreshToken> {
     const { userId, deviceId, refresh_token, requestData } = data;
 
     const findToken = await this.repo.findOne({
-      $and: [{ userId }, { deviceId }],
+      query: {
+        $and: [{ userId }, { deviceId }],
+      },
     });
 
     const deviceInfo =
@@ -76,31 +90,45 @@ export class RefreshTokenService {
       expiresAt: new Date(Date.now() + EXPIRE_DATES.TOKEN.ONE_MONTH),
     };
 
-    if (findToken) return await this.repo.update(finalData);
+    if (findToken)
+      return await this.repo.update({ _id: findToken._id }, finalData);
 
-    return await this.repo.save(finalData);
-  }
-
-  async findToken(refresh_token: string): Promise<RefreshTokenDocument | null> {
-    return this.repo.findByRefreshToken(refresh_token);
+    return await this.repo.create(finalData);
   }
 
   async verifyToken(
     token: string,
     isAccessToken: boolean = true,
-    ignoreExpiration: boolean = true
+    ignoreExpiration: boolean = true,
   ): Promise<any> {
     return await this.jwtService.verifyAsync(token, {
       secret: isAccessToken
         ? this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET)
         : this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET),
-      ignoreExpiration
+      ignoreExpiration,
     });
   }
 
   async removeTokenByUserId(
     userId: string,
-  ): Promise<RefreshTokenDocument | null> {
-    return await this.repo.remove({ userId });
+  ): Promise<IReturnedRefreshToken | null> {
+    return await this.repo.removeOne({ userId });
+  }
+
+  async findToken(
+    refreshToken: string,
+    _lang: LANGUAGE,
+  ): Promise<IReturnedRefreshToken> {
+    const res = await this.repo.findOne({ query: { refreshToken } });
+
+    if (!res)
+      throw new BaseException(
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        HttpStatus.UNAUTHORIZED,
+        ExceptionTypes.UNAUTHORIZED,
+        { navigate: true },
+      );
+
+    return res;
   }
 }

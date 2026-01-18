@@ -22,7 +22,7 @@ export class DeletedUserService {
   async remove(data: RemoveDeletedUserDto): Promise<IReturnedDeletedUser> {
     const { _id, _lang } = data;
 
-    const foundData = await this.repo.findOne({ _id });
+    const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
@@ -31,9 +31,9 @@ export class DeletedUserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const res = await this.repo.remove(_id);
+    const res = await this.repo.remove({ _id });
 
-    return res as IReturnedDeletedUser;
+    return res;
   }
 
   async findOne(
