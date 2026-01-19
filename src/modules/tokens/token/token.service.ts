@@ -8,7 +8,7 @@ import { RemoveTokenDto, RemoveAllTokensDto } from './dto/remove.token.dto';
 import { BaseException } from '@common/exceptions/base.exception';
 import { IRemoveAllResponse } from '@common/interfaces/response.interface';
 import { FindTokenDto } from './dto/find.token.dto';
-import { LANGUAGE, TOKEN_TYPE } from '@/src/common/enums/enums';
+import { CLS_KEYS, LANGUAGE, TOKEN_TYPE } from '@/src/common/enums/enums';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -80,7 +80,7 @@ export class TokenService {
   }
 
   async findToken(option: FindTokenDto): Promise<IReturnedToken> {
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const token = await this.repo.findOne(option);
 
@@ -100,7 +100,7 @@ export class TokenService {
 
   async removeToken(data: RemoveTokenDto): Promise<IReturnedToken> {
     const { _id, _lang } = data;
-    const lang = this.cls.get<LANGUAGE>('lang') || _lang;
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG) || _lang;
 
     const res = await this.repo.remove({ _id });
 
@@ -179,7 +179,7 @@ export class TokenService {
   }
 
   async remove(query: Record<string, any>) {
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const res = await this.repo.removeOne(query);
 

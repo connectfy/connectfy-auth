@@ -15,6 +15,7 @@ import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtService } from '@nestjs/jwt';
 import {
+  CLS_KEYS,
   LANGUAGE,
   PHONE_NUMBER_ACTION,
   PROVIDER,
@@ -46,11 +47,11 @@ export class UserService {
   // GET USER INFORMATIONS
   // =======================
   async me() {
-    const { _id } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const res = await this.repo.findOne({
-      query: { _id }
+      query: { _id },
     });
 
     if (!res)
@@ -85,13 +86,11 @@ export class UserService {
   // CREATE USER
   // =======================
   async create(data: AddUserDto): Promise<IReturnedUser> {
-    const res = await this.repo.create(data);
-
-    return res;
+    return await this.repo.create(data);
   }
 
   // =======================
-  // EDIT USER INFORMATIONS
+  // EDIT USER INFORMATION'S
   // =======================
   async edit(data: EditUserDto): Promise<IReturnedUser> {
     const { _id, _lang } = data;
@@ -105,9 +104,7 @@ export class UserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const newData = await this.repo.update({ _id: data._id }, data);
-
-    return newData;
+    return await this.repo.update({ _id: data._id }, data);
   }
 
   // =======================
@@ -125,26 +122,21 @@ export class UserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const res = await this.repo.remove({ _id });
-
-    return res;
+    return await this.repo.remove({ _id });
   }
 
   // =======================
   // FIND ONE USER
   // =======================
   async findOne(query: Record<string, any>): Promise<IReturnedUser | null> {
-    const res = await this.repo.findOne({ query });
-    return res;
+    return await this.repo.findOne({ query });
   }
 
   // =======================
   // CHECK USER IS EXIST BY FIELD
   // =======================
   async existByField(query: Record<string, any>): Promise<boolean> {
-    const res = await this.repo.existsByField(query);
-
-    return res;
+    return await this.repo.existsByField(query);
   }
 
   // =======================
@@ -152,8 +144,8 @@ export class UserService {
   // =======================
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
     const { username, token } = data;
-    const { _id, username: oldUsername } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id, username: oldUsername } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const isUserExist = await this.repo.existsByField({ _id });
 
@@ -214,8 +206,12 @@ export class UserService {
   // =======================
   async changeEmail(data: ChangeEmailDto): Promise<{ statusCode: number }> {
     const { email, token } = data;
-    const { _id, email: oldEmail, provider } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const {
+      _id,
+      email: oldEmail,
+      provider,
+    } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const isUserExist = await this.repo.findOne({ query: { _id } });
 
@@ -288,8 +284,8 @@ export class UserService {
   // =======================
   async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IReturnedUser> {
     const { token } = data;
-    const { _id } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const user = await this.repo.findOne({ query: { _id } });
 
@@ -348,8 +344,8 @@ export class UserService {
   // =======================
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
-    const { _id } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     if (password !== confirmPassword)
       throw new BaseException(
@@ -421,8 +417,10 @@ export class UserService {
   // =======================
   async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IReturnedUser> {
     const { phoneNumber, token, action } = data;
-    const { _id, phoneNumber: oldPhoneNumber } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id, phoneNumber: oldPhoneNumber } = this.cls.get<IUser>(
+      CLS_KEYS.USER,
+    );
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const isUserExist = await this.repo.existsByField({ _id });
 

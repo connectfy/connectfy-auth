@@ -151,3 +151,10 @@ export enum TIME_DIFFERENCE_TYPE {
   HOUR = 'hours_ago',
   DAY = 'days_ago',
 }
+
+export enum CLS_KEYS {
+  USER = 'user',
+  LANG = 'lang',
+  ACCOUNT = 'account',
+  SETTINGS = 'settings',
+}

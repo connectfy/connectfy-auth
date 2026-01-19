@@ -12,6 +12,7 @@ import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.r
 import { generateVerifyCode } from '@common/functions/function';
 import { VerifySignupDto } from './dto/verify.dto';
 import {
+  CLS_KEYS,
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
   IDENTIFIER_TYPE,
   LANGUAGE,
@@ -683,7 +684,7 @@ export class AuthService {
   // LOGOUT
   // =================================
   async logout(): Promise<{ statusCode: 200 }> {
-    const { _id } = this.cls.get<IUser>('user');
+    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
 
     await this.refreshTokenService.removeTokenByUserId(_id);
 
@@ -763,8 +764,8 @@ export class AuthService {
   // =================================
   async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
     const { token } = data;
-    const { _id, email } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id, email } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const deleteToken = await this.tokenService.findToken({
       query: {
@@ -873,8 +874,8 @@ export class AuthService {
     data: AuthenticateUserDto,
   ): Promise<{ statusCode: number; token: string }> {
     const { password, type, idToken } = data;
-    const { _id, email: userEmail } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id, email: userEmail } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const user = await this.userRepo.findOne({ query: { _id } });
 
@@ -1011,8 +1012,8 @@ export class AuthService {
   // =================================
   async deactivateAccount(data: DeactivateAccountDto) {
     const { token } = data;
-    const { _id } = this.cls.get<IUser>('user');
-    const lang = this.cls.get<LANGUAGE>('lang');
+    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const deactivateToken = await this.tokenService.findToken({
       query: {
