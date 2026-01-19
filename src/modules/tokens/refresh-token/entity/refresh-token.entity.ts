@@ -311,9 +311,6 @@ export const RefreshTokenSchema =
 // INDEXES - Performance optimization
 // ================================================
 
-// Unique index
-RefreshTokenSchema.index({ refresh_token: 1 }, { unique: true });
-
 // Compound indexes (tez-tez query olunan kombinasiyalar)
 RefreshTokenSchema.index({ userId: 1, isActive: 1 });
 RefreshTokenSchema.index({ userId: 1, deviceId: 1 });

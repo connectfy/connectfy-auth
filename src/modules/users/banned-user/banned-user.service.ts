@@ -22,7 +22,7 @@ export class BannedUserService {
   async remove(data: RemoveBannedUserDto): Promise<IReturnedBannedUser> {
     const { _id, _lang } = data;
 
-    const foundData = await this.repo.findOne({ _id });
+    const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
@@ -31,9 +31,9 @@ export class BannedUserService {
         ExceptionTypes.NOT_FOUND,
       );
 
-    const res = await this.repo.remove(_id);
+    const res = await this.repo.remove({ _id });
 
-    return res as IReturnedBannedUser;
+    return res;
   }
 
   async findOne(

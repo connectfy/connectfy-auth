@@ -225,7 +225,7 @@ export class AuthService {
       );
 
     const isUserBanned = await this.bannedUserRepo.findOne({
-      userId: user._id,
+      query: { userId: user._id },
     });
 
     if (isUserBanned)
@@ -329,7 +329,7 @@ export class AuthService {
       );
 
     const isUserBanned = await this.bannedUserRepo.findOne({
-      userId: user._id,
+      query: { userId: user._id },
     });
 
     if (isUserBanned)
