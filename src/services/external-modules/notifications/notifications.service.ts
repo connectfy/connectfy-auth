@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { emitWithContext } from '../../helpers/microservice-request.helper';
+import { emitWithContext } from '@common/helpers/microservice-request.helper';
 import i18n from '@/src/i18n';
-import { ISendEmail } from '../../interfaces/services.interface';
+import { ISendEmail } from '@common/interfaces/services.interface';
 import {
   accountDeletedMessage,
   emailNotFoundMessage,
@@ -10,11 +10,11 @@ import {
   googleSignInMessage,
   signupVerifyMessage,
 } from 'connectfy-shared';
-import { changeEmailMessage } from '../../constants/emial.messages';
-import { MICROSERVICE_NAMES } from '../../constants/constants';
+import { changeEmailMessage } from '@common/constants/emial.messages';
+import { MICROSERVICE_NAMES } from '@common/constants/constants';
 
 @Injectable()
-export class EmailService {
+export class NotificationsService {
   constructor(
     @Inject(MICROSERVICE_NAMES.NOTIFICATION.KAFKA)
     private readonly notificationServiceKafka: ClientKafka,

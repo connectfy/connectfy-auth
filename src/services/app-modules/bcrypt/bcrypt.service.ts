@@ -13,10 +13,7 @@ export class BcryptService {
   // =================================
   // COMPARE PASSWORDS
   // =================================
-  async compare(
-    firstVal: string,
-    secondVal: string,
-  ): Promise<boolean> {
+  async compare(firstVal: string, secondVal: string): Promise<boolean> {
     return await compare(firstVal, secondVal);
   }
 }

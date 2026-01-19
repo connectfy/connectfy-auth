@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MICROSERVICE_NAMES } from '../../constants/constants';
+import { MICROSERVICE_NAMES } from '@common/constants/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { GENDER } from 'connectfy-shared';
-import { sendWithContext } from '../../helpers/microservice-request.helper';
+import { sendWithContext } from '@common/helpers/microservice-request.helper';
 
 @Injectable()
 export class AccountService {

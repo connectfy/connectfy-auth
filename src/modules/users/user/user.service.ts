@@ -24,11 +24,11 @@ import {
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { COUNTRIES, ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
-import { EmailService } from '@/src/common/services/utils/email.service';
-import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
+import { NotificationsService } from '@/src/services/external-modules/notifications/notifications.service';
+import { BcryptService } from '@/src/services/app-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
-import { AccountService } from '@/src/common/services/projects/account.service';
+import { AccountService } from '@/src/services/external-modules/account/account.service';
 
 @Injectable()
 export class UserService {
@@ -37,7 +37,7 @@ export class UserService {
     private readonly cls: ClsService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
-    private readonly emailService: EmailService,
+    private readonly emailService: NotificationsService,
     private readonly bcryptService: BcryptService,
     private readonly tokenService: TokenService,
     private readonly accountService: AccountService,

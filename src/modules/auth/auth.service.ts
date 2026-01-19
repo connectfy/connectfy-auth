@@ -37,11 +37,11 @@ import { JwtService } from '@nestjs/jwt';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deactivated-user.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
-import { EmailService } from '@/src/common/services/utils/email.service';
-import { BcryptService } from '@/src/common/services/utils/bcrypt.service';
+import { NotificationsService } from '@/src/services/external-modules/notifications/notifications.service';
+import { BcryptService } from '@/src/services/app-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
 import { ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
-import { AccountService } from '@/src/common/services/projects/account.service';
+import { AccountService } from '@/src/services/external-modules/account/account.service';
 
 @Injectable()
 export class AuthService {
@@ -57,7 +57,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly jwtService: JwtService,
     private readonly deactivatedUserRepo: DeactivatedUserRepository,
-    private readonly emailService: EmailService,
+    private readonly emailService: NotificationsService,
     private readonly bcryptService: BcryptService,
     private readonly accountService: AccountService,
   ) {
