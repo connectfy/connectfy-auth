@@ -27,8 +27,6 @@ import { OAuth2Client } from 'google-auth-library';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
-import { FaceDescriptorDto } from './dto/face-descriptor.dto';
-import { encryptPayload } from '@/src/common/functions/crypto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { ClsService } from 'nestjs-cls';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
