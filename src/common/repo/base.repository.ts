@@ -186,7 +186,7 @@ export abstract class BaseRepository<
       .findOne(query)
       .select(fields)
       .sort(sort)
-      .populate(populate)
+      .populate(populate as PopulateOptions[])
       .lean()
       .exec()) as TInterface | null;
   }
@@ -201,7 +201,7 @@ export abstract class BaseRepository<
       .findOne({ _id })
       .select(fields)
       .sort(sort)
-      .populate(populate)
+      .populate(populate as PopulateOptions[])
       .lean()
       .exec()) as TInterface | null;
   }
@@ -216,7 +216,7 @@ export abstract class BaseRepository<
       .findOne({ userId })
       .select(fields)
       .sort(sort)
-      .populate(populate)
+      .populate(populate as PopulateOptions[])
       .lean()
       .exec()) as TInterface | null;
   }
@@ -237,7 +237,7 @@ export abstract class BaseRepository<
       .skip(skip)
       .limit(limit)
       .sort(sort)
-      .populate(populate)
+      .populate(populate as PopulateOptions[])
       .lean()
       .exec()) as TInterface[];
   }

@@ -1,10 +1,22 @@
-import { IsString } from "class-validator";
-import { ValidationMessages } from "../constants/validation.messages";
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '@common/enums/enums';
 
 export class PopulateOption {
-  @IsString({ message: ValidationMessages.STRING('populate.path') })
-  path: string;
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    isOptional: true,
+  })
+  path?: string;
 
-  @IsString({ message: ValidationMessages.STRING('populate.select') })
-  select: string;
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    isOptional: true,
+  })
+  select?: string;
+
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    isOptional: true,
+  })
+  collection?: string;
 }

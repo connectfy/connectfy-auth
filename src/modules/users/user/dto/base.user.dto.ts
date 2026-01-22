@@ -1,36 +1,19 @@
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { LANGUAGE } from '@/src/common/enums/enums';
-import {
-  enumTransform,
-  stringTransform,
-} from '@/src/common/functions/transform';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, LANGUAGE } from '@/src/common/enums/enums';
 
 export class BaseUserDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('username') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   username: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
+  @FieldValidator({
+    type: FIELD_TYPE.EMAIL,
+  })
   email: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('password') })
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  password: string;
-
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
-  _lang?: LANGUAGE;
+  password: string;
 }

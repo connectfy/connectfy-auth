@@ -1,17 +1,11 @@
-import { enumTransform } from '@/src/common/functions/transform';
-import { LANGUAGE } from '@/src/common/enums/enums';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { FIELD_TYPE, LANGUAGE } from '@/src/common/enums/enums';
 import { BaseRemoveDto } from '@common/dto/base.remove.dto';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
 
 export class RemoveUserDto extends BaseRemoveDto {
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
-  _lang?: LANGUAGE;
+  _lang: LANGUAGE;
 }

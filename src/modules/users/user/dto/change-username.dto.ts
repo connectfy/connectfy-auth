@@ -1,25 +1,24 @@
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
-import { stringTransform } from '@/src/common/functions/transform';
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, Matches, MinLength, MaxLength } from 'class-validator';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, VALIDATION_TYPE } from '@common/enums/enums';
 
 export class ChangeUsernameDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('username') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
-  @MinLength(3, { message: ValidationMessages.MIN('username', 3) })
-  @MaxLength(30, { message: ValidationMessages.MAX('username', 30) })
-  @Matches(/^[A-Za-z0-9._-]+$/, {
-    message: ValidationMessages.MISMATCH(
-      'username',
-      '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)',
-    ),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 3,
+    maxLength: 30,
+    matches: {
+      regexp: /^[A-Za-z0-9._-]+$/,
+      message: {
+        type: VALIDATION_TYPE.MISMATCH,
+        params: { characters: '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)' },
+      },
+    },
   })
   username: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('token') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
-  @MaxLength(1000, { message: ValidationMessages.MAX('token', 1000) })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    maxLength: 1000,
+  })
   token: string;
 }

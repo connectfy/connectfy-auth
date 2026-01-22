@@ -185,22 +185,6 @@ export class UserModel implements IUser {
 
   @Prop({
     type: String,
-    required: false,
-    default: null,
-    maxlength: [
-      20000,
-      t('validation_messages.max_length', {
-        lng: LANGUAGE.EN,
-        field: 'faceDescriptor',
-        length: 20000,
-      }),
-    ],
-    select: false,
-  })
-  faceDescriptor: string | null;
-
-  @Prop({
-    type: String,
     required: [
       true,
       t('validation_messages.required', {
@@ -244,7 +228,6 @@ UserSchema.index({ username: 'text', email: 'text' });
 
 // Sparse indexes (null dəyərləri skip edir)
 UserSchema.index({ 'phoneNumber.number': 1 }, { sparse: true });
-UserSchema.index({ faceDescriptor: 1 }, { sparse: true });
 
 // ================================================
 // VIRTUAL FIELDS - Calculated properties

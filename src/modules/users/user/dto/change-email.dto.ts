@@ -1,27 +1,24 @@
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
-import { stringTransform } from '@/src/common/functions/transform';
-import { Transform } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '@/src/common/enums/enums';
 
 export class ChangeEmailDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @IsString({ message: ValidationMessages.STRING('email') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
-  @MaxLength(254, { message: ValidationMessages.MAX('email', 254) })
+  @FieldValidator({
+    type: FIELD_TYPE.EMAIL,
+    maxLength: 254,
+  })
   email: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('token') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
-  @MaxLength(1000, { message: ValidationMessages.MAX('token', 1000) })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    maxLength: 1000,
+  })
   token: string;
 }
 
 export class VerifyEmailChangeDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('token') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
-  @MaxLength(1000, { message: ValidationMessages.MAX('token', 1000) })
+  @FieldValidator({
+    type: FIELD_TYPE.JWT,
+    maxLength: 1000,
+  })
   token: string;
 }

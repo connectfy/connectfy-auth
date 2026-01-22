@@ -1,34 +1,45 @@
-import { Type } from "class-transformer";
-import { IsArray, IsInt, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
-import { ValidationMessages } from "../constants/validation.messages";
-import { PopulateOption } from "./populate.option.dto";
+import { PopulateOption } from './populate.option.dto';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '@common/enums/enums';
 
 export class BaseFindDto {
-  @IsOptional()
-  @IsInt({ message: ValidationMessages.INT('limit') })
-  @Type(() => Number)
+  @FieldValidator({
+    type: FIELD_TYPE.INT,
+    isOptional: true,
+    classType: Number,
+  })
   limit?: number;
 
-  @IsOptional()
-  @IsInt({ message: ValidationMessages.INT('skip') })
-  @Type(() => Number)
+  @FieldValidator({
+    type: FIELD_TYPE.INT,
+    isOptional: true,
+    classType: Number,
+  })
   skip?: number;
 
-  @IsOptional()
-  @IsObject({ message: ValidationMessages.STRING('sort') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+  })
   sort?: Record<string, 1 | -1>;
 
-  @IsOptional()
-  @IsObject({ message: ValidationMessages.OBJECT('query') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+  })
   query?: Record<string, any>;
 
-  @IsOptional()
-  @IsString({ message: ValidationMessages.STRING('fields') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    isOptional: true,
+  })
   fields?: string;
 
-  @IsOptional()
-  @IsArray({ message: ValidationMessages.ARRAY('populate') })
-  @ValidateNested({ each: true })
-  @Type(() => PopulateOption)
+  @FieldValidator({
+    type: FIELD_TYPE.ARRAY,
+    isOptional: true,
+    validateNested: { each: true },
+    classType: PopulateOption,
+  })
   populate?: PopulateOption[];
 }

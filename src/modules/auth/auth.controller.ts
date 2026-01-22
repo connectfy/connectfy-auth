@@ -8,7 +8,7 @@ import {
 import { AuthService } from './auth.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { VerifySignupDto } from './dto/verify.dto';
-import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
+import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
@@ -53,7 +53,7 @@ export class AuthController {
 
   @MessagePattern('auth/google/login', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async googleAuthLogin(@Payload() data: GoogleAuthloginDto) {
+  async googleAuthLogin(@Payload() data: GoogleAuthLoginDto) {
     return await this.service.googleLogin(data);
   }
 
@@ -126,12 +126,6 @@ export class AuthController {
       );
 
     return await this.service.refreshToken(data, LANGUAGE.EN);
-  }
-
-  @MessagePattern('auth/faceDescriptor', Transport.TCP)
-  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-  async faceDescriptor(@Payload() data: FaceDescriptorDto) {
-    return await this.service.updateFaceDescriptor(data);
   }
 
   @MessagePattern('auth/authenticate-user', Transport.TCP)

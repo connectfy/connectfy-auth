@@ -1,15 +1,11 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
 import { BaseUserDto } from './base.user.dto';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import { PROVIDER } from '@/src/common/enums/enums';
-import { enumTransform } from '@/src/common/functions/transform';
+import { FIELD_TYPE, PROVIDER } from '@/src/common/enums/enums';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
 
 export class AddUserDto extends BaseUserDto {
-  @Transform(({ key, value }) => enumTransform({ key, value, enumObject: PROVIDER }))
-  @IsEnum(PROVIDER, {
-    message: ValidationMessages.ENUM('provider', Object.keys(PROVIDER)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: PROVIDER,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('provider') })
   provider: PROVIDER;
 }

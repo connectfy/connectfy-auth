@@ -20,7 +20,7 @@ import {
   TOKEN_TYPE,
   USER_STATUS,
 } from '@/src/common/enums/enums';
-import { GoogleAuthloginDto, LoginDto } from './dto/login.dto';
+import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser, IUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
 import { OAuth2Client } from 'google-auth-library';
@@ -293,7 +293,7 @@ export class AuthService {
   // GOOGLE LOGIN
   // =================================
   async googleLogin(
-    data: GoogleAuthloginDto,
+    data: GoogleAuthLoginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
     const { idToken, _lang, deviceId, requestData } = data;
 
@@ -483,49 +483,6 @@ export class AuthService {
     });
 
     return { _id, access_token, refresh_token };
-  }
-
-  // =================================
-  // UPDATE FACE DESCRIPTOR
-  // =================================
-  async updateFaceDescriptor(data: FaceDescriptorDto) {
-    const { faceDescriptor, _loggedUser, _lang } = data;
-
-    const user = await this.userRepo.findOne({
-      query: { _id: _loggedUser._id },
-    });
-
-    if (!user)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
-        HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
-      );
-
-    if (
-      (user.faceDescriptor && faceDescriptor) ||
-      (!user.faceDescriptor && !faceDescriptor)
-    )
-      throw new BaseException(
-        ExceptionMessages.CONFLICT_MESSAGE(_lang),
-        HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
-      );
-
-    const updatedFaceDescriptor = faceDescriptor
-      ? encryptPayload(
-          JSON.stringify(faceDescriptor),
-          this.config.get<string>(ENV.AUTH.KEYS.FACE_DESCRIPTOR)!,
-        )
-      : null;
-
-    await this.userRepo.update(
-      { _id: user._id },
-      {
-        _id: user._id,
-        faceDescriptor: updatedFaceDescriptor,
-      },
-    );
   }
 
   // =================================

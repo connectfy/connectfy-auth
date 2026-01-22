@@ -158,3 +158,91 @@ export enum CLS_KEYS {
   ACCOUNT = 'account',
   SETTINGS = 'settings',
 }
+
+export enum FIELD_TYPE {
+  // String əsaslı
+  STRING = 'string', // @IsString
+  UUID = 'uuid', // @IsUUID
+  EMAIL = 'email', // @IsEmail
+  URL = 'url', // @IsUrl
+  ENUM = 'enum', // @IsEnum
+  PHONE = 'phone', // @IsPhoneNumber
+  JSON = 'json', // @IsJSON
+  JWT = 'jwt', // @IsJWT
+  LOWERCASE = 'lowercase', // @IsLowercase
+  UPPERCASE = 'uppercase', // @IsUppercase
+  HEX_COLOR = 'hex_color', // @IsHexColor
+  BASE64 = 'base64', // @IsBase64
+  IP = 'ip', // @IsIP
+  MAC_ADDRESS = 'mac_address', // @IsMACAddress
+
+  // Number əsaslı
+  NUMBER = 'number', // @IsNumber
+  INT = 'int', // @IsInt
+  POSITIVE = 'positive', // @IsPositive
+  NEGATIVE = 'negative', // @IsNegative
+  DECIMAL = 'decimal', // @IsDecimal
+  LATITUDE = 'latitude', // @IsLatitude
+  LONGITUDE = 'longitude', // @IsLongitude
+
+  // Boolean
+  BOOLEAN = 'boolean', // @IsBoolean
+
+  // Date & Time
+  DATE = 'date', // @IsDate
+  DATE_STRING = 'date_string', // @IsDateString
+
+  // Array
+  ARRAY = 'array', // @IsArray
+
+  // Object
+  OBJECT = 'object', // @IsObject
+}
+
+export enum VALIDATION_TYPE {
+  REQUIRED = 'required',
+  STRING = 'string',
+  INT = 'int',
+  NUMBER = 'number',
+  MIN = 'min',
+  MAX = 'max',
+  DATE = 'date',
+  UUID = 'uuid',
+  ARRAY = 'array',
+  ENUM = 'enum',
+  BOOLEAN = 'boolean',
+  EXISTS = 'exist',
+  AVAILABLE = 'available',
+  NOT_ALLOWED_FIELD = 'not_allowed_field',
+  TYPE_MISMATCH = 'type_mismatch',
+  OBJECT = 'object',
+  EMAIL = 'email',
+  MISMATCH = 'mismatch',
+  PASSWORD = 'password',
+  INVALID_LENGTH = 'invalid_length',
+  ARRAY_EACH = 'array_each',
+  PHONE_CODE = 'phone_code',
+  FULL_PHONE = 'full_phone',
+  URL = 'url',
+  PHONE = 'phone',
+  JSON = 'json',
+  JWT = 'jwt',
+  LOWERCASE = 'lowercase',
+  UPPERCASE = 'uppercase',
+  HEX_COLOR = 'hex_color',
+  BASE64 = 'base64',
+  IP = 'ip',
+  MAC_ADDRESS = 'mac_address',
+  POSITIVE = 'positive',
+  NEGATIVE = 'negative',
+  DECIMAL = 'decimal',
+  LATITUDE = 'latitude',
+  LONGITUDE = 'longitude',
+  MIN_LENGTH = 'min_length',
+  MAX_LENGTH = 'max_length',
+  ARRAY_MIN_SIZE = 'array_min_size',
+  ARRAY_MAX_SIZE = 'array_max_size',
+  ARRAY_UNIQUE = 'array_unique',
+  MIN_DATE = 'min_date',
+  MAX_DATE = 'max_date',
+}

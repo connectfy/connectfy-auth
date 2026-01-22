@@ -1,63 +1,50 @@
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform, Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Length,
-  Matches,
-  ValidateNested,
-} from 'class-validator';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, VALIDATION_TYPE } from '@common/enums/enums';
 import { SignupDto } from './signup.dto';
 import { LANGUAGE } from '@/src/common/enums/enums';
-import {
-  enumTransform,
-  objectTransform,
-  stringTransform,
-} from '@/src/common/functions/transform';
 
 export class VerifySignupDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('code') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('code') })
-  @Length(6, 6, { message: ValidationMessages.INVALID_LENGTH('code', 6) })
-  @Matches(/^\d+$/, {
-    message: ValidationMessages.NUMBER('code'),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 6,
+    maxLength: 6,
+    matches: {
+      regexp: /^\d+$/,
+      message: {
+        type: VALIDATION_TYPE.NUMBER,
+      },
+    },
   })
   code: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('verifyCode') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('verifyCode') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   verifyCode: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @ValidateNested()
-  @Type(() => SignupDto)
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('unverifiedUser') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    classType: SignupDto,
+    validateNested: {},
+  })
   unverifiedUser: SignupDto;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.values(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('deviceId') })
-  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+    uuidVersion: '4',
+  })
   deviceId: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @IsOptional()
-  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+  })
   requestData: {
     headers: {
       'user-agent'?: string | string[];

@@ -1,36 +1,25 @@
-import {
-  dateTransform,
-  enumTransform,
-  stringTransform,
-} from '@/src/common/functions/transform';
-import { TOKEN_TYPE } from '@/src/common/enums/enums';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import { IsDate, IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { FIELD_TYPE, TOKEN_TYPE } from '@/src/common/enums/enums';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
 
 export class BaseTokenDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsUUID('4', { message: ValidationMessages.UUID('userId') })
-  @IsString({ message: ValidationMessages.STRING('userId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('userId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+  })
   userId: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('token') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   token: string;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: TOKEN_TYPE }),
-  )
-  @IsEnum(TOKEN_TYPE, {
-    message: ValidationMessages.ENUM('type', Object.values(TOKEN_TYPE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: TOKEN_TYPE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('type') })
   type: TOKEN_TYPE;
 
-  @Transform(({ key, value }) => dateTransform({ key, value }))
-  @IsDate({ message: ValidationMessages.DATE('expiresAt') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('expiresAt') })
+  @FieldValidator({
+    type: FIELD_TYPE.DATE,
+  })
   expiresAt: Date;
 }

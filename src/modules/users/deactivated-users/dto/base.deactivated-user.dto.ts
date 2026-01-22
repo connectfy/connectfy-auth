@@ -1,12 +1,9 @@
-import { stringTransform } from '@/src/common/functions/transform';
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '@common/enums/enums';
 
 export class BaseDeactivatedUserDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsUUID('4', { message: ValidationMessages.UUID('userId') })
-  @IsString({ message: ValidationMessages.STRING('userId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('userId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+  })
   userId: string;
 }

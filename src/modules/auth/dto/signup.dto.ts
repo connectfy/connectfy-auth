@@ -1,174 +1,131 @@
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, VALIDATION_TYPE } from '@common/enums/enums';
 import { GENDER, LANGUAGE, THEME } from '@/src/common/enums/enums';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import {
-  IsDate,
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  Matches,
-  MinLength,
-  MaxLength,
-  IsObject,
-  IsOptional,
-  IsUUID,
-} from 'class-validator';
-import {
-  dateTransform,
-  enumTransform,
-  objectTransform,
-  stringTransform,
-} from '@/src/common/functions/transform';
 
 export class SignupDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('firstName') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('firstName') })
-  @MaxLength(50, { message: ValidationMessages.MAX('firstName', 50) })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    maxLength: 50,
+  })
   firstName: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('lastName') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('lastName') })
-  @MaxLength(50, { message: ValidationMessages.MAX('lastName', 50) })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    maxLength: 50,
+  })
   lastName: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('username') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
-  @MinLength(3, { message: ValidationMessages.MIN('username', 3) })
-  @MaxLength(30, { message: ValidationMessages.MAX('username', 30) })
-  @Matches(/^[A-Za-z0-9._-]+$/, {
-    message: ValidationMessages.MISMATCH(
-      'username',
-      '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)',
-    ),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 3,
+    maxLength: 30,
+    matches: {
+      regexp: /^[^\s.,?()$:;"'{}\[\]=+&!\\|/<>`~@#№%^]+$/,
+      message: {
+        type: VALIDATION_TYPE.MISMATCH,
+        params: { characters: '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)' },
+      },
+    },
   })
   username: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsEmail({}, { message: ValidationMessages.EMAIL('email') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('email') })
-  @MaxLength(254, { message: ValidationMessages.MAX('email', 254) })
+  @FieldValidator({
+    type: FIELD_TYPE.EMAIL,
+    maxLength: 254,
+  })
   email: string;
 
-  // @Transform(({ key, value }) => objectTransform({ key, value }))
-  // @ValidateNested()
-  // @Type(() => PhoneNumberDto)
-  // @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  // phoneNumber: PhoneNumberDto;
-
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('password') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
-  @MinLength(8, { message: ValidationMessages.MIN('password', 8) })
-  @MaxLength(30, { message: ValidationMessages.MAX('password', 30) })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,30}$/, {
-    message: ValidationMessages.PASSWORD(),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 8,
+    maxLength: 30,
+    matches: {
+      regexp: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,30}$/,
+      message: {
+        type: VALIDATION_TYPE.PASSWORD,
+      },
+    },
   })
   password: string;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: GENDER }),
-  )
-  @IsEnum(GENDER, {
-    message: ValidationMessages.ENUM('gender', Object.keys(GENDER)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: GENDER,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('gender') })
   gender: GENDER;
 
-  @Transform(({ key, value }) => dateTransform({ key, value }))
-  @IsDate({ message: ValidationMessages.DATE('birthdayDate') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
+  @FieldValidator({
+    type: FIELD_TYPE.DATE,
+  })
   birthdayDate: Date;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: THEME }),
-  )
-  @IsEnum(THEME, {
-    message: ValidationMessages.ENUM('theme', Object.values(THEME)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: THEME,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('theme') })
   theme: THEME;
 }
 
 export class GoogleAuthSignupDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('idToken') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
-  @MaxLength(2048, { message: ValidationMessages.MAX('idToken', 2048) })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    maxLength: 2048,
+  })
   idToken: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('username') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('username') })
-  @MinLength(3, { message: ValidationMessages.MIN('username', 3) })
-  @MaxLength(30, { message: ValidationMessages.MAX('username', 30) })
-  @Matches(/^[^\s.,?()$:;"'{}[\]=+&!\\|/<>`~@#№%^]+$/, {
-    message: ValidationMessages.MISMATCH(
-      'username',
-      '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)',
-    ),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 3,
+    maxLength: 30,
+    matches: {
+      regexp: /^[^\s.,?()$:;"'{}\[\]=+&!\\|/<>`~@#№%^]+$/,
+      message: {
+        type: VALIDATION_TYPE.MISMATCH,
+        params: { characters: '(.,?()$:;"\'{}[]-=+&!\\|/<>`~@#№%^)' },
+      },
+    },
   })
   username: string;
 
-  // @Transform(({ key, value }) => objectTransform({ key, value }))
-  // @ValidateNested()
-  // @Type(() => PhoneNumberDto)
-  // @IsNotEmpty({ message: ValidationMessages.STRING("phoneNumber") })
-  // phoneNumber: PhoneNumberDto;
-
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: GENDER }),
-  )
-  @IsEnum(GENDER, {
-    message: ValidationMessages.ENUM('gender', Object.keys(GENDER)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: GENDER,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('gender') })
   gender: GENDER;
 
-  @Transform(({ key, value }) => dateTransform({ key, value }))
-  @IsDate({ message: ValidationMessages.DATE('birthdayDate') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('birthdayDate') })
+  @FieldValidator({
+    type: FIELD_TYPE.DATE,
+  })
   birthdayDate: Date;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: THEME }),
-  )
-  @IsEnum(THEME, {
-    message: ValidationMessages.ENUM('theme', Object.values(THEME)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: THEME,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('theme') })
   theme: THEME;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('deviceId') })
-  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+    uuidVersion: '4',
+  })
   deviceId: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @IsOptional()
-  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+  })
   requestData: {
     headers: {
       'user-agent'?: string | string[];

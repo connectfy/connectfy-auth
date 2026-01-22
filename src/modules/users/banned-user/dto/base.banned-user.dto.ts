@@ -1,17 +1,14 @@
-import { Transform } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsString, IsUUID } from 'class-validator';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { dateTransform, stringTransform } from '@/src/common/functions/transform';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '@common/enums/enums';
 
 export class BaseBannedUserDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsUUID('4', { message: ValidationMessages.UUID('userId') })
-  @IsString({ message: ValidationMessages.STRING('userId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('userId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+  })
   userId: string;
 
-  @Transform(({ key, value }) => dateTransform({ key, value }))
-  @IsDate({ message: ValidationMessages.DATE('bannedToDate') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('bannedToDate') })
+  @FieldValidator({
+    type: FIELD_TYPE.DATE,
+  })
   bannedToDate: Date;
 }

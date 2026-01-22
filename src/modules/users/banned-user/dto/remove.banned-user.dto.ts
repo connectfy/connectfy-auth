@@ -1,22 +1,21 @@
-import { enumTransform, stringTransform } from '@/src/common/functions/transform';
-import { LANGUAGE } from '@/src/common/enums/enums';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { FIELD_TYPE, LANGUAGE } from '@/src/common/enums/enums';
+import { BaseRemoveAllDto, BaseRemoveDto } from '@common/dto/base.remove.dto';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
 
-export class RemoveBannedUserDto {
-  @IsUUID('4', { message: ValidationMessages.UUID('_id') })
-  @IsString({ message: ValidationMessages.STRING('_id') })
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_id') })
-  _id: string;
-
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+export class RemoveBannedUserDto extends BaseRemoveDto {
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    isOptional: true,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
+  _lang?: LANGUAGE;
+}
+
+export class RemoveAllBannedUsersDto extends BaseRemoveAllDto {
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    isOptional: true,
+    enumObject: LANGUAGE,
+  })
   _lang?: LANGUAGE;
 }

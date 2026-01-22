@@ -1,26 +1,19 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
-import { ValidationMessages } from '../constants/validation.messages';
-import { arrayTransform, stringTransform } from '../functions/transform';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '../enums/enums';
 
 export class BaseRemoveDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsUUID('4', { message: ValidationMessages.UUID('_id') })
-  @IsString({ message: ValidationMessages.STRING('_id') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_id') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+  })
   _id: string;
 }
 
 export class BaseRemoveAllDto {
-  @Transform(({ key, value }) => arrayTransform({ key, value }))
-  @IsArray({ message: ValidationMessages.ARRAY('_ids') })
-  @ArrayNotEmpty({ message: ValidationMessages.REQUIRED('_ids') })
-  @IsString({ each: true, message: ValidationMessages.STRING('_ids[*]') })
+  @FieldValidator({
+    type: FIELD_TYPE.ARRAY,
+    minSize: 1,
+    classType: String,
+    validationOptions: { each: true },
+  })
   _ids: string[];
 }

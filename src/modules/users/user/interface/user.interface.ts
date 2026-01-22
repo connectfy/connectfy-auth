@@ -9,7 +9,6 @@ export interface IUser {
   provider: PROVIDER;
   password: string;
   phoneNumber: IPhoneNumber | null;
-  faceDescriptor: string | null;
   status: USER_STATUS;
   createdAt: Date;
   updatedAt: Date;
@@ -23,7 +22,6 @@ export interface IReturnedUser {
   provider: PROVIDER;
   password: string;
   phoneNumber: IPhoneNumber;
-  faceDescriptor: string | null;
   status: USER_STATUS;
   createdAt: Date;
   updatedAt: Date;

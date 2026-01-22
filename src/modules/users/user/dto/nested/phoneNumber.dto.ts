@@ -1,30 +1,37 @@
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { stringTransform } from '@/src/common/functions/transform';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, VALIDATION_TYPE } from '@common/enums/enums';
 
 export class PhoneNumberDto {
-  @Transform(({ key, value }) => stringTransform({ key ,value }))
-  @IsString({ message: ValidationMessages.STRING('countryCode') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('countryCode') })
-  @Matches(/^\+\d+$/, {
-    message: ValidationMessages.PHONE_CODE('countryCode'),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    matches: {
+      regexp: /^\+\d+$/,
+      message: {
+        type: VALIDATION_TYPE.PHONE_CODE,
+      },
+    },
   })
   countryCode: string;
 
-  @Transform(({ key, value }) => stringTransform({ key ,value }))
-  @IsString({ message: ValidationMessages.STRING('number') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('number') })
-  @Matches(/^\d+$/, {
-    message: ValidationMessages.NUMBER('number'),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    matches: {
+      regexp: /^\d+$/,
+      message: {
+        type: VALIDATION_TYPE.NUMBER,
+      },
+    },
   })
   number: string;
 
-  @Transform(({ key, value }) => stringTransform({ key ,value }))
-  @IsString({ message: ValidationMessages.STRING('fullPhoneNumber') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('fullPhoneNumber') })
-  @Matches(/^\+\d+$/, {
-    message: ValidationMessages.FULL_PHONE('fullPhoneNumber'),
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    matches: {
+      regexp: /^\+\d+$/,
+      message: {
+        type: VALIDATION_TYPE.FULL_PHONE,
+      },
+    },
   })
   fullPhoneNumber: string;
 }

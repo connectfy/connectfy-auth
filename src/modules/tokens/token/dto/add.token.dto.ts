@@ -1,3 +1,3 @@
-import { BaseTokenDto } from "./base.token.dto";
+import { BaseTokenDto } from './base.token.dto';
 
-export class AddTokenDto extends BaseTokenDto{};
+export class AddTokenDto extends BaseTokenDto {}

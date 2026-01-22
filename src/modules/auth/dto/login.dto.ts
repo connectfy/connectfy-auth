@@ -1,63 +1,43 @@
 import {
-  arrayTransform,
-  enumTransform,
-  objectTransform,
-  stringTransform,
-} from '@/src/common/functions/transform';
-import { IDENTIFIER_TYPE, LANGUAGE } from '@/src/common/enums/enums';
-import { ValidationMessages } from '@common/constants/validation.messages';
-import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
-import { Request } from 'express';
+  FIELD_TYPE,
+  IDENTIFIER_TYPE,
+  LANGUAGE,
+} from '@/src/common/enums/enums';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
 
 export class LoginDto {
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: IDENTIFIER_TYPE }),
-  )
-  @IsEnum(IDENTIFIER_TYPE, {
-    message: ValidationMessages.ENUM(
-      'identifierType',
-      Object.keys(IDENTIFIER_TYPE),
-    ),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: IDENTIFIER_TYPE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifierType') })
   identifierType: IDENTIFIER_TYPE;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('identifier') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('identifier') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   identifier: string;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('password') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('password') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   password: string;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('deviceId') })
-  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+    uuidVersion: '4',
+  })
   deviceId: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @IsOptional()
-  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+  })
   requestData: {
     headers: {
       'user-agent'?: string | string[];
@@ -69,30 +49,29 @@ export class LoginDto {
   };
 }
 
-export class GoogleAuthloginDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('idToken') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('idToken') })
+export class GoogleAuthLoginDto {
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   idToken: string;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: LANGUAGE }),
-  )
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: LANGUAGE,
+    enumValues: Object.values(LANGUAGE),
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang: LANGUAGE;
 
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('deviceId') })
-  @IsUUID('4', { message: ValidationMessages.UUID('deviceId') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('deviceId') })
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+    uuidVersion: '4',
+  })
   deviceId: string;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @IsOptional()
-  @IsObject({ message: ValidationMessages.OBJECT('requestData') })
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+  })
   requestData: {
     headers: {
       'user-agent'?: string | string[];

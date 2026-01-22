@@ -1,41 +1,26 @@
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE } from '@common/enums/enums';
 import { PHONE_NUMBER_ACTION } from '@/src/common/enums/enums';
-import {
-  enumTransform,
-  objectTransform,
-  stringTransform,
-} from '@/src/common/functions/transform';
-import { Transform, Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  ValidateIf,
-  ValidateNested,
-} from 'class-validator';
-import { ValidationMessages } from '@/src/common/constants/validation.messages';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
 
 export class ChangePhoneNumberDto {
-  @Transform(({ key, value }) => stringTransform({ key, value }))
-  @IsString({ message: ValidationMessages.STRING('token') })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('token') })
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+  })
   token: string;
 
-  @Transform(({ key, value }) =>
-    enumTransform({ key, value, enumObject: PHONE_NUMBER_ACTION }),
-  )
-  @IsEnum(PHONE_NUMBER_ACTION, {
-    message: ValidationMessages.REQUIRED('action'),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    enumObject: PHONE_NUMBER_ACTION,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('action') })
   action: PHONE_NUMBER_ACTION;
 
-  @Transform(({ key, value }) => objectTransform({ key, value }))
-  @IsOptional()
-  @ValidateIf((obj) => obj.action === PHONE_NUMBER_ACTION.UPDATE)
-  @ValidateNested()
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('phoneNumber') })
-  @Type(() => PhoneNumberDto)
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    isOptional: true,
+    validateIf: (obj) => obj.action === PHONE_NUMBER_ACTION.UPDATE,
+    validateNested: {},
+    classType: PhoneNumberDto,
+  })
   phoneNumber: PhoneNumberDto;
 }

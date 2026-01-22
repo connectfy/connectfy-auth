@@ -1,12 +1,12 @@
-import { LANGUAGE } from '@/src/common/enums/enums';
-import { ValidationMessages } from '@common/constants/validation.messages';
+import { FIELD_TYPE, LANGUAGE } from '@/src/common/enums/enums';
 import { BaseFindDto } from '@common/dto/base.find.dto';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
 
 export class FindTokenDto extends BaseFindDto {
-  @IsEnum(LANGUAGE, {
-    message: ValidationMessages.ENUM('_lang', Object.keys(LANGUAGE)),
+  @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    isOptional: true,
+    enumObject: LANGUAGE,
   })
-  @IsNotEmpty({ message: ValidationMessages.REQUIRED('_lang') })
   _lang?: LANGUAGE;
 }

@@ -93,13 +93,14 @@ export class UserService {
   // EDIT USER INFORMATION'S
   // =======================
   async edit(data: EditUserDto): Promise<IReturnedUser> {
-    const { _id, _lang } = data;
+    const { _id } = data;
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
       );
