@@ -18,20 +18,14 @@ import {
   ExceptionMessages,
   ExceptionTypes,
 } from '@common/constants/exception.constants';
-import { FaceDescriptorDto } from './dto/face-descriptor.dto';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
-import { ClsService } from 'nestjs-cls';
-import { ILoggedUser } from '@/src/common/interfaces/request.interface';
 
 @Controller('')
 export class AuthController {
-  constructor(
-    private readonly service: AuthService,
-    private readonly cls: ClsService,
-  ) {}
+  constructor(private readonly service: AuthService) {}
 
   @MessagePattern('auth/signup', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
