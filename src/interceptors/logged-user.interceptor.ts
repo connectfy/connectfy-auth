@@ -27,7 +27,9 @@ export class LoggedUserInterceptor implements NestInterceptor {
           this.cls.set(CLS_KEYS.SETTINGS, loggedUser.settings);
           this.cls.set(
             CLS_KEYS.LANG,
-            loggedUser.settings.generalSettings.language,
+            loggedUser
+              ? loggedUser.settings.generalSettings.language
+              : data?._lang,
           );
           next.handle().subscribe(subscriber);
         });
