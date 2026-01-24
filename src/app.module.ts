@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { TokensModule } from './modules/tokens/tokens.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UsersModule } from '@modules/users/users.module';
+import { TokensModule } from '@modules/tokens/tokens.module';
 import { ClsInterceptor, ClsModule } from 'nestjs-cls';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
-import { ENV } from './common/constants/constants';
+import { ENV } from '@common/constants/constants';
+import { TcpConnectionsModule } from '@/src/services/app-connections/tcp-connections.module';
+import { KafkaConnectionsModule } from '@/src/services/app-connections/kafka-connections.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { ENV } from './common/constants/constants';
     AuthModule,
     UsersModule,
     TokensModule,
+    TcpConnectionsModule,
+    KafkaConnectionsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClsInterceptor },
