@@ -722,9 +722,10 @@ export class AuthService {
     const { _id, email } = this.cls.get<IUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
+    const hashedToken = this.tokenService.hashToken(token);
     const deleteToken = await this.tokenService.findToken({
       query: {
-        $and: [{ token }, { userId: _id }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
+        $and: [{ token: hashedToken }, { userId: _id }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
       },
     });
 
@@ -832,7 +833,7 @@ export class AuthService {
     const { _id, email: userEmail } = this.cls.get<IUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    const user = await this.userRepo.findOne({ query: { _id } });
+    const user = await this.userRepo.findOne({ query: { _id }, fields: "provider password" });
 
     if (!user)
       throw new BaseException(

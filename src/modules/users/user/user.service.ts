@@ -29,6 +29,7 @@ import { BcryptService } from '@/src/services/app-modules/bcrypt/bcrypt.service'
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
 import { AccountService } from '@/src/services/external-modules/account/account.service';
+import { CheckUniqueDto } from './dto/check-unique.dto';
 
 @Injectable()
 export class UserService {
@@ -505,5 +506,23 @@ export class UserService {
     });
 
     return updatedUser;
+  }
+
+  // =======================
+  // CHECK UNIQUE
+  // =======================
+  async checkUnique(data: CheckUniqueDto): Promise<boolean> {
+    const { field, value } = data;
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    
+    const isUserExist = await this.repo.existsByField({ [field]: value });
+
+    if (isUserExist)
+      throw new BaseException(
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(value, lang),
+        HttpStatus.BAD_REQUEST,
+      );
+
+    return true;
   }
 }

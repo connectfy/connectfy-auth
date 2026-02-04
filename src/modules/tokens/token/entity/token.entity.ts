@@ -60,7 +60,7 @@ export class TokenModel implements IToken {
     ],
     unique: true,
     index: true,
-    select: false, // Security: default query-lərdə token gəlməsin
+    // select: false, // Security: default query-lərdə token gəlməsin
   })
   token: string;
 

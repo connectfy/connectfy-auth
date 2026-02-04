@@ -5,6 +5,7 @@ import { ChangeUsernameDto } from './dto/change-username.dto';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
+import { CheckUniqueDto } from './dto/check-unique.dto';
 
 @Controller('')
 export class UserController {
@@ -44,5 +45,11 @@ export class UserController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async changePhoneNumber(@Payload() data: ChangePhoneNumberDto) {
     return await this.service.changePhoneNumber(data);
+  }
+
+  @MessagePattern('user/check-unique', Transport.TCP)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async checkUnique(@Payload() data: CheckUniqueDto) {
+    return await this.service.checkUnique(data);
   }
 }

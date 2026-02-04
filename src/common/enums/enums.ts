@@ -246,3 +246,9 @@ export enum VALIDATION_TYPE {
   MIN_DATE = 'min_date',
   MAX_DATE = 'max_date',
 }
+
+export enum CHECK_UNIQUE_FIELD {
+  USERNAME = 'username',
+  EMAIL = 'email',
+  PHONE_NUMBER = 'phone_number',
+}
