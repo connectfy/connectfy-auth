@@ -158,6 +158,21 @@ export class AuthService {
   }
 
   // =================================
+  // RESEND VERIFY SIGNUP
+  // =================================
+  async resendSignupVerify(data: SignupDto) {
+    const verifyCode = generateVerifyCode();
+
+    this.emailService.verifySignup({
+      to: data.email,
+      _lang: data._lang,
+      additional: { firstName: data.firstName, lastName: data.lastName, verifyCode },
+    });
+
+    return { verifyCode };
+  }
+
+  // =================================
   // LOGIN
   // =================================
   async login(

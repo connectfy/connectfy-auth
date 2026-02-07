@@ -39,6 +39,21 @@ export class AuthController {
     return await this.service.verifySignup(data);
   }
 
+  @MessagePattern('auth/verify-signup/resend', Transport.TCP)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async resendSignupVerify(@Payload() data: SignupDto ) 
+  {
+    if (!data)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
+        HttpStatus.NOT_FOUND,
+        ExceptionTypes.NOT_FOUND,
+        { navigate: true },
+      );
+
+    return await this.service.resendSignupVerify(data);
+  }
+
   @MessagePattern('auth/login', Transport.TCP)
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async login(@Payload() data: LoginDto) {
@@ -116,7 +131,7 @@ export class AuthController {
         ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
         HttpStatus.NOT_FOUND,
         ExceptionTypes.NOT_FOUND,
-        { nagivate: true },
+        { navigate: true },
       );
 
     return await this.service.refreshToken(data, LANGUAGE.EN);
