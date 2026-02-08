@@ -4,33 +4,34 @@ import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { HttpExceptionFilter } from './exception-filters/http.filter';
 import { AllExceptionsFilter } from './exception-filters/all.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Start Kafka Microservice
-  const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          clientId: 'connectfy-auth',
-          brokers: ['kafka-0:9092', 'kafka-1:9092'],
-        },
-        consumer: {
-          groupId: 'consumer-connectfy-auth',
-          allowAutoTopicCreation: false,
-        },
-        run: {
-          autoCommit: false,
-        },
-      },
-    },
-  );
+  // const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
+  //   AppModule,
+  //   {
+  //     transport: Transport.KAFKA,
+  //     options: {
+  //       client: {
+  //         clientId: 'connectfy-auth',
+  //         brokers: ['kafka-0:9092', 'kafka-1:9092'],
+  //       },
+  //       consumer: {
+  //         groupId: 'consumer-connectfy-auth',
+  //         allowAutoTopicCreation: false,
+  //       },
+  //       run: {
+  //         autoCommit: false,
+  //       },
+  //     },
+  //   },
+  // );
 
-  kafkaApp.useGlobalFilters(new AllExceptionsFilter());
+  // kafkaApp.useGlobalFilters(new AllExceptionsFilter());
 
-  await kafkaApp.listen();
-  console.log('✅ Kafka Microservice is running');
+  // await kafkaApp.listen();
+  // console.log('✅ Kafka Microservice is running');
 
   // Starting TCP Microservice
   const PORT = Number(process.env.PORT);
@@ -49,6 +50,9 @@ async function bootstrap() {
 
   // Filter
   tcpApp.useGlobalFilters(new HttpExceptionFilter());
+  tcpApp.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, transform: true }),
+  );
 
   await tcpApp.listen();
 
