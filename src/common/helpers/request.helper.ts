@@ -241,7 +241,6 @@ export class RequestHelper {
         longitude: geo.ll?.[1] || null,
       };
     } catch (error) {
-      console.error('Error getting geolocation:', error);
       return {
         country: null,
         countryCode: null,
@@ -444,9 +443,7 @@ export class RequestHelper {
   // ==========================================
   // Extract IP address from request data
   // ==========================================
-  static extractIpFromRequestData(
-    requestData: Record<string, any>,
-  ): string {
+  static extractIpFromRequestData(requestData: Record<string, any>): string {
     const headers = requestData.headers;
 
     if (headers['cf-connecting-ip']) {

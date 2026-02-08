@@ -10,6 +10,8 @@ export interface IUser {
   password: string;
   phoneNumber: IPhoneNumber | null;
   status: USER_STATUS;
+  timeZone: string | null;
+  location: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,8 @@ export interface IReturnedUser {
   password: string;
   phoneNumber: IPhoneNumber;
   status: USER_STATUS;
+  timeZone: string | null;
+  location: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -124,13 +124,15 @@ export class AuthService {
     const { firstName, lastName, birthdayDate, gender, theme, ...authDatas } =
       unverifiedUser;
 
+    const userIp = RequestHelper.extractIpFromRequestData(requestData);
+    const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
+
     const { _id, username } = await this.userRepo.create({
       ...authDatas,
       provider: PROVIDER.PASSWORD,
+      timeZone: userLocation.timezone || null,
+      location: `${userLocation.country ?? ''}${userLocation.city ? `, ${userLocation.city}` : ''}`,
     });
-
-    const userIp = RequestHelper.extractIpFromRequestData(requestData);
-    const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
 
     await this.accountService.createAccountRelatedServices({
       userId: _id,
@@ -166,7 +168,11 @@ export class AuthService {
     this.emailService.verifySignup({
       to: data.email,
       _lang: data._lang,
-      additional: { firstName: data.firstName, lastName: data.lastName, verifyCode },
+      additional: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        verifyCode,
+      },
     });
 
     return { verifyCode };
@@ -462,15 +468,17 @@ export class AuthService {
         ExceptionTypes.CONFLICT,
       );
 
+    const userIp = RequestHelper.extractIpFromRequestData(requestData);
+    const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
+
     const { _id } = await this.userRepo.create({
       email,
       username,
       provider: PROVIDER.GOOGLE,
-      password: await this.bcryptService.hash('singed_up_with_google'),
+      password: await this.bcryptService.hash('signed_up_with_google'),
+      timeZone: userLocation.timezone || null,
+      location: `${userLocation.country ?? ''}${userLocation.city ? `, ${userLocation.city}` : ''}`,
     });
-
-    const userIp = RequestHelper.extractIpFromRequestData(requestData);
-    const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
 
     await this.accountService.createAccountRelatedServices({
       userId: _id,
@@ -740,7 +748,11 @@ export class AuthService {
     const hashedToken = this.tokenService.hashToken(token);
     const deleteToken = await this.tokenService.findToken({
       query: {
-        $and: [{ token: hashedToken }, { userId: _id }, { type: TOKEN_TYPE.DELETE_ACCOUNT }],
+        $and: [
+          { token: hashedToken },
+          { userId: _id },
+          { type: TOKEN_TYPE.DELETE_ACCOUNT },
+        ],
       },
     });
 
@@ -848,7 +860,10 @@ export class AuthService {
     const { _id, email: userEmail } = this.cls.get<IUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    const user = await this.userRepo.findOne({ query: { _id }, fields: "provider password" });
+    const user = await this.userRepo.findOne({
+      query: { _id },
+      fields: 'provider password',
+    });
 
     if (!user)
       throw new BaseException(

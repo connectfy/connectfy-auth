@@ -68,7 +68,6 @@ export class UserModel implements IUser {
     index: true,
     validate: {
       validator: function (value: string): boolean {
-        // Username yalnız hərf, rəqəm, alt xətt və tire ola bilər
         return /^[a-zA-Z0-9_-]+$/.test(value);
       },
       message: t('validation_messages.invalid_username', {
@@ -101,7 +100,6 @@ export class UserModel implements IUser {
     index: true,
     validate: {
       validator: function (value: string): boolean {
-        // Email regex validation
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       },
       message: t('validation_messages.invalid_email', {
@@ -204,6 +202,38 @@ export class UserModel implements IUser {
     index: true,
   })
   status: USER_STATUS;
+
+  @Prop({
+    type: String,
+    required: false,
+    default: null,
+    trim: true,
+    maxlength: [
+      100,
+      t('validation_messages.max_length', {
+        lng: LANGUAGE.EN,
+        field: 'timeZone',
+        length: 100,
+      }),
+    ],
+  })
+  timeZone: string | null;
+
+  @Prop({
+    type: String,
+    required: false,
+    default: null,
+    trim: true,
+    maxlength: [
+      100,
+      t('validation_messages.max_length', {
+        lng: LANGUAGE.EN,
+        field: 'location',
+        length: 100,
+      }),
+    ],
+  })
+  location: string | null;
 
   createdAt: Date;
   updatedAt: Date;

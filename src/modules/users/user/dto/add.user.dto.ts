@@ -8,4 +8,16 @@ export class AddUserDto extends BaseUserDto {
     enumObject: PROVIDER,
   })
   provider: PROVIDER;
+
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    isOptional: true,
+  })
+  timeZone: string | null;
+
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    isOptional: true,
+  })
+  location: string | null;
 }
