@@ -15,7 +15,7 @@ services:
     networks:
       - connectfy-auth-network
       - auth-db-network
-      - connectfy_kafka_network
+      - connectfy-kafka-network
       - connectfy-api-gateway-network
     environment:
       - NODE_ENV=development
@@ -27,7 +27,7 @@ services:
     env_file:
       - .env.development
     ports:
-      - "4000:4000" 
+      - '4000:4000'
 
   mongo:
     image: mongo:6.0
@@ -42,7 +42,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: authDb
     ports:
-      - "25001:27017"
+      - '25001:27017'
 
 volumes:
   mongo-data:
@@ -51,7 +51,7 @@ networks:
   connectfy-auth-network:
     external: true
   auth-db-network:
-  connectfy_kafka_network:
+  connectfy-kafka-network:
     external: true
   connectfy-api-gateway-network:
     external: true
