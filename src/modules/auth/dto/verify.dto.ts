@@ -1,7 +1,10 @@
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
-import { FIELD_TYPE, VALIDATION_TYPE } from '@common/enums/enums';
+import {
+  FIELD_TYPE,
+  VALIDATION_TYPE,
+  FieldValidator,
+  LANGUAGE,
+} from 'connectfy-shared';
 import { SignupDto } from './signup.dto';
-import { LANGUAGE } from '@/src/common/enums/enums';
 
 export class VerifySignupDto {
   @FieldValidator({

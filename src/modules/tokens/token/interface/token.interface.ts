@@ -1,4 +1,4 @@
-import { TOKEN_TYPE } from '@/src/common/enums/enums';
+import { TOKEN_TYPE } from 'connectfy-shared';
 
 export interface IToken {
   _id: string;

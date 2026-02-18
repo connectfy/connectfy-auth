@@ -1,5 +1,4 @@
-import { FIELD_TYPE, TOKEN_TYPE } from '@/src/common/enums/enums';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, TOKEN_TYPE, FieldValidator } from 'connectfy-shared';
 
 export class AuthenticateUserDto {
   @FieldValidator({

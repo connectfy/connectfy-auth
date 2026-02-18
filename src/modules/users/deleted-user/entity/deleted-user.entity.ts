@@ -2,10 +2,8 @@ import { v4 as uuid, validate } from 'uuid';
 import { HydratedDocument } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IDeletedUser } from '../interface/deleted-user.interface';
-import { DELETE_REASON } from '@/src/common/enums/enums';
-import { COLLECTIONS } from '@/src/common/constants/constants';
+import { DELETE_REASON, LANGUAGE, COLLECTIONS } from 'connectfy-shared';
 import { t } from 'i18next';
-import { LANGUAGE } from 'connectfy-shared';
 
 @Schema({
   timestamps: true,

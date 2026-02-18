@@ -1,6 +1,10 @@
-import { FIELD_TYPE, LANGUAGE } from '@/src/common/enums/enums';
-import { BaseRemoveAllDto, BaseRemoveDto } from '@common/dto/base.remove.dto';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import {
+  FIELD_TYPE,
+  LANGUAGE,
+  BaseRemoveAllDto,
+  BaseRemoveDto,
+  FieldValidator,
+} from 'connectfy-shared';
 
 export class RemoveBannedUserDto extends BaseRemoveDto {
   @FieldValidator({

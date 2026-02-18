@@ -4,7 +4,7 @@ import { BannedUserService } from './banned-user.service';
 import { BannedUserSchema } from './entity/banned-user.entity';
 import { BannedUserController } from './banned-user.controller';
 import { BannedUserRepository } from './repo/banned-user.repo';
-import { COLLECTIONS } from '@/src/common/constants/constants';
+import { COLLECTIONS } from 'connectfy-shared';
 
 @Module({
   imports: [

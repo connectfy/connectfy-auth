@@ -1,5 +1,4 @@
-import { DELETE_REASON, FIELD_TYPE } from '@/src/common/enums/enums';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { DELETE_REASON, FIELD_TYPE, FieldValidator } from 'connectfy-shared';
 
 export class BaseUserDto {
   @FieldValidator({

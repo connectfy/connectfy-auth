@@ -7,8 +7,7 @@ import {
   ISaveRefreshToken,
   IUpdateRefreshToken,
 } from '../interface/refresh-token.interface';
-import { COLLECTIONS } from '@/src/common/constants/constants';
-import { BaseRepository } from '@common/repo/base.repository';
+import { COLLECTIONS, BaseRepository } from 'connectfy-shared';
 
 @Injectable()
 export class RefreshTokenRepository extends BaseRepository<

@@ -1,17 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { emitWithContext } from '@common/helpers/microservice-request.helper';
 import i18n from '@/src/i18n';
-import { ISendEmail } from '@common/interfaces/services.interface';
+import { ISendEmail } from './interfaces/notifications.interface';
 import {
   accountDeletedMessage,
   emailNotFoundMessage,
   forgotPasswordMessage,
   googleSignInMessage,
   signupVerifyMessage,
+  changeEmailMessage,
+  MICROSERVICE_NAMES,
+  emitWithContext,
 } from 'connectfy-shared';
-import { changeEmailMessage } from '@common/constants/emial.messages';
-import { MICROSERVICE_NAMES } from '@common/constants/constants';
 
 @Injectable()
 export class NotificationsService {

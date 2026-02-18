@@ -7,12 +7,12 @@ import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
-import { LANGUAGE } from '@/src/common/enums/enums';
-import { BaseException } from '@common/exceptions/base.exception';
 import {
+  LANGUAGE,
+  BaseException,
   ExceptionMessages,
   ExceptionTypes,
-} from '@common/constants/exception.constants';
+} from 'connectfy-shared';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';

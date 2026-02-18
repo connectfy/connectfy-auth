@@ -2,14 +2,18 @@ import { v4 as uuid } from 'uuid';
 import { HydratedDocument } from 'mongoose';
 import { IUser } from '../interface/user.interface';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { PROVIDER, ROLE, USER_STATUS } from '@/src/common/enums/enums';
 import {
   PhoneNumberModel,
   PhoneNumberSchema,
 } from './nested/phoneNumber.entity';
-import { COLLECTIONS } from '@/src/common/constants/constants';
 import { t } from 'i18next';
-import { LANGUAGE } from 'connectfy-shared';
+import {
+  LANGUAGE,
+  COLLECTIONS,
+  PROVIDER,
+  ROLE,
+  USER_STATUS,
+} from 'connectfy-shared';
 import * as bcrypt from 'bcrypt';
 
 @Schema({

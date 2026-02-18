@@ -1,6 +1,9 @@
-import { FIELD_TYPE, LANGUAGE } from '@/src/common/enums/enums';
-import { BaseFindDto } from '@common/dto/base.find.dto';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import {
+  BaseFindDto,
+  FieldValidator,
+  FIELD_TYPE,
+  LANGUAGE,
+} from 'connectfy-shared';
 
 export class FindTokenDto extends BaseFindDto {
   @FieldValidator({

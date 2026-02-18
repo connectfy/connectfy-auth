@@ -1,9 +1,9 @@
 import {
   FIELD_TYPE,
+  FieldValidator,
   IDENTIFIER_TYPE,
   LANGUAGE,
-} from '@/src/common/enums/enums';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+} from 'connectfy-shared';
 
 export class LoginDto {
   @FieldValidator({

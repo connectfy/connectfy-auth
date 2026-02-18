@@ -1,9 +1,9 @@
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
-import { FIELD_TYPE } from '@common/enums/enums';
 import {
+  FIELD_TYPE,
+  FieldValidator,
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
   LANGUAGE,
-} from '@/src/common/enums/enums';
+} from 'connectfy-shared';
 
 export class ForgotPasswordDto {
   @FieldValidator({

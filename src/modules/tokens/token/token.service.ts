@@ -1,14 +1,16 @@
 import {
   ExceptionMessages,
   ExceptionTypes,
-} from '@common/constants/exception.constants';
+  BaseException,
+  IRemoveAllResponse,
+  CLS_KEYS,
+  LANGUAGE,
+  TOKEN_TYPE,
+} from 'connectfy-shared';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { TokenRepository } from './repo/token.repo';
 import { RemoveTokenDto, RemoveAllTokensDto } from './dto/remove.token.dto';
-import { BaseException } from '@common/exceptions/base.exception';
-import { IRemoveAllResponse } from '@common/interfaces/response.interface';
 import { FindTokenDto } from './dto/find.token.dto';
-import { CLS_KEYS, LANGUAGE, TOKEN_TYPE } from '@/src/common/enums/enums';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -23,10 +25,6 @@ export class TokenService {
     private readonly jwtService: JwtService,
     private readonly cls: ClsService,
   ) {}
-
-  // async generateToken(data: AddTokenDto): Promise<IReturnedToken> {
-  //   return (await this.repo.save(data)).toObject();
-  // }
 
   hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');

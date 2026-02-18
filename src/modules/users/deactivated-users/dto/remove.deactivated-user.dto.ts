@@ -1,3 +1,3 @@
-import { BaseRemoveDto } from '@common/dto/base.remove.dto';
+import { BaseRemoveDto } from 'connectfy-shared';
 
 export class RemoveDeactivatedUserRepo extends BaseRemoveDto {}

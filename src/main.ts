@@ -2,8 +2,7 @@ import i18n from './i18n';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { HttpExceptionFilter } from './exception-filters/http.filter';
-import { AllExceptionsFilter } from './exception-filters/all.filter';
+import { AllExceptionsFilter } from 'connectfy-shared';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -49,7 +48,7 @@ async function bootstrap() {
   );
 
   // Filter
-  tcpApp.useGlobalFilters(new HttpExceptionFilter());
+  tcpApp.useGlobalFilters(new AllExceptionsFilter());
   tcpApp.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true }),
   );

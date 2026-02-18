@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AddTokenDto } from '../dto/add.token.dto';
 import { UpdateTokenDto } from '../dto/edit.token.dto';
 import { TokenDocument } from '../entity/token.entity';
-import { COLLECTIONS } from '@/src/common/constants/constants';
-import { BaseRepository } from '@common/repo/base.repository';
+import { COLLECTIONS, BaseRepository } from 'connectfy-shared';
 import { IReturnedToken } from '@modules/tokens/token/interface/token.interface';
 
 export class TokenRepository extends BaseRepository<

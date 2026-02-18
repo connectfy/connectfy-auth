@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ClsService } from 'nestjs-cls';
-import { ILoggedUser } from '@common/interfaces/request.interface';
-import { CLS_KEYS } from '@common/enums/enums';
+import { ILoggedUser, CLS_KEYS } from 'connectfy-shared';
 
 @Injectable()
 export class LoggedUserInterceptor implements NestInterceptor {

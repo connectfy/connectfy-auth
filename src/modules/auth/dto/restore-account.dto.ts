@@ -1,6 +1,4 @@
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
-import { FIELD_TYPE } from '@common/enums/enums';
-import { LANGUAGE } from '@/src/common/enums/enums';
+import { FIELD_TYPE, LANGUAGE, FieldValidator } from 'connectfy-shared';
 
 export class RestoreAccountDto {
   @FieldValidator({

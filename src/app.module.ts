@@ -7,7 +7,7 @@ import { TokensModule } from '@modules/tokens/tokens.module';
 import { ClsInterceptor, ClsModule } from 'nestjs-cls';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
-import { ENV } from '@common/constants/constants';
+import { ENV } from 'connectfy-shared';
 import { TcpConnectionsModule } from '@/src/services/app-connections/tcp-connections.module';
 import { KafkaConnectionsModule } from '@/src/services/app-connections/kafka-connections.module';
 

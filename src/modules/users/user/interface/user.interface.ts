@@ -1,4 +1,4 @@
-import { PROVIDER, ROLE, USER_STATUS } from '@/src/common/enums/enums';
+import { PROVIDER, ROLE, USER_STATUS } from 'connectfy-shared';
 import { IPhoneNumber } from './nested/phoneNumber.interface';
 
 export interface IUser {

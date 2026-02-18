@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DeletedUserDocument } from '../entity/deleted-user.entity';
 import { AddDeletedUserDto } from '../dto/add.deleted-user.dto';
-import { COLLECTIONS } from '@/src/common/constants/constants';
-import { BaseRepository } from '@common/repo/base.repository';
+import { COLLECTIONS, BaseRepository } from 'connectfy-shared';
 import { IReturnedDeletedUser } from '@modules/users/deleted-user/interface/deleted-user.interface';
 
 @Injectable()

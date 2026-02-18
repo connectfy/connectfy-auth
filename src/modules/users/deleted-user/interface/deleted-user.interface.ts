@@ -1,4 +1,4 @@
-import { DELETE_REASON } from '@/src/common/enums/enums';
+import { DELETE_REASON } from 'connectfy-shared';
 
 export interface IDeletedUser {
   _id: string;

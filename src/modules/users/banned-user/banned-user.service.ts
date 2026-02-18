@@ -3,11 +3,11 @@ import { BannedUserRepository } from './repo/banned-user.repo';
 import { AddBannedUserDto } from './dto/add.banned-user.dto';
 import { RemoveBannedUserDto } from './dto/remove.banned-user.dto';
 import { IReturnedBannedUser } from './interface/banned-user.interface';
-import { BaseException } from '@common/exceptions/base.exception';
 import {
   ExceptionMessages,
   ExceptionTypes,
-} from '@common/constants/exception.constants';
+  BaseException,
+} from 'connectfy-shared';
 
 @Injectable()
 export class BannedUserService {

@@ -4,7 +4,7 @@ import { DeletedUserController } from './deleted-user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeletedUserSchema } from './entity/deleted-user.entity';
 import { DeletedUserRepository } from './repo/deleted-user.repo';
-import { COLLECTIONS } from '@/src/common/constants/constants';
+import { COLLECTIONS } from 'connectfy-shared';
 
 @Module({
   imports: [

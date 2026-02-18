@@ -5,7 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TokenSchema } from './entity/token.entity';
 import { TokenRepository } from './repo/token.repo';
 import { JwtModule } from '@nestjs/jwt';
-import { COLLECTIONS } from '@/src/common/constants/constants';
+import { COLLECTIONS } from 'connectfy-shared';
 
 @Module({
   imports: [

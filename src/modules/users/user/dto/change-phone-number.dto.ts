@@ -1,6 +1,8 @@
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
-import { FIELD_TYPE } from '@common/enums/enums';
-import { PHONE_NUMBER_ACTION } from '@/src/common/enums/enums';
+import {
+  FieldValidator,
+  FIELD_TYPE,
+  PHONE_NUMBER_ACTION,
+} from 'connectfy-shared';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
 
 export class ChangePhoneNumberDto {

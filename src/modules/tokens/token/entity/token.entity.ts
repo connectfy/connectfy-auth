@@ -1,12 +1,9 @@
 import { v4 as uuid, validate } from 'uuid';
 import { HydratedDocument } from 'mongoose';
 import { IToken } from '../interface/token.interface';
-import { TOKEN_TYPE } from '@/src/common/enums/enums';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IUser } from '@modules/users/user/interface/user.interface';
-import { COLLECTIONS } from '@/src/common/constants/constants';
+import { TOKEN_TYPE, LANGUAGE, COLLECTIONS } from 'connectfy-shared';
 import { t } from 'i18next';
-import { LANGUAGE } from 'connectfy-shared';
 
 @Schema({
   timestamps: true,

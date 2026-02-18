@@ -4,9 +4,8 @@ import { AddUserDto } from '../dto/add.user.dto';
 import { EditUserDto } from '../dto/edit.user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { COLLECTIONS } from '@/src/common/constants/constants';
-import { BaseRepository } from '@common/repo/base.repository';
 import { IReturnedUser } from '@modules/users/user/interface/user.interface';
+import { COLLECTIONS, BaseRepository } from 'connectfy-shared';
 
 @Injectable()
 export class UserRepository extends BaseRepository<

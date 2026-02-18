@@ -3,11 +3,11 @@ import { DeletedUserRepository } from './repo/deleted-user.repo';
 import { AddDeletedUserDto } from './dto/add.deleted-user.dto';
 import { IReturnedDeletedUser } from './interface/deleted-user.interface';
 import { RemoveDeletedUserDto } from './dto/remove.deleted-user.dto';
-import { BaseException } from '@common/exceptions/base.exception';
 import {
+  BaseException,
   ExceptionMessages,
   ExceptionTypes,
-} from '@common/constants/exception.constants';
+} from 'connectfy-shared';
 
 @Injectable()
 export class DeletedUserService {

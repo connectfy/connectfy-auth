@@ -9,13 +9,14 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
-import { ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
-import { BaseException } from '@common/exceptions/base.exception';
 import {
   ExceptionMessages,
   ExceptionTypes,
-} from '@common/constants/exception.constants';
-import { LANGUAGE } from '@common/enums/enums';
+  LANGUAGE,
+  ENV,
+  EXPIRE_DATES,
+  BaseException,
+} from 'connectfy-shared';
 
 @Injectable()
 export class RefreshTokenService {

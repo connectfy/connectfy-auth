@@ -1,3 +1,3 @@
-import { BaseFindDto } from '@/src/common/dto/base.find.dto';
+import { BaseFindDto } from 'connectfy-shared';
 
 export class FindDeactivatedUserDto extends BaseFindDto {}

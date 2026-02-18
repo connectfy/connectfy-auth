@@ -2,10 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IDeactivatedUser } from '../interface/deactivated-user.intreface';
 import { v4 as uuid, validate } from 'uuid';
 import { HydratedDocument } from 'mongoose';
-import { ITimestamps } from '@/src/common/interfaces/date.interface';
-import { COLLECTIONS } from '@/src/common/constants/constants';
 import { t } from 'i18next';
-import { LANGUAGE } from 'connectfy-shared';
+import { LANGUAGE, COLLECTIONS } from 'connectfy-shared';
 
 @Schema({
   timestamps: true,

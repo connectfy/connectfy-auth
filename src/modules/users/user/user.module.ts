@@ -10,7 +10,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.module';
 import { NotificationsModule } from '@/src/services/external-modules/notifications/notifications.module';
 import { BcryptModule } from '@/src/services/app-modules/bcrypt/bcrypt.module';
-import { COLLECTIONS } from '@/src/common/constants/constants';
+import { COLLECTIONS } from 'connectfy-shared';
 import { AccountModule } from '@/src/services/external-modules/account/account.module';
 
 @Module({

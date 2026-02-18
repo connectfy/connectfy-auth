@@ -4,8 +4,7 @@ import { Model } from 'mongoose';
 import { DeactivatedUserDocument } from '../entity/deactivated-user.entity';
 import { AddDeactivatedUserDto } from '../dto/add.deactivated-user.dto';
 import { IReturnedDeactivatedUser } from '../interface/deactivated-user.intreface';
-import { COLLECTIONS } from '@/src/common/constants/constants';
-import { BaseRepository } from '@common/repo/base.repository';
+import { COLLECTIONS, BaseRepository } from 'connectfy-shared';
 
 @Injectable()
 export class DeactivatedUserRepository extends BaseRepository<

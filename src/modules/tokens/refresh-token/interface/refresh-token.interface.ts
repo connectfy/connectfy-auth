@@ -1,4 +1,4 @@
-import { DEVICE_TYPE } from '@/src/common/enums/enums';
+import { DEVICE_TYPE } from 'connectfy-shared';
 
 export interface IRefreshToken {
   _id: string;

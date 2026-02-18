@@ -1,6 +1,5 @@
 import { BaseUserDto } from './base.user.dto';
-import { FIELD_TYPE, PROVIDER } from '@/src/common/enums/enums';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, PROVIDER, FieldValidator } from 'connectfy-shared';
 
 export class AddUserDto extends BaseUserDto {
   @FieldValidator({

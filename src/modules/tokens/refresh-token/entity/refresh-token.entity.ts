@@ -2,10 +2,8 @@ import { v4 as uuid, validate } from 'uuid';
 import { HydratedDocument } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IRefreshToken } from '../interface/refresh-token.interface';
-import { DEVICE_TYPE } from '@/src/common/enums/enums';
-import { COLLECTIONS } from '@/src/common/constants/constants';
 import { t } from 'i18next';
-import { LANGUAGE } from 'connectfy-shared';
+import { LANGUAGE, DEVICE_TYPE, COLLECTIONS } from 'connectfy-shared';
 
 @Schema({
   timestamps: true,

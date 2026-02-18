@@ -3,12 +3,7 @@ import { UserRepository } from './repo/user.repo';
 import { AddUserDto } from './dto/add.user.dto';
 import { IReturnedUser, IUser } from './interface/user.interface';
 import { EditUserDto } from './dto/edit.user.dto';
-import { BaseException } from '@common/exceptions/base.exception';
 import { RemoveUserDto } from './dto/remove.user.dto';
-import {
-  ExceptionMessages,
-  ExceptionTypes,
-} from '@common/constants/exception.constants';
 import { ClsService } from 'nestjs-cls';
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
@@ -20,9 +15,14 @@ import {
   PHONE_NUMBER_ACTION,
   PROVIDER,
   TOKEN_TYPE,
-} from '@/src/common/enums/enums';
+  ExceptionMessages,
+  ExceptionTypes,
+  BaseException,
+  COUNTRIES,
+  ENV,
+  EXPIRE_DATES,
+} from 'connectfy-shared';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
-import { COUNTRIES, ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
 import { ConfigService } from '@nestjs/config';
 import { NotificationsService } from '@/src/services/external-modules/notifications/notifications.service';
 import { BcryptService } from '@/src/services/app-modules/bcrypt/bcrypt.service';
@@ -514,7 +514,7 @@ export class UserService {
   async checkUnique(data: CheckUniqueDto): Promise<boolean> {
     const { field, value } = data;
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-    
+
     const isUserExist = await this.repo.existsByField({ [field]: value });
 
     if (isUserExist)

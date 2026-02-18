@@ -1,16 +1,3 @@
-import { ConfigService } from '@nestjs/config';
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { UserRepository } from '../users/user/repo/user.repo';
-import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
-import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
-import { BaseException } from '@common/exceptions/base.exception';
-import {
-  ExceptionMessages,
-  ExceptionTypes,
-} from '@common/constants/exception.constants';
-import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
-import { generateVerifyCode } from '@common/functions/function';
-import { VerifySignupDto } from './dto/verify.dto';
 import {
   CLS_KEYS,
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
@@ -19,7 +6,20 @@ import {
   PROVIDER,
   TOKEN_TYPE,
   USER_STATUS,
-} from '@/src/common/enums/enums';
+  BaseException,
+  ExceptionMessages,
+  ExceptionTypes,
+  ENV,
+  EXPIRE_DATES,
+} from 'connectfy-shared';
+import { generateVerifyCode } from '@/src/common/functions/function';
+import { ConfigService } from '@nestjs/config';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { UserRepository } from '../users/user/repo/user.repo';
+import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
+import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
+import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
+import { VerifySignupDto } from './dto/verify.dto';
 import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser, IUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
@@ -38,7 +38,6 @@ import { RequestHelper } from '@/src/common/helpers/request.helper';
 import { NotificationsService } from '@/src/services/external-modules/notifications/notifications.service';
 import { BcryptService } from '@/src/services/app-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
-import { ENV, EXPIRE_DATES } from '@/src/common/constants/constants';
 import { AccountService } from '@/src/services/external-modules/account/account.service';
 
 @Injectable()

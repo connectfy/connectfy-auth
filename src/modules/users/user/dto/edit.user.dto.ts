@@ -1,8 +1,7 @@
 import { BaseUserDto } from './base.user.dto';
 import { PartialType } from '@nestjs/mapped-types';
 import { PhoneNumberDto } from './nested/phoneNumber.dto';
-import { FIELD_TYPE, USER_STATUS } from '@/src/common/enums/enums';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, USER_STATUS, FieldValidator } from 'connectfy-shared';
 
 export class EditUserDto extends PartialType(BaseUserDto) {
   @FieldValidator({

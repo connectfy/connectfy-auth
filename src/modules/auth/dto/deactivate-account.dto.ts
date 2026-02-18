@@ -1,5 +1,4 @@
-import { FIELD_TYPE } from '@common/enums/enums';
-import { FieldValidator } from '@common/decorators/field-validator/field-validator.decorator';
+import { FIELD_TYPE, FieldValidator } from 'connectfy-shared';
 
 export class DeactivateAccountDto {
   @FieldValidator({
