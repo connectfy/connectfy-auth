@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { ClsService } from 'nestjs-cls';
-import { ILoggedUser, CLS_KEYS } from 'connectfy-shared';
+import { CLS_KEYS, ILoggedUser, LANGUAGE } from 'connectfy-shared';
 
 @Injectable()
 export class LoggedUserInterceptor implements NestInterceptor {
@@ -19,21 +19,22 @@ export class LoggedUserInterceptor implements NestInterceptor {
     const loggedUser: ILoggedUser | undefined = data?._loggedUser;
 
     if (loggedUser) {
+      const language: LANGUAGE | undefined = data?._loggedUser?._lang;
       return new Observable((subscriber) => {
         this.cls.run(() => {
-          this.cls.set(CLS_KEYS.USER, loggedUser.user);
-          this.cls.set(CLS_KEYS.ACCOUNT, loggedUser.account);
-          this.cls.set(CLS_KEYS.SETTINGS, loggedUser.settings);
-          this.cls.set(
-            CLS_KEYS.LANG,
-            loggedUser.settings.generalSettings.language,
-          );
+          this.cls.set(CLS_KEYS.USER, loggedUser);
+          this.cls.set(CLS_KEYS.LANG, language);
           next.handle().subscribe(subscriber);
         });
       });
     }
 
-    this.cls.set(CLS_KEYS.LANG, data?._lang);
-    return next.handle();
+    return new Observable((subscriber) => {
+      this.cls.run(() => {
+        const language = data?._lang;
+        this.cls.set(CLS_KEYS.LANG, language);
+        next.handle().subscribe(subscriber);
+      });
+    });
   }
 }

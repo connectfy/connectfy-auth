@@ -91,8 +91,9 @@ export class RefreshTokenService {
       expiresAt: new Date(Date.now() + EXPIRE_DATES.TOKEN.ONE_MONTH),
     };
 
-    if (findToken)
+    if (findToken) {
       return await this.repo.update({ _id: findToken._id }, finalData);
+    }
 
     return await this.repo.create(finalData);
   }

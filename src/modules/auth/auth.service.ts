@@ -701,7 +701,10 @@ export class AuthService {
       );
     }
 
-    const user = await this.userRepo.findOne({ query: { _id: payload._id } });
+    const user = await this.userRepo.findOne({
+      query: { _id: payload._id },
+      fields: '-password',
+    });
 
     if (!user) {
       throw new BaseException(
@@ -712,25 +715,21 @@ export class AuthService {
       );
     }
 
-    const { password, ...safeUser } = user;
-    const searchPayload = { query: { userId: safeUser._id } };
-
-    const [account, generalSettings, notificationSettings, privacySettings] =
-      await Promise.all([
-        this.accountService.findAccount(searchPayload),
-        this.accountService.findGeneralSettings(searchPayload),
-        this.accountService.findNotificationSettings(searchPayload),
-        this.accountService.findPrivacySettings(searchPayload),
-      ]);
+    const [account, generalSettings] = await Promise.all([
+      this.accountService.findAccount({
+        query: { userId: user._id },
+        fields: 'avatar',
+      }),
+      this.accountService.findGeneralSettings({
+        query: { userId: user._id },
+        fields: 'language',
+      }),
+    ]);
 
     const result = {
-      user: safeUser,
-      account,
-      settings: {
-        generalSettings,
-        notificationSettings,
-        privacySettings,
-      },
+      ...user,
+      language: generalSettings.language,
+      avatar: account.avatar,
     };
 
     return { status: 200, user: result };
@@ -819,6 +818,18 @@ export class AuthService {
       false,
     );
 
+    const isExpired = Date.now() >= payload.exp * 1000;
+
+    if (isExpired) {
+      throw new BaseException(
+        ExceptionMessages.TOKEN_EXPIRED(_lang),
+        HttpStatus.UNAUTHORIZED,
+        ExceptionTypes.UNAUTHORIZED,
+      );
+    }
+
+    await this.refreshTokenService.findToken(data.refresh_token, _lang);
+
     const user = await this.userRepo.findOne({
       query: { _id: payload._id },
     });
@@ -828,6 +839,7 @@ export class AuthService {
         ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
         HttpStatus.UNAUTHORIZED,
         ExceptionTypes.UNAUTHORIZED,
+        { navigate: true },
       );
 
     const { access_token, refresh_token } =
