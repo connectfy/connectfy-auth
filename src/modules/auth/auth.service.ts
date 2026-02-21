@@ -696,6 +696,14 @@ export class AuthService {
       }),
     ]);
 
+    if (!account || !generalSettings) {
+      throw new BaseException(
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
+        HttpStatus.UNAUTHORIZED,
+        { navigate: true },
+      );
+    }
+
     const result = {
       ...user,
       language: generalSettings.language,
