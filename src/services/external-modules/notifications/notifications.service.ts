@@ -41,7 +41,7 @@ export class NotificationsService {
   // SIGNUP VERIFY MESSAGE
   // =================================
   verifySignup(data: ISendEmail): void {
-    const { to, _lang: lang, additional } = data;
+    const { to, language: lang, additional } = data;
     const { firstName, lastName, verifyCode } = additional!;
     this.sendEmail(
       to,
@@ -54,7 +54,7 @@ export class NotificationsService {
   // EMAIL NOT FOUND FOR RESET PASSWORD
   // =================================
   emailNotFound(data: ISendEmail): void {
-    const { to, _lang: lang } = data;
+    const { to, language: lang } = data;
     this.sendEmail(
       to,
       i18n.t('email_messages.email_not_found.mail_subject', { lang }),
@@ -66,7 +66,7 @@ export class NotificationsService {
   // GOOGLE PROVIDER DETECETED FOR RESET PASSWORD
   // =================================
   googleSignInDetected(data: ISendEmail): void {
-    const { to, _lang: lang } = data;
+    const { to, language: lang } = data;
     this.sendEmail(
       to,
       i18n.t('email_messages.google_sign_in.mail_subject', { lang }),
@@ -78,7 +78,7 @@ export class NotificationsService {
   // FORGOT PASSWORD EMAIL TO RESET PASSWORD
   // =================================
   forgotPassword(data: ISendEmail): void {
-    const { to, _lang: lang, additional } = data;
+    const { to, language: lang, additional } = data;
     const { token } = additional!;
     this.sendEmail(
       to,
@@ -91,7 +91,7 @@ export class NotificationsService {
   // RESTORE ACCOUNT EMAIL AFTER DELETE
   // =================================
   deleteAccountCompleted(data: ISendEmail): void {
-    const { to, _lang: lang, additional } = data;
+    const { to, language: lang, additional } = data;
     const { token } = additional!;
     this.sendEmail(
       to,
@@ -104,7 +104,7 @@ export class NotificationsService {
   // MESSAGE FOR CHANGE EMAIL
   // =================================
   changeEmail(data: ISendEmail): void {
-    const { to, _lang: lang, additional } = data;
+    const { to, language: lang, additional } = data;
     const { token } = additional!;
     this.sendEmail(
       to,

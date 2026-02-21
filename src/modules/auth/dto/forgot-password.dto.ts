@@ -2,7 +2,6 @@ import {
   FIELD_TYPE,
   FieldValidator,
   FORGOT_PASSWORD_IDENTIFIER_TYPE,
-  LANGUAGE,
 } from 'connectfy-shared';
 
 export class ForgotPasswordDto {
@@ -16,10 +15,4 @@ export class ForgotPasswordDto {
     type: FIELD_TYPE.STRING,
   })
   identifier: string;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
 }

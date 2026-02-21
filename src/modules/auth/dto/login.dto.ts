@@ -1,9 +1,4 @@
-import {
-  FIELD_TYPE,
-  FieldValidator,
-  IDENTIFIER_TYPE,
-  LANGUAGE,
-} from 'connectfy-shared';
+import { FIELD_TYPE, FieldValidator, IDENTIFIER_TYPE } from 'connectfy-shared';
 
 export class LoginDto {
   @FieldValidator({
@@ -21,12 +16,6 @@ export class LoginDto {
     type: FIELD_TYPE.STRING,
   })
   password: string;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
 
   @FieldValidator({
     type: FIELD_TYPE.UUID,
@@ -54,13 +43,6 @@ export class GoogleAuthLoginDto {
     type: FIELD_TYPE.STRING,
   })
   idToken: string;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-    enumValues: Object.values(LANGUAGE),
-  })
-  _lang: LANGUAGE;
 
   @FieldValidator({
     type: FIELD_TYPE.UUID,

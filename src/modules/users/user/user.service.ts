@@ -16,7 +16,6 @@ import {
   PROVIDER,
   TOKEN_TYPE,
   ExceptionMessages,
-  ExceptionTypes,
   BaseException,
   COUNTRIES,
   ENV,
@@ -59,7 +58,6 @@ export class UserService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     const payload = { query: { userId: _id } };
@@ -103,7 +101,6 @@ export class UserService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     return await this.repo.update({ _id: data._id }, data);
@@ -113,15 +110,15 @@ export class UserService {
   // REMOVE USER
   // =======================
   async remove(data: RemoveUserDto): Promise<IReturnedUser> {
-    const { _id, _lang } = data;
+    const language = await this.cls.get(CLS_KEYS.LANG);
+    const { _id } = data;
 
     const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     return await this.repo.remove({ _id });
@@ -213,19 +210,19 @@ export class UserService {
       email: oldEmail,
       provider,
     } = this.cls.get<IUser>(CLS_KEYS.USER);
-    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const isUserExist = await this.repo.findOne({ query: { _id } });
 
     if (!isUserExist)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
       );
 
     if (provider !== PROVIDER.PASSWORD)
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
+        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -244,8 +241,8 @@ export class UserService {
     if (email === oldEmail)
       throw new BaseException(
         ExceptionMessages.SAME_DATA(
-          i18n.t('common.username', { lng: lang }),
-          lang,
+          i18n.t('common.username', { lng: language }),
+          language,
         ),
         HttpStatus.BAD_REQUEST,
       );
@@ -256,7 +253,7 @@ export class UserService {
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, language),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -274,7 +271,7 @@ export class UserService {
 
     this.emailService.changeEmail({
       to: email,
-      _lang: lang,
+      language,
       additional: { token: emailChangeToken },
     });
 

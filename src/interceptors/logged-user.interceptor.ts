@@ -19,7 +19,8 @@ export class LoggedUserInterceptor implements NestInterceptor {
     const loggedUser: ILoggedUser | undefined = data?._loggedUser;
 
     if (loggedUser) {
-      const language: LANGUAGE | undefined = data?._loggedUser?._lang;
+      const language: LANGUAGE | undefined =
+        data?._loggedUser?._lang ?? LANGUAGE.EN;
       return new Observable((subscriber) => {
         this.cls.run(() => {
           this.cls.set(CLS_KEYS.USER, loggedUser);
@@ -31,7 +32,7 @@ export class LoggedUserInterceptor implements NestInterceptor {
 
     return new Observable((subscriber) => {
       this.cls.run(() => {
-        const language = data?._lang;
+        const language = data?._lang ?? LANGUAGE.EN;
         this.cls.set(CLS_KEYS.LANG, language);
         next.handle().subscribe(subscriber);
       });

@@ -3,7 +3,6 @@ import {
   VALIDATION_TYPE,
   FieldValidator,
   GENDER,
-  LANGUAGE,
   THEME,
 } from 'connectfy-shared';
 
@@ -66,12 +65,6 @@ export class SignupDto {
 
   @FieldValidator({
     type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
     enumObject: THEME,
   })
   theme: THEME;
@@ -108,12 +101,6 @@ export class GoogleAuthSignupDto {
     type: FIELD_TYPE.DATE,
   })
   birthdayDate: Date;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
 
   @FieldValidator({
     type: FIELD_TYPE.ENUM,

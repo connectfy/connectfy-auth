@@ -1,4 +1,4 @@
-import { FIELD_TYPE, LANGUAGE, FieldValidator } from 'connectfy-shared';
+import { FIELD_TYPE, FieldValidator } from 'connectfy-shared';
 
 export class RestoreAccountDto {
   @FieldValidator({
@@ -6,10 +6,4 @@ export class RestoreAccountDto {
     maxLength: 1000,
   })
   token: string;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
 }

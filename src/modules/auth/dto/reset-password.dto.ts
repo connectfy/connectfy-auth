@@ -1,9 +1,4 @@
-import {
-  FIELD_TYPE,
-  LANGUAGE,
-  VALIDATION_TYPE,
-  FieldValidator,
-} from 'connectfy-shared';
+import { FIELD_TYPE, VALIDATION_TYPE, FieldValidator } from 'connectfy-shared';
 
 export class ResetPasswordDto {
   @FieldValidator({
@@ -31,10 +26,4 @@ export class ResetPasswordDto {
     maxLength: 30,
   })
   confirmPassword: string;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
 }

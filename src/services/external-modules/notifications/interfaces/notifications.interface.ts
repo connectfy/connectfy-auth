@@ -2,6 +2,6 @@ import { LANGUAGE } from 'connectfy-shared';
 
 export interface ISendEmail {
   to: string;
-  _lang: LANGUAGE;
+  language: LANGUAGE;
   additional?: Record<string, any>;
 }

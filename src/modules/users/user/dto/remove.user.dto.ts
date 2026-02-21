@@ -1,14 +1,3 @@
-import {
-  BaseRemoveDto,
-  FieldValidator,
-  FIELD_TYPE,
-  LANGUAGE,
-} from 'connectfy-shared';
+import { BaseRemoveDto } from 'connectfy-shared';
 
-export class RemoveUserDto extends BaseRemoveDto {
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
-}
+export class RemoveUserDto extends BaseRemoveDto {}

@@ -1,9 +1,4 @@
-import {
-  FIELD_TYPE,
-  VALIDATION_TYPE,
-  FieldValidator,
-  LANGUAGE,
-} from 'connectfy-shared';
+import { FIELD_TYPE, VALIDATION_TYPE, FieldValidator } from 'connectfy-shared';
 import { SignupDto } from './signup.dto';
 
 export class VerifySignupDto {
@@ -31,12 +26,6 @@ export class VerifySignupDto {
     validateNested: {},
   })
   unverifiedUser: SignupDto;
-
-  @FieldValidator({
-    type: FIELD_TYPE.ENUM,
-    enumObject: LANGUAGE,
-  })
-  _lang: LANGUAGE;
 
   @FieldValidator({
     type: FIELD_TYPE.UUID,

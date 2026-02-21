@@ -7,12 +7,7 @@ import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
-import {
-  LANGUAGE,
-  BaseException,
-  ExceptionMessages,
-  ExceptionTypes,
-} from 'connectfy-shared';
+import { LANGUAGE, BaseException, ExceptionMessages } from 'connectfy-shared';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';
@@ -38,7 +33,6 @@ export class AuthController {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
         { navigate: true },
       );
 
@@ -86,18 +80,12 @@ export class AuthController {
     {
       access_token,
       refresh_token,
-      _lang,
     }: {
       access_token: string;
       refresh_token: string;
-      _lang: LANGUAGE;
     },
   ) {
-    return await this.service.verifyAuthToken(
-      access_token,
-      refresh_token,
-      _lang,
-    );
+    return await this.service.verifyAuthToken(access_token, refresh_token);
   }
 
   @MessagePattern('auth/delete-account', Transport.TCP)
@@ -111,11 +99,10 @@ export class AuthController {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
         { navigate: true },
       );
 
-    return await this.service.refreshToken(data, LANGUAGE.EN);
+    return await this.service.refreshToken(data);
   }
 
   @MessagePattern('auth/authenticate-user', Transport.TCP)

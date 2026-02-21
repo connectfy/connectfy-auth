@@ -1,6 +1,5 @@
 import {
   ExceptionMessages,
-  ExceptionTypes,
   BaseException,
   IRemoveAllResponse,
   CLS_KEYS,
@@ -86,7 +85,6 @@ export class TokenService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     return token;
@@ -106,7 +104,6 @@ export class TokenService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     return res;
@@ -185,7 +182,6 @@ export class TokenService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang ?? LANGUAGE.EN),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     return res;

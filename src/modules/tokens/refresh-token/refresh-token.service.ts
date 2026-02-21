@@ -11,12 +11,13 @@ import { RefreshTokenRepository } from './repo/refresh-token.repo';
 import { RequestHelper } from '@/src/common/helpers/request.helper';
 import {
   ExceptionMessages,
-  ExceptionTypes,
   LANGUAGE,
   ENV,
   EXPIRE_DATES,
   BaseException,
+  CLS_KEYS,
 } from 'connectfy-shared';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class RefreshTokenService {
@@ -24,6 +25,7 @@ export class RefreshTokenService {
     private readonly repo: RefreshTokenRepository,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly cls: ClsService,
   ) {}
 
   async generateTokens(
@@ -117,17 +119,14 @@ export class RefreshTokenService {
     return await this.repo.removeOne({ userId });
   }
 
-  async findToken(
-    refreshToken: string,
-    _lang: LANGUAGE,
-  ): Promise<IReturnedRefreshToken> {
+  async findToken(refreshToken: string): Promise<IReturnedRefreshToken> {
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const res = await this.repo.findOne({ query: { refreshToken } });
 
     if (!res)
       throw new BaseException(
-        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
         { navigate: true },
       );
 

@@ -3,11 +3,7 @@ import { BannedUserRepository } from './repo/banned-user.repo';
 import { AddBannedUserDto } from './dto/add.banned-user.dto';
 import { RemoveBannedUserDto } from './dto/remove.banned-user.dto';
 import { IReturnedBannedUser } from './interface/banned-user.interface';
-import {
-  ExceptionMessages,
-  ExceptionTypes,
-  BaseException,
-} from 'connectfy-shared';
+import { ExceptionMessages, BaseException } from 'connectfy-shared';
 
 @Injectable()
 export class BannedUserService {
@@ -28,7 +24,6 @@ export class BannedUserService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     const res = await this.repo.remove({ _id });

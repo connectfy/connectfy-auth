@@ -8,7 +8,6 @@ import {
   USER_STATUS,
   BaseException,
   ExceptionMessages,
-  ExceptionTypes,
   ENV,
   EXPIRE_DATES,
 } from 'connectfy-shared';
@@ -68,7 +67,8 @@ export class AuthService {
   async signup(
     data: SignupDto,
   ): Promise<{ unverifiedUser: Record<string, any>; verifyCode: string }> {
-    const { firstName, lastName, email, username, _lang } = data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { firstName, lastName, email, username } = data;
 
     const userWithUsername = await this.userRepo.findOne({
       query: { username },
@@ -76,25 +76,23 @@ export class AuthService {
 
     if (userWithUsername)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const userWithEmail = await this.userRepo.findOne({ query: { email } });
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const verifyCode = generateVerifyCode();
 
     this.emailService.verifySignup({
       to: email,
-      _lang,
+      language,
       additional: { firstName, lastName, verifyCode },
     });
 
@@ -110,14 +108,13 @@ export class AuthService {
   async verifySignup(
     data: VerifySignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
-    const { code, verifyCode, unverifiedUser, _lang, deviceId, requestData } =
-      data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { code, verifyCode, unverifiedUser, deviceId, requestData } = data;
 
     if (verifyCode !== code)
       throw new BaseException(
-        ExceptionMessages.CONFLICT_MESSAGE(_lang),
+        ExceptionMessages.CONFLICT_MESSAGE(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const { firstName, lastName, birthdayDate, gender, theme, ...authDatas } =
@@ -139,7 +136,6 @@ export class AuthService {
       firstName,
       lastName,
       gender,
-      _lang,
       birthdayDate,
       theme,
       location: `${userLocation.country ?? ''}${userLocation.city ? `, ${userLocation.city}` : ''}`,
@@ -162,11 +158,12 @@ export class AuthService {
   // RESEND VERIFY SIGNUP
   // =================================
   async resendSignupVerify(data: SignupDto) {
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const verifyCode = generateVerifyCode();
 
     this.emailService.verifySignup({
       to: data.email,
-      _lang: data._lang,
+      language,
       additional: {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -183,14 +180,9 @@ export class AuthService {
   async login(
     data: LoginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
-    const {
-      identifierType,
-      identifier,
-      password,
-      _lang,
-      requestData,
-      deviceId,
-    } = data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { identifierType, identifier, password, requestData, deviceId } =
+      data;
 
     let user: IReturnedUser | null;
 
@@ -219,16 +211,14 @@ export class AuthService {
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     if (user.provider !== PROVIDER.PASSWORD)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const isPasswordMatch = await this.bcryptService.compare(
@@ -238,9 +228,8 @@ export class AuthService {
 
     if (!isPasswordMatch)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const isUserBanned = await this.bannedUserRepo.findOne({
@@ -251,10 +240,9 @@ export class AuthService {
       throw new BaseException(
         ExceptionMessages.BANNED_MESSAGE(
           isUserBanned.bannedToDate as Date,
-          _lang,
+          language,
         ),
         HttpStatus.FORBIDDEN,
-        ExceptionTypes.FORBIDDEN,
       );
 
     if (
@@ -262,9 +250,8 @@ export class AuthService {
       user.status !== USER_STATUS.INACTIVE
     )
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     if (user.status === USER_STATUS.INACTIVE) {
@@ -274,7 +261,7 @@ export class AuthService {
 
       if (!deactivatedUser)
         throw new BaseException(
-          ExceptionMessages.INVALID_CREDENTIALS(_lang),
+          ExceptionMessages.INVALID_CREDENTIALS(language),
           HttpStatus.BAD_REQUEST,
         );
 
@@ -313,7 +300,8 @@ export class AuthService {
   async googleLogin(
     data: GoogleAuthLoginDto,
   ): Promise<{ access_token?: string; refresh_token: string }> {
-    const { idToken, _lang, deviceId, requestData } = data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { idToken, deviceId, requestData } = data;
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
@@ -326,25 +314,22 @@ export class AuthService {
 
     if (!email)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const user = await this.userRepo.findOne({ query: { email } });
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     if (user.provider !== PROVIDER.GOOGLE)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const isUserBanned = await this.bannedUserRepo.findOne({
@@ -355,10 +340,9 @@ export class AuthService {
       throw new BaseException(
         ExceptionMessages.BANNED_MESSAGE(
           isUserBanned.bannedToDate as Date,
-          _lang,
+          language,
         ),
         HttpStatus.FORBIDDEN,
-        ExceptionTypes.FORBIDDEN,
       );
 
     if (
@@ -366,9 +350,8 @@ export class AuthService {
       user.status !== USER_STATUS.INACTIVE
     )
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     if (user.status === USER_STATUS.INACTIVE) {
@@ -378,7 +361,7 @@ export class AuthService {
 
       if (!deactivatedUser)
         throw new BaseException(
-          ExceptionMessages.INVALID_CREDENTIALS(_lang),
+          ExceptionMessages.INVALID_CREDENTIALS(language),
           HttpStatus.BAD_REQUEST,
         );
 
@@ -417,13 +400,13 @@ export class AuthService {
   async googleSignup(
     data: GoogleAuthSignupDto,
   ): Promise<{ _id: string; access_token?: string; refresh_token: string }> {
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const {
       idToken,
       username,
       gender,
       theme,
       birthdayDate,
-      _lang,
       deviceId,
       requestData,
     } = data;
@@ -442,18 +425,16 @@ export class AuthService {
 
     if (!email)
       throw new BaseException(
-        ExceptionMessages.INVALID_CREDENTIALS(_lang),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const userWithEmail = await this.userRepo.findOne({ query: { email } });
 
     if (userWithEmail)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const userWithUsername = await this.userRepo.findOne({
@@ -462,9 +443,8 @@ export class AuthService {
 
     if (userWithUsername)
       throw new BaseException(
-        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, _lang),
+        ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, language),
         HttpStatus.CONFLICT,
-        ExceptionTypes.CONFLICT,
       );
 
     const userIp = RequestHelper.extractIpFromRequestData(requestData);
@@ -486,7 +466,6 @@ export class AuthService {
       lastName,
       gender,
       avatar,
-      _lang,
       birthdayDate,
       theme,
       location: `${userLocation.country ?? ''}${userLocation.city ? `, ${userLocation.city}` : ''}`,
@@ -511,7 +490,8 @@ export class AuthService {
   async forgotPassword(
     data: ForgotPasswordDto,
   ): Promise<{ statusCode: 200; email?: string }> {
-    const { identifierType, identifier, _lang } = data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { identifierType, identifier } = data;
 
     const isEmail = identifierType === FORGOT_PASSWORD_IDENTIFIER_TYPE.EMAIL;
     const user = await this.userRepo.findOne(
@@ -523,13 +503,13 @@ export class AuthService {
     if (!user) {
       if (!isEmail) return { statusCode: 200 };
 
-      this.emailService.emailNotFound({ to: identifier, _lang });
+      this.emailService.emailNotFound({ to: identifier, language });
 
       return { statusCode: 200 };
     }
 
     if (user.provider !== PROVIDER.PASSWORD) {
-      this.emailService.googleSignInDetected({ to: identifier, _lang });
+      this.emailService.googleSignInDetected({ to: identifier, language });
 
       return { statusCode: 200 };
     }
@@ -544,7 +524,7 @@ export class AuthService {
 
     this.emailService.forgotPassword({
       to: identifier,
-      _lang,
+      language,
       additional: { token },
     });
 
@@ -586,7 +566,8 @@ export class AuthService {
   // RESET PASSWORD
   // =================================
   async resetPassword(data: ResetPasswordDto): Promise<{ statusCode: 200 }> {
-    const { resetToken, password, confirmPassword, _lang } = data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { resetToken, password, confirmPassword } = data;
 
     const hashedToken = this.tokenService.hashToken(resetToken);
 
@@ -603,7 +584,7 @@ export class AuthService {
 
     if (decoded.type !== TOKEN_TYPE.PASSWORD_RESET)
       throw new BaseException(
-        ExceptionMessages.CONFLICT_MESSAGE(_lang),
+        ExceptionMessages.CONFLICT_MESSAGE(language),
         HttpStatus.CONFLICT,
       );
 
@@ -611,7 +592,7 @@ export class AuthService {
 
     if (decoded.userId !== user._id)
       throw new BaseException(
-        ExceptionMessages.FORBIDDEN_MESSAGE(_lang),
+        ExceptionMessages.FORBIDDEN_MESSAGE(language),
         HttpStatus.FORBIDDEN,
       );
 
@@ -621,17 +602,15 @@ export class AuthService {
       if (token) await this.tokenService.removeToken({ _id: token._id });
 
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(_lang),
+        ExceptionMessages.TOKEN_EXPIRED(language),
         HttpStatus.BAD_REQUEST,
-        ExceptionTypes.BAD_REQUEST,
       );
     }
 
     if (password !== confirmPassword)
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(_lang),
+        ExceptionMessages.BAD_REQUEST_MESSAGE(language),
         HttpStatus.BAD_REQUEST,
-        ExceptionTypes.BAD_REQUEST,
       );
 
     const isPasswordSame = await this.bcryptService.compare(
@@ -641,7 +620,7 @@ export class AuthService {
 
     if (isPasswordSame)
       throw new BaseException(
-        ExceptionMessages.SAME_DATA('password', _lang),
+        ExceptionMessages.SAME_DATA('password', language),
         HttpStatus.BAD_REQUEST,
       );
 
@@ -671,32 +650,24 @@ export class AuthService {
   // =================================
   // VERIFY AUTH TOKEN
   // =================================
-  async verifyAuthToken(
-    access_token: string,
-    refresh_token: string,
-    _lang: LANGUAGE,
-  ) {
+  async verifyAuthToken(access_token: string, refresh_token: string) {
     const payload = await this.refreshTokenService.verifyToken(access_token);
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     if (!payload._id) {
       throw new BaseException(
-        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
         { navigate: true },
       );
     }
 
-    const storedToken = await this.refreshTokenService.findToken(
-      refresh_token,
-      _lang,
-    );
+    const storedToken = await this.refreshTokenService.findToken(refresh_token);
 
     if (!storedToken || storedToken.userId !== payload._id) {
       throw new BaseException(
-        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
         { navigate: true },
       );
     }
@@ -708,9 +679,8 @@ export class AuthService {
 
     if (!user) {
       throw new BaseException(
-        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
         { navigate: true },
       );
     }
@@ -763,7 +733,6 @@ export class AuthService {
       throw new BaseException(
         ExceptionMessages.TOKEN_EXPIRED(lang),
         HttpStatus.BAD_REQUEST,
-        ExceptionTypes.BAD_REQUEST,
       );
     }
 
@@ -773,7 +742,6 @@ export class AuthService {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     await Promise.all([
@@ -802,7 +770,7 @@ export class AuthService {
 
     this.emailService.deleteAccountCompleted({
       to: email,
-      _lang: lang,
+      language: lang,
       additional: { token: newToken },
     });
 
@@ -812,7 +780,8 @@ export class AuthService {
   // =================================
   // REFRESH TOKEN
   // =================================
-  async refreshToken(data: Record<string, any>, _lang: LANGUAGE) {
+  async refreshToken(data: Record<string, any>) {
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const payload = await this.refreshTokenService.verifyToken(
       data.refresh_token,
       false,
@@ -822,13 +791,12 @@ export class AuthService {
 
     if (isExpired) {
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(_lang),
+        ExceptionMessages.TOKEN_EXPIRED(language),
         HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
       );
     }
 
-    await this.refreshTokenService.findToken(data.refresh_token, _lang);
+    await this.refreshTokenService.findToken(data.refresh_token);
 
     const user = await this.userRepo.findOne({
       query: { _id: payload._id },
@@ -836,9 +804,8 @@ export class AuthService {
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.UNAUTHORIZED_MESSAGE(_lang),
+        ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
-        ExceptionTypes.UNAUTHORIZED,
         { navigate: true },
       );
 
@@ -921,7 +888,6 @@ export class AuthService {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.CONFLICT,
-          ExceptionTypes.CONFLICT,
         );
     }
 
@@ -938,7 +904,8 @@ export class AuthService {
   // RESTORE ACCOUNT
   // =================================
   async restoreAccount(data: RestoreAccountDto) {
-    const { token, _lang } = data;
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { token } = data;
 
     const hashedToken = this.tokenService.hashToken(token);
 
@@ -948,7 +915,7 @@ export class AuthService {
 
     if (restoreToken.expiresAt && restoreToken.expiresAt < new Date()) {
       throw new BaseException(
-        ExceptionMessages.TOKEN_EXPIRED(_lang),
+        ExceptionMessages.TOKEN_EXPIRED(language),
         HttpStatus.GONE,
       );
     }
@@ -959,13 +926,13 @@ export class AuthService {
 
     if (decoded.type !== TOKEN_TYPE.RESTORE_ACCOUNT)
       throw new BaseException(
-        ExceptionMessages.CONFLICT_MESSAGE(_lang),
+        ExceptionMessages.CONFLICT_MESSAGE(language),
         HttpStatus.CONFLICT,
       );
 
     if (decoded.userId !== restoreToken.userId)
       throw new BaseException(
-        ExceptionMessages.FORBIDDEN_MESSAGE(_lang),
+        ExceptionMessages.FORBIDDEN_MESSAGE(language),
         HttpStatus.FORBIDDEN,
       );
 
@@ -975,7 +942,7 @@ export class AuthService {
 
     if (!deletedUser)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
       );
 
@@ -985,7 +952,7 @@ export class AuthService {
 
     if (!user)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
       );
 

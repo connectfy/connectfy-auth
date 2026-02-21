@@ -3,15 +3,15 @@ import { DeletedUserRepository } from './repo/deleted-user.repo';
 import { AddDeletedUserDto } from './dto/add.deleted-user.dto';
 import { IReturnedDeletedUser } from './interface/deleted-user.interface';
 import { RemoveDeletedUserDto } from './dto/remove.deleted-user.dto';
-import {
-  BaseException,
-  ExceptionMessages,
-  ExceptionTypes,
-} from 'connectfy-shared';
+import { BaseException, CLS_KEYS, ExceptionMessages } from 'connectfy-shared';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class DeletedUserService {
-  constructor(private readonly repo: DeletedUserRepository) {}
+  constructor(
+    private readonly repo: DeletedUserRepository,
+    private readonly cls: ClsService,
+  ) {}
 
   async create(data: AddDeletedUserDto): Promise<IReturnedDeletedUser> {
     const res = await this.repo.create(data);
@@ -20,15 +20,15 @@ export class DeletedUserService {
   }
 
   async remove(data: RemoveDeletedUserDto): Promise<IReturnedDeletedUser> {
-    const { _id, _lang } = data;
+    const language = await this.cls.get(CLS_KEYS.LANG);
+    const { _id } = data;
 
     const foundData = await this.repo.findOne({ query: { _id } });
 
     if (!foundData)
       throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
-        ExceptionTypes.NOT_FOUND,
       );
 
     const res = await this.repo.remove({ _id });

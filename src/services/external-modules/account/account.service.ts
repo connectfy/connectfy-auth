@@ -1,12 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { sendWithContext, MICROSERVICE_NAMES, GENDER } from 'connectfy-shared';
+import {
+  sendWithContext,
+  MICROSERVICE_NAMES,
+  GENDER,
+  LANGUAGE,
+  CLS_KEYS,
+} from 'connectfy-shared';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class AccountService {
   constructor(
     @Inject(MICROSERVICE_NAMES.ACCOUNT.TCP)
     private readonly accountServiceTcp: ClientProxy,
+    private readonly cls: ClsService,
   ) {}
 
   // =================================
@@ -19,11 +27,11 @@ export class AccountService {
     lastName: string;
     gender: GENDER;
     avatar?: string | null;
-    _lang: string;
     birthdayDate: Date | null;
     theme: string | null;
     location: string | null;
   }): Promise<void> {
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const {
       userId,
       firstName = '',
@@ -31,7 +39,6 @@ export class AccountService {
       username,
       gender,
       avatar,
-      _lang,
       birthdayDate,
       theme,
     } = opts;
@@ -40,7 +47,7 @@ export class AccountService {
       // account create
       sendWithContext({
         client: this.accountServiceTcp,
-        endpoint: 'account/create',
+        endpoint: 'profile/create',
         payload: {
           userId,
           firstName,
@@ -48,7 +55,6 @@ export class AccountService {
           username,
           gender,
           avatar,
-          _lang,
           birthdayDate,
         },
       }),
@@ -57,21 +63,21 @@ export class AccountService {
       sendWithContext({
         client: this.accountServiceTcp,
         endpoint: 'privacy-settings/create',
-        payload: { userId, _lang },
+        payload: { userId },
       }),
 
       // general settings create
       sendWithContext({
         client: this.accountServiceTcp,
         endpoint: 'general-settings/create',
-        payload: { userId, _lang, theme, language: _lang },
+        payload: { userId, theme, language },
       }),
 
       // notification settings create
       sendWithContext({
         client: this.accountServiceTcp,
         endpoint: 'notification-settings/create',
-        payload: { userId, _lang },
+        payload: { userId },
       }),
     ]);
   }
@@ -82,7 +88,7 @@ export class AccountService {
   async findAccount(payload: Record<string, any>): Promise<any> {
     return await sendWithContext({
       client: this.accountServiceTcp,
-      endpoint: 'account/findOne',
+      endpoint: 'profile/findOne',
       payload,
     });
   }
