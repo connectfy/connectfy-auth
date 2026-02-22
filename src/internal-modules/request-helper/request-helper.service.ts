@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { UAParser } from 'ua-parser-js';
 import * as geoip from 'geoip-lite';
 import { BROWSER_TYPE, DEVICE_TYPE, OS_TYPE } from 'connectfy-shared';
@@ -6,15 +7,17 @@ import {
   IDeviceInfoWithLocation,
   IGeoLocation,
   IParsedUserAgent,
-} from '../interfaces/request.interface';
+  IRequestData,
+} from './interfaces/request.interface';
 import { Request } from 'express';
 import countries from 'i18n-iso-countries';
 
-export class RequestHelper {
+@Injectable()
+export class RequestHelperService {
   // ==========================================
   // Parse user agent string and return structured data with enums
   // ==========================================
-  static parseUserAgent(userAgent: string | undefined): IParsedUserAgent {
+  parseUserAgent(userAgent: string | undefined): IParsedUserAgent {
     if (!userAgent) {
       return {
         browser: BROWSER_TYPE.UNKNOWN,
@@ -50,7 +53,7 @@ export class RequestHelper {
   // ==========================================
   // Map browser name to BROWSER_TYPE enum
   // ==========================================
-  private static mapBrowser(browserName: string | undefined): BROWSER_TYPE {
+  private mapBrowser(browserName: string | undefined): BROWSER_TYPE {
     if (!browserName) return BROWSER_TYPE.UNKNOWN;
 
     const browser = browserName.toLowerCase();
@@ -83,7 +86,7 @@ export class RequestHelper {
   // ==========================================
   // Map OS name to OS_TYPE enum
   // ==========================================
-  private static mapOS(osName: string | undefined): OS_TYPE {
+  private mapOS(osName: string | undefined): OS_TYPE {
     if (!osName) return OS_TYPE.UNKNOWN;
 
     const os = osName.toLowerCase();
@@ -110,7 +113,7 @@ export class RequestHelper {
   // ==========================================
   // Map device type to DEVICE_TYPE enum
   // ==========================================
-  private static mapPlatform(deviceType: string | undefined): DEVICE_TYPE {
+  private mapPlatform(deviceType: string | undefined): DEVICE_TYPE {
     if (!deviceType) return DEVICE_TYPE.WEB;
 
     const device = deviceType.toLowerCase();
@@ -131,7 +134,7 @@ export class RequestHelper {
   // ==========================================
   // Get client IP address (handles proxies, load balancers, CDNs)
   // ==========================================
-  static getClientIp(request: Request): string {
+  getClientIp(request: Request): string {
     const ipHeaders = [
       'cf-connecting-ip', // Cloudflare
       'x-real-ip', // Nginx proxy
@@ -162,7 +165,7 @@ export class RequestHelper {
   // ==========================================
   // Clean and normalize IP address
   // ==========================================
-  static cleanIpAddress(ip: string): string {
+  cleanIpAddress(ip: string): string {
     if (ip.startsWith('::ffff:')) {
       return ip.substring(7);
     }
@@ -182,7 +185,7 @@ export class RequestHelper {
   // ==========================================
   // Get full device info from request
   // ==========================================
-  static getDeviceInfo(request: Request): IDeviceInfo {
+  getDeviceInfo(request: Request): IDeviceInfo {
     const userAgent = request.headers['user-agent'] || 'Unknown';
     const parsedUA = this.parseUserAgent(userAgent);
     const ipAddress = this.getClientIp(request);
@@ -202,7 +205,7 @@ export class RequestHelper {
   // ==========================================
   // Get geolocation from IP address
   // ==========================================
-  static getGeoLocationFromIP(ipAddress: string): IGeoLocation {
+  getGeoLocationFromIP(ipAddress: string): IGeoLocation {
     // Skip private/localhost IPs
     if (this.isPrivateIP(ipAddress)) {
       return {
@@ -256,7 +259,7 @@ export class RequestHelper {
   // ==========================================
   // Get device info WITH geolocation
   // ==========================================
-  static getDeviceInfoWithLocation(request: Request): IDeviceInfoWithLocation {
+  getDeviceInfoWithLocation(request: Request): IDeviceInfoWithLocation {
     const userAgent = request.headers['user-agent'] || 'Unknown';
     const parsedUA = this.parseUserAgent(userAgent);
     const ipAddress = this.getClientIp(request);
@@ -287,7 +290,7 @@ export class RequestHelper {
   // ==========================================
   // Generate human-readable device name
   // ==========================================
-  static generateDeviceName(
+  generateDeviceName(
     browser: BROWSER_TYPE,
     os: OS_TYPE,
     platform: DEVICE_TYPE,
@@ -310,7 +313,7 @@ export class RequestHelper {
   // ==========================================
   // Get display name for browser enum
   // ==========================================
-  private static getBrowserDisplayName(browser: BROWSER_TYPE): string {
+  private getBrowserDisplayName(browser: BROWSER_TYPE): string {
     const names: Record<BROWSER_TYPE, string> = {
       [BROWSER_TYPE.CHROME]: 'Chrome',
       [BROWSER_TYPE.FIREFOX]: 'Firefox',
@@ -328,7 +331,7 @@ export class RequestHelper {
   // ==========================================
   // Get display name for OS enum
   // ==========================================
-  private static getOSDisplayName(os: OS_TYPE): string {
+  private getOSDisplayName(os: OS_TYPE): string {
     const names: Record<OS_TYPE, string> = {
       [OS_TYPE.WINDOWS]: 'Windows',
       [OS_TYPE.MACOS]: 'macOS',
@@ -344,7 +347,7 @@ export class RequestHelper {
   // ==========================================
   // Get display name for platform enum
   // ==========================================
-  private static getPlatformDisplayName(platform: DEVICE_TYPE): string {
+  private getPlatformDisplayName(platform: DEVICE_TYPE): string {
     const names: Record<DEVICE_TYPE, string> = {
       [DEVICE_TYPE.WEB]: 'Web',
       [DEVICE_TYPE.MOBILE]: 'Mobile',
@@ -359,7 +362,7 @@ export class RequestHelper {
   // ==========================================
   // Get country name from country code
   // ==========================================
-  private static getCountryName(code?: string | null): string | null {
+  private getCountryName(code?: string | null): string | null {
     if (!code) return null;
     return countries.getName(code, 'en') ?? code;
   }
@@ -367,7 +370,7 @@ export class RequestHelper {
   // ==========================================
   // Validate if IP is internal/private
   // ==========================================
-  static isPrivateIP(ip: string): boolean {
+  isPrivateIP(ip: string): boolean {
     const cleanIp = this.cleanIpAddress(ip);
 
     if (cleanIp === '127.0.0.1' || cleanIp === '::1') return true;
@@ -384,8 +387,8 @@ export class RequestHelper {
   // ==========================================
   // Parse device info WITH geolocation from request data
   // ==========================================
-  static parseDeviceInfoFromRequestData(
-    requestData?: Record<string, any>,
+  parseDeviceInfoFromRequestData(
+    requestData?: IRequestData,
   ): IDeviceInfoWithLocation {
     if (!requestData) {
       return {
@@ -443,7 +446,7 @@ export class RequestHelper {
   // ==========================================
   // Extract IP address from request data
   // ==========================================
-  static extractIpFromRequestData(requestData: Record<string, any>): string {
+  extractIpFromRequestData(requestData: IRequestData): string {
     const headers = requestData.headers;
 
     if (headers['cf-connecting-ip']) {

@@ -30,3 +30,13 @@ export interface IGeoLocation {
 }
 
 export interface IDeviceInfoWithLocation extends IDeviceInfo, IGeoLocation {}
+
+export interface IRequestData {
+  headers: {
+    'user-agent': string;
+    'x-forwarded-for': string;
+    'x-real-ip': string;
+    'cf-connecting-ip': string;
+  };
+  ip: string;
+}

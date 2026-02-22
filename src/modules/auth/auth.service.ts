@@ -35,7 +35,7 @@ import { RestoreAccountDto } from './dto/restore-account.dto';
 import { JwtService } from '@nestjs/jwt';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { DeactivatedUserRepository } from '../users/deactivated-users/repo/deactivated-user.repo';
-import { RequestHelper } from '@/src/common/helpers/request.helper';
+import { RequestHelperService } from '@/src/internal-modules/request-helper/request-helper.service';
 import { NotificationsService } from '@/src/external-modules/notifications/notifications.service';
 import { BcryptService } from '@/src/internal-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
@@ -58,6 +58,7 @@ export class AuthService {
     private readonly emailService: NotificationsService,
     private readonly bcryptService: BcryptService,
     private readonly accountService: AccountService,
+    private readonly requestHelperService: RequestHelperService,
   ) {
     const clientId = this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID);
     this.googleClient = new OAuth2Client(clientId);
@@ -122,8 +123,9 @@ export class AuthService {
     const { firstName, lastName, birthdayDate, gender, theme, ...authDatas } =
       unverifiedUser;
 
-    const userIp = RequestHelper.extractIpFromRequestData(requestData);
-    const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
+    const userIp =
+      this.requestHelperService.extractIpFromRequestData(requestData);
+    const userLocation = this.requestHelperService.getGeoLocationFromIP(userIp);
 
     const { _id, username } = await this.userRepo.create({
       ...authDatas,
@@ -479,8 +481,9 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
 
-    const userIp = RequestHelper.extractIpFromRequestData(requestData);
-    const userLocation = RequestHelper.getGeoLocationFromIP(userIp);
+    const userIp =
+      this.requestHelperService.extractIpFromRequestData(requestData);
+    const userLocation = this.requestHelperService.getGeoLocationFromIP(userIp);
 
     const { _id } = await this.userRepo.create({
       email,

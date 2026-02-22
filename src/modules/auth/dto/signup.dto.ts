@@ -1,3 +1,5 @@
+import { IRequestData } from '@/src/internal-modules/request-helper/interfaces/request.interface';
+import { RequestDataDto } from '@/src/internal-modules/request-helper/dto/request-data.dto';
 import {
   FIELD_TYPE,
   VALIDATION_TYPE,
@@ -116,15 +118,7 @@ export class GoogleAuthSignupDto {
 
   @FieldValidator({
     type: FIELD_TYPE.OBJECT,
-    isOptional: true,
+    classType: RequestDataDto,
   })
-  requestData: {
-    headers: {
-      'user-agent'?: string | string[];
-      'x-forwarded-for'?: string | string[];
-      'x-real-ip'?: string | string[];
-      'cf-connecting-ip'?: string | string[];
-    };
-    ip?: string;
-  };
+  requestData: IRequestData;
 }

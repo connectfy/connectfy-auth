@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
-import { RequestHelper } from '@/src/common/helpers/request.helper';
+import { RequestHelperService } from '@/src/internal-modules/request-helper/request-helper.service';
 import {
   ExceptionMessages,
   LANGUAGE,
@@ -18,6 +18,7 @@ import {
   CLS_KEYS,
 } from 'connectfy-shared';
 import { ClsService } from 'nestjs-cls';
+import { IRequestData } from '@/src/internal-modules/request-helper/interfaces/request.interface';
 
 @Injectable()
 export class RefreshTokenService {
@@ -26,6 +27,7 @@ export class RefreshTokenService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly cls: ClsService,
+    private readonly requestHelperService: RequestHelperService,
   ) {}
 
   async generateTokens(
@@ -60,7 +62,7 @@ export class RefreshTokenService {
     userId: string;
     deviceId: string;
     refresh_token: string;
-    requestData: Record<string, any>;
+    requestData: IRequestData;
   }): Promise<IReturnedRefreshToken> {
     const { userId, deviceId, refresh_token, requestData } = data;
 
@@ -71,7 +73,7 @@ export class RefreshTokenService {
     });
 
     const deviceInfo =
-      RequestHelper.parseDeviceInfoFromRequestData(requestData);
+      this.requestHelperService.parseDeviceInfoFromRequestData(requestData);
 
     const finalData: IUpdateRefreshToken = {
       userId,
