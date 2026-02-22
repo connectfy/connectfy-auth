@@ -10,6 +10,8 @@ import {
   ExceptionMessages,
   ENV,
   EXPIRE_DATES,
+  THEME,
+  STARTUP_PAGE,
 } from 'connectfy-shared';
 import { generateVerifyCode } from '@/src/common/functions/function';
 import { ConfigService } from '@nestjs/config';
@@ -177,9 +179,13 @@ export class AuthService {
   // =================================
   // LOGIN
   // =================================
-  async login(
-    data: LoginDto,
-  ): Promise<{ access_token?: string; refresh_token: string }> {
+  async login(data: LoginDto): Promise<{
+    access_token?: string;
+    refresh_token: string;
+    language: LANGUAGE;
+    theme: THEME;
+    startupPage: STARTUP_PAGE;
+  }> {
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const { identifierType, identifier, password, requestData, deviceId } =
       data;
@@ -284,6 +290,11 @@ export class AuthService {
         _id: user._id,
       });
 
+    const generalSettings = await this.accountService.findGeneralSettings({
+      query: { userId: user._id },
+      fields: 'language theme startupPage',
+    });
+
     await this.refreshTokenService.saveTokens({
       refresh_token,
       userId: user._id,
@@ -291,15 +302,25 @@ export class AuthService {
       requestData,
     });
 
-    return { access_token, refresh_token };
+    return {
+      access_token,
+      refresh_token,
+      language: generalSettings.language,
+      theme: generalSettings.theme,
+      startupPage: generalSettings.startupPage,
+    };
   }
 
   // =================================
   // GOOGLE LOGIN
   // =================================
-  async googleLogin(
-    data: GoogleAuthLoginDto,
-  ): Promise<{ access_token?: string; refresh_token: string }> {
+  async googleLogin(data: GoogleAuthLoginDto): Promise<{
+    access_token?: string;
+    refresh_token: string;
+    language: LANGUAGE;
+    theme: THEME;
+    startupPage: STARTUP_PAGE;
+  }> {
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const { idToken, deviceId, requestData } = data;
 
@@ -384,6 +405,11 @@ export class AuthService {
         _id: user._id,
       });
 
+    const generalSettings = await this.accountService.findGeneralSettings({
+      query: { userId: user._id },
+      fields: 'language theme startupPage',
+    });
+
     await this.refreshTokenService.saveTokens({
       refresh_token,
       userId: user._id,
@@ -391,7 +417,13 @@ export class AuthService {
       requestData,
     });
 
-    return { access_token, refresh_token };
+    return {
+      access_token,
+      refresh_token,
+      language: generalSettings.language,
+      theme: generalSettings.theme,
+      startupPage: generalSettings.startupPage,
+    };
   }
 
   // =================================

@@ -6,6 +6,7 @@ import {
   GENDER,
   LANGUAGE,
   CLS_KEYS,
+  BaseFindDto,
 } from 'connectfy-shared';
 import { ClsService } from 'nestjs-cls';
 
@@ -85,7 +86,7 @@ export class AccountService {
   // =================================
   // FIND USER ACCOUNT
   // =================================
-  async findAccount(payload: Record<string, any>): Promise<any> {
+  async findAccount(payload: BaseFindDto): Promise<any> {
     return await sendWithContext({
       client: this.accountServiceTcp,
       endpoint: 'profile/findOne',
@@ -96,7 +97,7 @@ export class AccountService {
   // =================================
   // FIND GENERAL SETTINGS
   // =================================
-  async findGeneralSettings(payload): Promise<any> {
+  async findGeneralSettings(payload: BaseFindDto): Promise<any> {
     return await sendWithContext({
       client: this.accountServiceTcp,
       endpoint: 'general-settings/findOne',
@@ -107,7 +108,7 @@ export class AccountService {
   // =================================
   // FIND NOTIFICATION SETTINGS
   // =================================
-  async findNotificationSettings(payload): Promise<any> {
+  async findNotificationSettings(payload: BaseFindDto): Promise<any> {
     return await sendWithContext({
       client: this.accountServiceTcp,
       endpoint: 'notification-settings/findOne',
@@ -118,7 +119,7 @@ export class AccountService {
   // =================================
   // FIND PRIVACY SETTINGS
   // =================================
-  async findPrivacySettings(payload): Promise<any> {
+  async findPrivacySettings(payload: BaseFindDto): Promise<any> {
     return await sendWithContext({
       client: this.accountServiceTcp,
       endpoint: 'privacy-settings/findOne',
