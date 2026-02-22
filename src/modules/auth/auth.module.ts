@@ -9,9 +9,6 @@ import { DeletedUserModule } from '../users/deleted-user/deleted-user.module';
 import { BannedUserModule } from '../users/banned-user/banned-user.module';
 import { TokenModule } from '../tokens/token/token.module';
 import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-users.module';
-import { NotificationsModule } from '@/src/services/external-modules/notifications/notifications.module';
-import { BcryptModule } from '@/src/services/app-modules/bcrypt/bcrypt.module';
-import { AccountModule } from '@/src/services/external-modules/account/account.module';
 
 @Module({
   imports: [
@@ -23,9 +20,6 @@ import { AccountModule } from '@/src/services/external-modules/account/account.m
     BannedUserModule,
     TokenModule,
     DeactivetedUsersModule,
-    AccountModule,
-    NotificationsModule,
-    BcryptModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

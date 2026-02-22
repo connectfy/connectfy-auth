@@ -23,11 +23,11 @@ import {
 } from 'connectfy-shared';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { ConfigService } from '@nestjs/config';
-import { NotificationsService } from '@/src/services/external-modules/notifications/notifications.service';
-import { BcryptService } from '@/src/services/app-modules/bcrypt/bcrypt.service';
+import { NotificationsService } from '@/src/external-modules/notifications/notifications.service';
+import { BcryptService } from '@/src/internal-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
-import { AccountService } from '@/src/services/external-modules/account/account.service';
+import { AccountService } from '@/src/external-modules/account/account.service';
 import { CheckUniqueDto } from './dto/check-unique.dto';
 
 @Injectable()

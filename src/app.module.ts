@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from '@modules/auth/auth.module';
-import { UsersModule } from '@modules/users/users.module';
-import { TokensModule } from '@modules/tokens/tokens.module';
 import { ClsInterceptor, ClsModule } from 'nestjs-cls';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
 import { ENV } from 'connectfy-shared';
-import { TcpConnectionsModule } from '@/src/services/app-connections/tcp-connections.module';
-import { KafkaConnectionsModule } from '@/src/services/app-connections/kafka-connections.module';
+import { AppSettingsModule } from './app-settings/app-settings.module';
+import { ExternalModulesModule } from './external-modules/external-modules.module';
+import { InternalModulesModule } from './internal-modules/internal-modules.module';
+import { ModulesModule } from './modules/modules.module';
 
 @Module({
   imports: [
@@ -28,11 +27,15 @@ import { KafkaConnectionsModule } from '@/src/services/app-connections/kafka-con
       global: true,
       interceptor: { mount: false },
     }),
-    AuthModule,
-    UsersModule,
-    TokensModule,
-    TcpConnectionsModule,
-    KafkaConnectionsModule,
+
+    // /src/app-settings
+    AppSettingsModule,
+    // /src/external-modules
+    ExternalModulesModule,
+    // /src/internal-modules
+    InternalModulesModule,
+    // /src/modules
+    ModulesModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: ClsInterceptor },
