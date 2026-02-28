@@ -24,5 +24,5 @@ export class ChangePhoneNumberDto {
     validateNested: {},
     classType: PhoneNumberDto,
   })
-  phoneNumber: PhoneNumberDto;
+  phoneNumber: PhoneNumberDto | null;
 }

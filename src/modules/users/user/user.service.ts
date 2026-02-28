@@ -440,44 +440,53 @@ export class UserService {
       },
     });
 
-    if (phoneNumber?.fullPhoneNumber === oldPhoneNumber?.fullPhoneNumber)
+    if (
+      phoneNumber &&
+      phoneNumber?.fullPhoneNumber === oldPhoneNumber?.fullPhoneNumber
+    ) {
       throw new BaseException(
         ExceptionMessages.SAME_DATA(phoneNumber.fullPhoneNumber, lang),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     if (action === PHONE_NUMBER_ACTION.UPDATE) {
-      const country = COUNTRIES.find((c) => c.code === phoneNumber.countryCode);
+      const country = COUNTRIES.find(
+        (c) => c.code === phoneNumber?.countryCode,
+      );
 
-      if (!country)
+      if (!country) {
         throw new BaseException(
           ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       const { numberLength } = country;
 
-      if (phoneNumber.number.length !== numberLength)
+      if (phoneNumber?.number.length !== numberLength) {
         throw new BaseException(
           ExceptionMessages.INVALID_LENGTH_MESSAGE(lang),
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       const userWithPhoneNumber = await this.repo.existsByField({
         $and: [
-          { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
+          { 'phoneNumber.fullPhoneNumber': phoneNumber?.fullPhoneNumber },
           { _id: { $ne: _id } },
         ],
       });
 
-      if (userWithPhoneNumber)
+      if (userWithPhoneNumber) {
         throw new BaseException(
           ExceptionMessages.ALREADY_EXISTS_MESSAGE(
-            phoneNumber.fullPhoneNumber,
+            phoneNumber?.fullPhoneNumber,
             lang,
           ),
           HttpStatus.BAD_REQUEST,
         );
+      }
     }
 
     let updatedUser: IReturnedUser;
