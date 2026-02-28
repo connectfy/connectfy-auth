@@ -25,7 +25,7 @@ export class AuthenticateUserDto {
   @FieldValidator({
     type: FIELD_TYPE.STRING,
     isOptional: true,
-    maxLength: 1000,
+    maxLength: 1500,
     validateIf: (obj) => obj.idToken,
   })
   idToken: string | null;

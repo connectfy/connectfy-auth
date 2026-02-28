@@ -7,7 +7,7 @@ export class BcryptService {
   // HASH PASSWORD
   // =================================
   async hash(password: string): Promise<string> {
-    return hash(password, await genSalt());
+    return await hash(password, await genSalt());
   }
 
   // =================================

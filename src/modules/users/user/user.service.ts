@@ -175,9 +175,7 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const userWithUsername = await this.repo.findOne({
-      query: { username },
-    });
+    const userWithUsername = await this.repo.existsByField({ username });
 
     if (userWithUsername)
       throw new BaseException(
@@ -212,7 +210,7 @@ export class UserService {
     } = this.cls.get<IUser>(CLS_KEYS.USER);
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    const isUserExist = await this.repo.findOne({ query: { _id } });
+    const isUserExist = await this.repo.existsByField({ _id });
 
     if (!isUserExist)
       throw new BaseException(
@@ -247,9 +245,7 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const userWithEmail = await this.repo.findOne({
-      query: { email },
-    });
+    const userWithEmail = await this.repo.existsByField({ email });
 
     if (userWithEmail)
       throw new BaseException(
@@ -264,7 +260,7 @@ export class UserService {
     const emailChangeToken = await this.tokenService.generateAndSaveJwtToken(
       _id,
       TOKEN_TYPE.CHANGE_EMAIL,
-      'CHANGE_EMAIL_SECRET',
+      ENV.AUTH.JWT.ACTIONS.CHANGE_EMAIL,
       EXPIRE_DATES.JWT.ONE_HOUR,
       EXPIRE_DATES.TOKEN.ONE_HOUR,
     );
@@ -286,7 +282,7 @@ export class UserService {
     const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    const user = await this.repo.findOne({ query: { _id } });
+    const user = await this.repo.existsByField({ _id });
 
     if (!user)
       throw new BaseException(
@@ -352,7 +348,10 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
 
-    const user = await this.repo.findOne({ query: { _id } });
+    const user = await this.repo.findOne({
+      query: { _id },
+      fields: 'provider +password',
+    });
 
     if (!user)
       throw new BaseException(
@@ -464,8 +463,11 @@ export class UserService {
           HttpStatus.BAD_REQUEST,
         );
 
-      const userWithPhoneNumber = await this.repo.findOne({
-        query: { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
+      const userWithPhoneNumber = await this.repo.existsByField({
+        $and: [
+          { 'phoneNumber.fullPhoneNumber': phoneNumber.fullPhoneNumber },
+          { _id: { $ne: _id } },
+        ],
       });
 
       if (userWithPhoneNumber)
