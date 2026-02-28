@@ -29,11 +29,13 @@ export class TokenService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  async generateAndSaveToken(
-    userId: string,
-    type: TOKEN_TYPE,
-    expiresInMs: number,
-  ): Promise<{ rawToken: string; hashedToken: string }> {
+  async generateAndSaveToken(options: {
+    userId: string;
+    type: TOKEN_TYPE;
+    expiresInMs: number;
+  }): Promise<{ rawToken: string; hashedToken: string }> {
+    const { userId, type, expiresInMs } = options;
+
     const rawToken = crypto.randomBytes(128).toString('hex');
     const hashedToken = this.hashToken(rawToken);
     const tokenExpiry = new Date(Date.now() + expiresInMs);
@@ -48,15 +50,18 @@ export class TokenService {
     return { rawToken, hashedToken };
   }
 
-  async generateAndSaveJwtToken(
-    userId: string,
-    type: TOKEN_TYPE,
-    secret: string,
-    jwtExp: string,
-    tokenExp: number,
-  ): Promise<string> {
+  async generateAndSaveJwtToken(options: {
+    userId: string;
+    type: TOKEN_TYPE;
+    secret: string;
+    jwtExp: string;
+    tokenExp: number;
+    payload?: Record<string, any>;
+  }): Promise<string> {
+    const { userId, type, secret, jwtExp, tokenExp, payload } = options;
+
     const token = this.jwtService.sign(
-      { userId, type },
+      { userId, type, ...payload },
       {
         secret: this.config.get<string>(secret),
         expiresIn: jwtExp,
@@ -91,7 +96,7 @@ export class TokenService {
   }
 
   async findAllTokens(options: FindTokenDto): Promise<IReturnedToken[]> {
-    return await this.repo.findMany(options);
+    return await this.repo.findAll(options);
   }
 
   async removeToken(data: RemoveTokenDto): Promise<IReturnedToken> {
@@ -112,7 +117,7 @@ export class TokenService {
   async removeTokens({
     _ids,
   }: RemoveAllTokensDto): Promise<IRemoveAllResponse> {
-    const allTokens = await this.repo.findMany({
+    const allTokens = await this.repo.findAll({
       query: { _id: { $in: _ids } },
     });
 

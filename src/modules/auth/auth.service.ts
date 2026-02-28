@@ -549,13 +549,13 @@ export class AuthService {
       return { statusCode: 200 };
     }
 
-    const token = await this.tokenService.generateAndSaveJwtToken(
-      user._id,
-      TOKEN_TYPE.PASSWORD_RESET,
-      'FORGOT_PASSWORD_SECRET',
-      EXPIRE_DATES.JWT.ONE_HOUR,
-      EXPIRE_DATES.TOKEN.ONE_HOUR,
-    );
+    const token = await this.tokenService.generateAndSaveJwtToken({
+      userId: user._id,
+      type: TOKEN_TYPE.PASSWORD_RESET,
+      secret: 'FORGOT_PASSWORD_SECRET',
+      jwtExp: EXPIRE_DATES.JWT.ONE_HOUR,
+      tokenExp: EXPIRE_DATES.TOKEN.ONE_HOUR,
+    });
 
     this.emailService.forgotPassword({
       to: identifier,
@@ -796,14 +796,14 @@ export class AuthService {
       this.tokenService.removeTokensByUserId(_id),
     ]);
 
-    const [newToken, , ,] = await Promise.all([
-      this.tokenService.generateAndSaveJwtToken(
-        _id,
-        TOKEN_TYPE.RESTORE_ACCOUNT,
-        'RESTORE_ACCOUNT_SECRET',
-        EXPIRE_DATES.JWT.ONE_MONTH,
-        EXPIRE_DATES.TOKEN.ONE_MONTH,
-      ),
+    const [newToken] = await Promise.all([
+      this.tokenService.generateAndSaveJwtToken({
+        userId: _id,
+        type: TOKEN_TYPE.RESTORE_ACCOUNT,
+        secret: 'RESTORE_ACCOUNT_SECRET',
+        jwtExp: EXPIRE_DATES.JWT.ONE_MONTH,
+        tokenExp: EXPIRE_DATES.TOKEN.ONE_MONTH,
+      }),
       this.tokenService.removeMany({
         $and: [{ userId: _id }, { type: { $ne: TOKEN_TYPE.RESTORE_ACCOUNT } }],
       }),
@@ -883,7 +883,7 @@ export class AuthService {
 
     const user = await this.userRepo.findOne({
       query: { _id },
-      fields: 'provider password',
+      fields: 'provider +password',
     });
 
     if (!user)
@@ -934,11 +934,15 @@ export class AuthService {
         );
     }
 
-    const { rawToken: token } = await this.tokenService.generateAndSaveToken(
-      _id,
+    await this.tokenService.removeMany({
+      $and: [{ userId: _id }, { type }],
+    });
+
+    const { rawToken: token } = await this.tokenService.generateAndSaveToken({
+      userId: _id,
       type,
-      10 * 60 * 60,
-    );
+      expiresInMs: 10 * 60 * 60,
+    });
 
     return { statusCode: 200, token };
   }

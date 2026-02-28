@@ -257,13 +257,14 @@ export class UserService {
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_EMAIL }],
     });
 
-    const emailChangeToken = await this.tokenService.generateAndSaveJwtToken(
-      _id,
-      TOKEN_TYPE.CHANGE_EMAIL,
-      ENV.AUTH.JWT.ACTIONS.CHANGE_EMAIL,
-      EXPIRE_DATES.JWT.ONE_HOUR,
-      EXPIRE_DATES.TOKEN.ONE_HOUR,
-    );
+    const emailChangeToken = await this.tokenService.generateAndSaveJwtToken({
+      userId: _id,
+      type: TOKEN_TYPE.CHANGE_EMAIL,
+      secret: ENV.AUTH.JWT.ACTIONS.CHANGE_EMAIL,
+      jwtExp: EXPIRE_DATES.JWT.ONE_HOUR,
+      tokenExp: EXPIRE_DATES.TOKEN.ONE_HOUR,
+      payload: { email },
+    });
 
     this.emailService.changeEmail({
       to: email,
@@ -326,7 +327,7 @@ export class UserService {
           email: decoded.email,
         },
       ),
-      await this.tokenService.remove({
+      await this.tokenService.removeMany({
         $and: [{ type: TOKEN_TYPE.CHANGE_EMAIL }, { userId: _id }],
       }),
     ]);
