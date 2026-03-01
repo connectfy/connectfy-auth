@@ -1,4 +1,8 @@
-import { FIELD_TYPE, FieldValidator, DELETE_REASON } from 'connectfy-shared';
+import {
+  FIELD_TYPE,
+  FieldValidator,
+  DELETE_REASON_CODE,
+} from 'connectfy-shared';
 
 export class DeleteAccountDto {
   @FieldValidator({
@@ -9,14 +13,14 @@ export class DeleteAccountDto {
 
   @FieldValidator({
     type: FIELD_TYPE.ENUM,
-    enumObject: DELETE_REASON,
+    enumObject: DELETE_REASON_CODE,
   })
-  reason: DELETE_REASON;
+  reasonCode: DELETE_REASON_CODE;
 
   @FieldValidator({
     type: FIELD_TYPE.STRING,
     isOptional: true,
-    maxLength: 1000,
+    maxLength: 200,
   })
-  otherReason: string | null;
+  reasonDescription: string | null;
 }

@@ -12,6 +12,8 @@ import {
   EXPIRE_DATES,
   THEME,
   STARTUP_PAGE,
+  DELETE_REASON,
+  DELETE_REASON_CODE,
 } from 'connectfy-shared';
 import { generateVerifyCode } from '@/src/common/functions/function';
 import { ConfigService } from '@nestjs/config';
@@ -787,11 +789,17 @@ export class AuthService {
         HttpStatus.NOT_FOUND,
       );
 
+    const reasonDescription =
+      data.reasonCode === DELETE_REASON_CODE.FOUND_ALTERNATIVE
+        ? null
+        : data.reasonDescription;
+
     await Promise.all([
       this.deletedUserRepo.create({
         userId: _id,
-        reason: data.reason,
-        otherReason: data.otherReason,
+        reason: DELETE_REASON.USER_REQUEST,
+        reasonCode: data.reasonCode,
+        reasonDescription,
       }),
       this.tokenService.removeTokensByUserId(_id),
     ]);
@@ -800,7 +808,7 @@ export class AuthService {
       this.tokenService.generateAndSaveJwtToken({
         userId: _id,
         type: TOKEN_TYPE.RESTORE_ACCOUNT,
-        secret: 'RESTORE_ACCOUNT_SECRET',
+        secret: ENV.AUTH.JWT.ACTIONS.RESTORE_ACCOUNT,
         jwtExp: EXPIRE_DATES.JWT.ONE_MONTH,
         tokenExp: EXPIRE_DATES.TOKEN.ONE_MONTH,
       }),
@@ -1026,10 +1034,12 @@ export class AuthService {
     const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
+    const hashedToken = this.tokenService.hashToken(token);
+
     const deactivateToken = await this.tokenService.findToken({
       query: {
         $and: [
-          { token },
+          { token: hashedToken },
           { userId: _id },
           { type: TOKEN_TYPE.DEACTIVATE_ACCOUNT },
         ],

@@ -1,4 +1,9 @@
-import { DELETE_REASON, FIELD_TYPE, FieldValidator } from 'connectfy-shared';
+import {
+  DELETE_REASON,
+  DELETE_REASON_CODE,
+  FIELD_TYPE,
+  FieldValidator,
+} from 'connectfy-shared';
 
 export class BaseUserDto {
   @FieldValidator({
@@ -13,8 +18,16 @@ export class BaseUserDto {
   reason: DELETE_REASON;
 
   @FieldValidator({
+    type: FIELD_TYPE.ENUM,
+    isOptional: true,
+    enumObject: DELETE_REASON_CODE,
+  })
+  reasonCode: DELETE_REASON_CODE | null;
+
+  @FieldValidator({
     type: FIELD_TYPE.STRING,
     isOptional: true,
+    maxLength: 200,
   })
-  otherReason: string | null;
+  reasonDescription: string | null;
 }
