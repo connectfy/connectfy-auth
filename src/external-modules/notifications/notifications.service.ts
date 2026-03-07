@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
+import { Injectable } from '@nestjs/common';
 import i18n from '@/src/i18n';
 import { ISendEmail } from './interfaces/notifications.interface';
 import {
@@ -9,23 +8,20 @@ import {
   googleSignInMessage,
   signupVerifyMessage,
   changeEmailMessage,
-  MICROSERVICE_NAMES,
-  emitWithContext,
 } from 'connectfy-shared';
+import { KafkaConnectionService } from '@/src/app-settings/kafka-connections/kafka-connection.service';
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    @Inject(MICROSERVICE_NAMES.NOTIFICATION.KAFKA)
-    private readonly notificationServiceKafka: ClientKafka,
+    private readonly kafkaConnectionService: KafkaConnectionService,
   ) {}
 
   // =================================
   // EMAIL SENDER
   // =================================
   private sendEmail(to: string, subject: string, html: string): void {
-    emitWithContext({
-      client: this.notificationServiceKafka,
+    this.kafkaConnectionService.emitWithContext({
       topic: 'mail.send',
       payload: {
         from: '"Connectfy Team" <connectfy.team@gmail.com>',

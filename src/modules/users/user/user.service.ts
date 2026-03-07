@@ -18,17 +18,16 @@ import {
   ExceptionMessages,
   BaseException,
   COUNTRIES,
-  ENV,
   EXPIRE_DATES,
 } from 'connectfy-shared';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
-import { ConfigService } from '@nestjs/config';
 import { NotificationsService } from '@/src/external-modules/notifications/notifications.service';
 import { BcryptService } from '@/src/internal-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
 import { AccountService } from '@/src/external-modules/account/account.service';
 import { CheckUniqueDto } from './dto/check-unique.dto';
+import { ENVIRONMENT_VARIABLES } from '@/src/common/constants/environment-variables';
 
 @Injectable()
 export class UserService {
@@ -36,7 +35,6 @@ export class UserService {
     private readonly repo: UserRepository,
     private readonly cls: ClsService,
     private readonly jwtService: JwtService,
-    private readonly config: ConfigService,
     private readonly emailService: NotificationsService,
     private readonly bcryptService: BcryptService,
     private readonly tokenService: TokenService,
@@ -260,7 +258,7 @@ export class UserService {
     const emailChangeToken = await this.tokenService.generateAndSaveJwtToken({
       userId: _id,
       type: TOKEN_TYPE.CHANGE_EMAIL,
-      secret: ENV.AUTH.JWT.ACTIONS.CHANGE_EMAIL,
+      secret: ENVIRONMENT_VARIABLES.CHANGE_EMAIL_SECRET || '',
       jwtExp: EXPIRE_DATES.JWT.ONE_HOUR,
       tokenExp: EXPIRE_DATES.TOKEN.ONE_HOUR,
       payload: { email },
@@ -292,7 +290,7 @@ export class UserService {
       );
 
     const decoded = this.jwtService.verify(token, {
-      secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.CHANGE_EMAIL),
+      secret: ENVIRONMENT_VARIABLES.CHANGE_EMAIL_SECRET,
     });
 
     if (

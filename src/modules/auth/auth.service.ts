@@ -8,7 +8,6 @@ import {
   USER_STATUS,
   BaseException,
   ExceptionMessages,
-  ENV,
   EXPIRE_DATES,
   THEME,
   STARTUP_PAGE,
@@ -16,7 +15,6 @@ import {
   DELETE_REASON_CODE,
 } from 'connectfy-shared';
 import { generateVerifyCode } from '@/src/common/functions/function';
-import { ConfigService } from '@nestjs/config';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { UserRepository } from '../users/user/repo/user.repo';
 import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
@@ -42,6 +40,7 @@ import { NotificationsService } from '@/src/external-modules/notifications/notif
 import { BcryptService } from '@/src/internal-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
 import { AccountService } from '@/src/external-modules/account/account.service';
+import { ENVIRONMENT_VARIABLES } from '@/src/common/constants/environment-variables';
 
 @Injectable()
 export class AuthService {
@@ -49,7 +48,6 @@ export class AuthService {
 
   constructor(
     private cls: ClsService,
-    private readonly config: ConfigService,
     private readonly userRepo: UserRepository,
     private readonly bannedUserRepo: BannedUserRepository,
     private readonly deletedUserRepo: DeletedUserRepository,
@@ -62,7 +60,7 @@ export class AuthService {
     private readonly accountService: AccountService,
     private readonly requestHelperService: RequestHelperService,
   ) {
-    const clientId = this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID);
+    const clientId = ENVIRONMENT_VARIABLES.GOOGLE_CLIENT_ID;
     this.googleClient = new OAuth2Client(clientId);
   }
 
@@ -330,7 +328,7 @@ export class AuthService {
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
-      audience: this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID),
+      audience: ENVIRONMENT_VARIABLES.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -449,7 +447,7 @@ export class AuthService {
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
-      audience: this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID),
+      audience: ENVIRONMENT_VARIABLES.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -616,7 +614,7 @@ export class AuthService {
     });
 
     const decoded = this.jwtService.verify(resetToken, {
-      secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.FORGOT_PASSWORD),
+      secret: ENVIRONMENT_VARIABLES.FORGOT_PASSWORD_SECRET,
     });
 
     if (decoded.type !== TOKEN_TYPE.PASSWORD_RESET)
@@ -808,7 +806,7 @@ export class AuthService {
       this.tokenService.generateAndSaveJwtToken({
         userId: _id,
         type: TOKEN_TYPE.RESTORE_ACCOUNT,
-        secret: ENV.AUTH.JWT.ACTIONS.RESTORE_ACCOUNT,
+        secret: ENVIRONMENT_VARIABLES.RESTORE_ACCOUNT_SECRET || '',
         jwtExp: EXPIRE_DATES.JWT.ONE_MONTH,
         tokenExp: EXPIRE_DATES.TOKEN.ONE_MONTH,
       }),
@@ -928,7 +926,7 @@ export class AuthService {
 
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
-        audience: this.config.get<string>(ENV.OAUTH.GOOGLE.CLIENT_ID),
+        audience: ENVIRONMENT_VARIABLES.GOOGLE_CLIENT_ID,
       });
 
       const payload = ticket.getPayload();
@@ -976,7 +974,7 @@ export class AuthService {
     }
 
     const decoded = this.jwtService.verify(token, {
-      secret: this.config.get<string>(ENV.AUTH.JWT.ACTIONS.RESTORE_ACCOUNT),
+      secret: ENVIRONMENT_VARIABLES.RESTORE_ACCOUNT_SECRET,
     });
 
     if (decoded.type !== TOKEN_TYPE.RESTORE_ACCOUNT)

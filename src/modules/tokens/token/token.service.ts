@@ -12,7 +12,6 @@ import { RemoveTokenDto, RemoveAllTokensDto } from './dto/remove.token.dto';
 import { FindTokenDto } from './dto/find.token.dto';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
 import { IReturnedToken } from '@modules/tokens/token/interface/token.interface';
 
@@ -20,7 +19,6 @@ import { IReturnedToken } from '@modules/tokens/token/interface/token.interface'
 export class TokenService {
   constructor(
     private readonly repo: TokenRepository,
-    private readonly config: ConfigService,
     private readonly jwtService: JwtService,
     private readonly cls: ClsService,
   ) {}
@@ -63,7 +61,7 @@ export class TokenService {
     const token = this.jwtService.sign(
       { userId, type, ...payload },
       {
-        secret: this.config.get<string>(secret),
+        secret: secret,
         expiresIn: jwtExp,
       },
     );

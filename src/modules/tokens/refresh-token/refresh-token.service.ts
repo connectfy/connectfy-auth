@@ -6,26 +6,24 @@ import {
   IUpdateRefreshToken,
 } from './interface/refresh-token.interface';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { RefreshTokenRepository } from './repo/refresh-token.repo';
 import { RequestHelperService } from '@/src/internal-modules/request-helper/request-helper.service';
 import {
   ExceptionMessages,
   LANGUAGE,
-  ENV,
   EXPIRE_DATES,
   BaseException,
   CLS_KEYS,
 } from 'connectfy-shared';
 import { ClsService } from 'nestjs-cls';
 import { IRequestData } from '@/src/internal-modules/request-helper/interfaces/request.interface';
+import { ENVIRONMENT_VARIABLES } from '@/src/common/constants/environment-variables';
 
 @Injectable()
 export class RefreshTokenService {
   constructor(
     private readonly repo: RefreshTokenRepository,
     private readonly jwtService: JwtService,
-    private readonly config: ConfigService,
     private readonly cls: ClsService,
     private readonly requestHelperService: RequestHelperService,
   ) {}
@@ -33,17 +31,11 @@ export class RefreshTokenService {
   async generateTokens(
     payload: IRefreshTokenPayload,
   ): Promise<IGenerateRefreshToken> {
-    const accessSecretKey = this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET);
-    const accessExpiry = this.config.get<string>(
-      ENV.AUTH.JWT.ACCESS.EXPIRES_IN,
-    );
+    const accessSecretKey = ENVIRONMENT_VARIABLES.JWT_ACCESS_SECRET;
+    const accessExpiry = ENVIRONMENT_VARIABLES.JWT_ACCESS_EXPIRES_IN;
 
-    const refreshSecretKey = this.config.get<string>(
-      ENV.AUTH.JWT.REFRESH.SECRET,
-    );
-    const refreshExpiry = this.config.get<string>(
-      ENV.AUTH.JWT.REFRESH.EXPIRES_IN,
-    );
+    const refreshSecretKey = ENVIRONMENT_VARIABLES.JWT_REFRESH_SECRET;
+    const refreshExpiry = ENVIRONMENT_VARIABLES.JWT_REFRESH_EXPIRES_IN;
 
     const access_token = await this.jwtService.signAsync(payload, {
       secret: accessSecretKey,
@@ -109,8 +101,8 @@ export class RefreshTokenService {
   ): Promise<any> {
     return await this.jwtService.verifyAsync(token, {
       secret: isAccessToken
-        ? this.config.get<string>(ENV.AUTH.JWT.ACCESS.SECRET)
-        : this.config.get<string>(ENV.AUTH.JWT.REFRESH.SECRET),
+        ? ENVIRONMENT_VARIABLES.JWT_ACCESS_SECRET
+        : ENVIRONMENT_VARIABLES.JWT_REFRESH_SECRET,
       ignoreExpiration,
     });
   }

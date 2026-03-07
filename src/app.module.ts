@@ -1,27 +1,18 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClsInterceptor, ClsModule } from 'nestjs-cls';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedUserInterceptor } from './interceptors/logged-user.interceptor';
-import { ENV } from 'connectfy-shared';
 import { AppSettingsModule } from './app-settings/app-settings.module';
 import { ExternalModulesModule } from './external-modules/external-modules.module';
 import { InternalModulesModule } from './internal-modules/internal-modules.module';
 import { ModulesModule } from './modules/modules.module';
+import { ENVIRONMENT_VARIABLES } from './common/constants/environment-variables';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
-      isGlobal: true,
-    }),
-    MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get<string>(ENV.CORE.DATABASE.MONGO.URI),
-        dbName: config.get<string>(ENV.CORE.DATABASE.MONGO.DB_NAME),
-      }),
+    MongooseModule.forRoot(ENVIRONMENT_VARIABLES.MONGO_URI, {
+      dbName: ENVIRONMENT_VARIABLES.DB_NAME,
     }),
     ClsModule.forRoot({
       global: true,

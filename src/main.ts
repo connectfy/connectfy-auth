@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AllExceptionsFilter } from 'connectfy-shared';
 import { ValidationPipe } from '@nestjs/common';
+import { ENVIRONMENT_VARIABLES } from './common/constants/environment-variables';
 
 async function bootstrap() {
   // Start Kafka Microservice
@@ -33,15 +34,16 @@ async function bootstrap() {
   // console.log('✅ Kafka Microservice is running');
 
   // Starting TCP Microservice
-  const PORT = Number(process.env.PORT);
-  const NODE_ENV = String(process.env.NODE_ENV);
+  const PORT = Number(ENVIRONMENT_VARIABLES.PORT);
+  const NODE_ENV = String(ENVIRONMENT_VARIABLES.NODE_ENV);
+  const HOST = String(ENVIRONMENT_VARIABLES.HOST);
 
   const tcpApp = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
       transport: Transport.TCP,
       options: {
-        host: 'auth-service',
+        host: HOST,
         port: PORT,
       },
     },
