@@ -17,11 +17,16 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
+    "strictPropertyInitialization": false,
 
     "paths": {
       "@/*": ["./*"],
       "@modules/*": ["src/modules/*"],
-      "@common/*": ["src/common/*"]
+      "@common/*": ["src/common/*"],
+      "@external-modules/*": ["src/external-modules/*"],
+      "@internal-modules/*": ["src/internal-modules/*"],
+      "@app-settings/*": ["src/app-settings/*"],
+      "@interceptors/*": ["src/internal-modules/*"],
     }
   }
 }

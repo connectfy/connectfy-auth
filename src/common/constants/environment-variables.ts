@@ -14,8 +14,16 @@ export const ENVIRONMENT_VARIABLES = {
   HOST: process.env.HOST,
 
   // Database
-  DB_NAME: process.env.DB_NAME,
+  // DB_NAME: process.env.DB_NAME,
   MONGO_URI: process.env.MONGO_URI || '',
+
+  DB_TYPE: process.env.DB_TYPE,
+  DB_HOST: process.env.DB_HOST,
+  DB_PORT: Number(process.env.DB_PORT),
+  DB_NAME: process.env.DB_NAME,
+  DB_USERNAME: process.env.DB_USERNAME,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DATABASE_URL: process.env.DATABASE_URL,
 
   // Kafka
   SERVICE_NAME: process.env.SERVICE_NAME,
