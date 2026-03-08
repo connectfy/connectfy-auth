@@ -9,7 +9,6 @@ services:
     restart: unless-stopped
     depends_on:
       - mongo
-      - postgres
     volumes:
       - .:/usr/src/app
     networks:
@@ -35,23 +34,8 @@ services:
     ports:
       - '25001:27017'
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: connectfy-auth-postgres-dev
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: authDb
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - auth-db-network
-    ports:
-      - '5433:5432'
-
 volumes:
   mongo-data:
-  postgres-data:
 
 networks:
   connectfy-core-network:
