@@ -41,6 +41,7 @@ import { BcryptService } from '@/src/internal-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../tokens/token/token.service';
 import { AccountService } from '@/src/external-modules/account/account.service';
 import { ENVIRONMENT_VARIABLES } from '@/src/common/constants/environment-variables';
+import { LogoutDto } from './dto/logout.dto';
 
 @Injectable()
 export class AuthService {
@@ -674,10 +675,18 @@ export class AuthService {
   // =================================
   // LOGOUT
   // =================================
-  async logout(): Promise<{ statusCode: 200 }> {
+  async logout(data: LogoutDto): Promise<{ statusCode: 200 }> {
+    const { deviceId } = data;
     const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
 
-    await this.refreshTokenService.removeTokenByUserId(_id);
+    const findToken = await this.refreshTokenService.findOne({
+      query: {
+        $and: [{ userId: _id }, { deviceId }],
+      },
+      fields: 'userId deviceId',
+    });
+
+    await this.refreshTokenService.removeTokenByUserId(findToken.userId);
 
     return { statusCode: 200 };
   }

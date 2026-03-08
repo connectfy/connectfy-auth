@@ -14,6 +14,7 @@ import {
   EXPIRE_DATES,
   BaseException,
   CLS_KEYS,
+  BaseFindDto,
 } from 'connectfy-shared';
 import { ClsService } from 'nestjs-cls';
 import { IRequestData } from '@/src/internal-modules/request-helper/interfaces/request.interface';
@@ -122,6 +123,18 @@ export class RefreshTokenService {
         ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
         { navigate: true },
+      );
+
+    return res;
+  }
+
+  async findOne(options: BaseFindDto): Promise<IReturnedRefreshToken> {
+    const res = await this.repo.findOne(options);
+
+    if (!res)
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(LANGUAGE.EN),
+        HttpStatus.NOT_FOUND,
       );
 
     return res;

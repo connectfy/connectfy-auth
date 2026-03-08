@@ -12,6 +12,7 @@ import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 import { RestoreAccountDto } from './dto/restore-account.dto';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
+import { LogoutDto } from './dto/logout.dto';
 
 @Controller('')
 export class AuthController {
@@ -70,8 +71,8 @@ export class AuthController {
   }
 
   @MessagePattern('auth/logout', Transport.TCP)
-  async logout() {
-    return await this.service.logout();
+  async logout(@Payload() data: LogoutDto) {
+    return await this.service.logout(data);
   }
 
   @MessagePattern('auth/refresh-token/verify-token', Transport.TCP)
