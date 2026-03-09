@@ -22,7 +22,7 @@ import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
 import { VerifySignupDto } from './dto/verify.dto';
 import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
-import { IReturnedUser, IUser } from '../users/user/interface/user.interface';
+import { IReturnedUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
 import { OAuth2Client } from 'google-auth-library';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -182,13 +182,16 @@ export class AuthService {
   // =================================
   // LOGIN
   // =================================
-  async login(data: LoginDto): Promise<{
-    access_token?: string;
-    refresh_token: string;
-    language: LANGUAGE;
-    theme: THEME;
-    startupPage: STARTUP_PAGE;
-  }> {
+  async login(data: LoginDto): Promise<
+    | {
+        access_token?: string;
+        refresh_token: string;
+        language: LANGUAGE;
+        theme: THEME;
+        startupPage: STARTUP_PAGE;
+      }
+    | { success: true; isTwoFactorEnabled: true }
+  > {
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const { identifierType, identifier, password, requestData, deviceId } =
       data;
@@ -218,17 +221,19 @@ export class AuthService {
         break;
     }
 
-    if (!user)
+    if (!user) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
-    if (user.provider !== PROVIDER.PASSWORD)
+    if (user.provider !== PROVIDER.PASSWORD) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
     const isPasswordMatch = await this.bcryptService.compare(
       password,
@@ -245,7 +250,7 @@ export class AuthService {
       query: { userId: user._id },
     });
 
-    if (isUserBanned)
+    if (isUserBanned) {
       throw new BaseException(
         ExceptionMessages.BANNED_MESSAGE(
           isUserBanned.bannedToDate as Date,
@@ -253,26 +258,33 @@ export class AuthService {
         ),
         HttpStatus.FORBIDDEN,
       );
+    }
 
     if (
       user.status !== USER_STATUS.ACTIVE &&
       user.status !== USER_STATUS.INACTIVE
-    )
+    ) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
+
+    if (user.isTwoFactorEnabled) {
+      return { success: true, isTwoFactorEnabled: true };
+    }
 
     if (user.status === USER_STATUS.INACTIVE) {
       const deactivatedUser = await this.deactivatedUserRepo.findOne({
         query: { userId: user._id },
       });
 
-      if (!deactivatedUser)
+      if (!deactivatedUser) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(language),
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       await Promise.all([
         this.userRepo.update(
@@ -677,7 +689,7 @@ export class AuthService {
   // =================================
   async logout(data: LogoutDto): Promise<{ statusCode: 200 }> {
     const { deviceId } = data;
-    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
 
     const findToken = await this.refreshTokenService.findOne({
       query: {
@@ -716,18 +728,34 @@ export class AuthService {
       );
     }
 
-    const user = await this.userRepo.findOne({
+    const rawUser = await this.userRepo.findOne({
       query: { _id: payload._id },
-      fields: '-password',
+      fields: '-password -status -role',
     });
 
-    if (!user) {
+    if (!rawUser) {
       throw new BaseException(
         ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
         { navigate: true },
       );
     }
+
+    const user = {
+      _id: rawUser._id,
+      username: rawUser.username,
+      email: rawUser.email,
+      phoneNumber: rawUser.phoneNumber,
+      isTwoFactorEnabled: rawUser.isTwoFactorEnabled,
+      timeZone: rawUser.timeZone,
+      location: rawUser.location,
+      usesPasswordAuth: rawUser.usesPasswordAuth,
+      usesOAuth: rawUser.usesOAuth,
+      hasPhoneNumber: rawUser.hasPhoneNumber,
+      accountAgeInDays: rawUser.accountAgeInDays,
+      createdAt: rawUser.createdAt,
+      updatedAt: rawUser.updatedAt,
+    };
 
     const [account, generalSettings] = await Promise.all([
       this.accountService.findAccount({
@@ -762,7 +790,7 @@ export class AuthService {
   // =================================
   async deleteAccount(data: DeleteAccountDto): Promise<{ statusCode: 200 }> {
     const { token } = data;
-    const { _id, email } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id, email } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const hashedToken = this.tokenService.hashToken(token);
@@ -893,7 +921,9 @@ export class AuthService {
     data: AuthenticateUserDto,
   ): Promise<{ statusCode: number; token: string }> {
     const { password, type, idToken } = data;
-    const { _id, email: userEmail } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id, email: userEmail } = this.cls.get<IReturnedUser>(
+      CLS_KEYS.USER,
+    );
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const user = await this.userRepo.findOne({
@@ -901,37 +931,41 @@ export class AuthService {
       fields: 'provider +password',
     });
 
-    if (!user)
+    if (!user) {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
+    }
 
-    if (user.provider === PROVIDER.PASSWORD) {
-      if (!password)
+    if (user.usesPasswordAuth) {
+      if (!password) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       const isPasswordMatch = await this.bcryptService.compare(
         password,
         user.password,
       );
 
-      if (!isPasswordMatch)
+      if (!isPasswordMatch) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.BAD_REQUEST,
         );
+      }
     }
 
-    if (user.provider === PROVIDER.GOOGLE) {
-      if (!idToken)
+    if (user.usesOAuth) {
+      if (!idToken) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
@@ -942,11 +976,12 @@ export class AuthService {
 
       const email = payload?.email;
 
-      if (!email || email !== userEmail)
+      if (!email || email !== userEmail) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
           HttpStatus.CONFLICT,
         );
+      }
     }
 
     await this.tokenService.removeMany({
@@ -1038,7 +1073,7 @@ export class AuthService {
   // =================================
   async deactivateAccount(data: DeactivateAccountDto) {
     const { token } = data;
-    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     const hashedToken = this.tokenService.hashToken(token);

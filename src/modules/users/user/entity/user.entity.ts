@@ -15,6 +15,7 @@ import {
   USER_STATUS,
 } from 'connectfy-shared';
 import * as bcrypt from 'bcrypt';
+import * as mongooseLeanVirtuals from 'mongoose-lean-virtuals';
 
 @Schema({
   timestamps: true,
@@ -179,6 +180,14 @@ export class UserModel implements IUser {
   password: string;
 
   @Prop({
+    type: Boolean,
+    required: false,
+    default: false,
+    index: true,
+  })
+  isTwoFactorEnabled: boolean;
+
+  @Prop({
     type: PhoneNumberSchema,
     required: false,
     default: null,
@@ -256,6 +265,7 @@ UserSchema.index({ role: 1, status: 1 });
 UserSchema.index({ provider: 1, status: 1 });
 UserSchema.index({ createdAt: -1 });
 UserSchema.index({ updatedAt: -1 });
+UserSchema.index({ isTwoFactorEnabled: 1 });
 
 // Text search index
 UserSchema.index({ username: 'text', email: 'text' });
@@ -266,11 +276,6 @@ UserSchema.index({ 'phoneNumber.number': 1 }, { sparse: true });
 // ================================================
 // VIRTUAL FIELDS - Calculated properties
 // ================================================
-
-// Full identifier (username or email)
-UserSchema.virtual('identifier').get(function () {
-  return this.username || this.email;
-});
 
 // Is active user
 UserSchema.virtual('isActive').get(function () {
@@ -334,45 +339,6 @@ UserSchema.virtual('accountAgeInDays').get(function () {
 });
 
 // ================================================
-// METHODS - Instance methods
-// ================================================
-
-// Compare password
-UserSchema.methods.comparePassword = async function (
-  candidatePassword: string,
-): Promise<boolean> {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch {
-    return false;
-  }
-};
-
-// Activate account
-UserSchema.methods.activate = function () {
-  this.status = USER_STATUS.ACTIVE;
-  return this.save();
-};
-
-// Ban account
-UserSchema.methods.ban = function () {
-  this.status = USER_STATUS.BANNED;
-  return this.save();
-};
-
-// Suspend account
-UserSchema.methods.inactive = function () {
-  this.status = USER_STATUS.INACTIVE;
-  return this.save();
-};
-
-// Soft delete account
-UserSchema.methods.softDelete = function () {
-  this.status = USER_STATUS.DELETED;
-  return this.save();
-};
-
-// ================================================
 // MIDDLEWARE / HOOKS
 // ================================================
 
@@ -398,4 +364,5 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
+UserSchema.plugin(mongooseLeanVirtuals.mongooseLeanVirtuals);
 export type UserDocument = HydratedDocument<UserModel>;

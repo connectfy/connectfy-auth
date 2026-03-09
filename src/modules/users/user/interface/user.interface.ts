@@ -10,6 +10,7 @@ export interface IUser {
   password: string;
   phoneNumber: IPhoneNumber | null;
   status: USER_STATUS;
+  isTwoFactorEnabled: boolean;
   timeZone: string | null;
   location: string | null;
   createdAt: Date;
@@ -25,8 +26,19 @@ export interface IReturnedUser {
   password: string;
   phoneNumber: IPhoneNumber;
   status: USER_STATUS;
+  isTwoFactorEnabled: boolean;
   timeZone: string | null;
   location: string | null;
+  isActive: boolean;
+  isInactive: boolean;
+  isDeleted: boolean;
+  isAdmin: boolean;
+  isModerator: boolean;
+  isUser: boolean;
+  usesPasswordAuth: boolean;
+  usesOAuth: boolean;
+  hasPhoneNumber: boolean;
+  accountAgeInDays: number;
   createdAt: Date;
   updatedAt: Date;
 }

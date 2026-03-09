@@ -19,6 +19,7 @@ import {
   BaseException,
   COUNTRIES,
   EXPIRE_DATES,
+  TWO_FACTOR_ACTION,
 } from 'connectfy-shared';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { NotificationsService } from '@/src/external-modules/notifications/notifications.service';
@@ -28,6 +29,7 @@ import i18n from '@/src/i18n';
 import { AccountService } from '@/src/external-modules/account/account.service';
 import { CheckUniqueDto } from './dto/check-unique.dto';
 import { ENVIRONMENT_VARIABLES } from '@/src/common/constants/environment-variables';
+import { TwoFactorDto } from './dto/two-factor.dto';
 
 @Injectable()
 export class UserService {
@@ -40,44 +42,6 @@ export class UserService {
     private readonly tokenService: TokenService,
     private readonly accountService: AccountService,
   ) {}
-
-  // =======================
-  // GET USER INFORMATIONS
-  // =======================
-  async me() {
-    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
-    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-
-    const res = await this.repo.findOne({
-      query: { _id },
-    });
-
-    if (!res)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
-        HttpStatus.NOT_FOUND,
-      );
-
-    const payload = { query: { userId: _id } };
-
-    const [account, generalSettings, notificationSettings, privacySettings] =
-      await Promise.all([
-        this.accountService.findAccount(payload),
-        this.accountService.findGeneralSettings(payload),
-        this.accountService.findNotificationSettings(payload),
-        this.accountService.findPrivacySettings(payload),
-      ]);
-
-    return {
-      user: res,
-      account,
-      settings: {
-        generalSettings,
-        notificationSettings,
-        privacySettings,
-      },
-    };
-  }
 
   // =======================
   // CREATE USER
@@ -141,16 +105,10 @@ export class UserService {
   // =======================
   async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
     const { username, token } = data;
-    const { _id, username: oldUsername } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id, username: oldUsername } = this.cls.get<IReturnedUser>(
+      CLS_KEYS.USER,
+    );
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-
-    const isUserExist = await this.repo.existsByField({ _id });
-
-    if (!isUserExist)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
-        HttpStatus.NOT_FOUND,
-      );
 
     const hashedToken = this.tokenService.hashToken(token);
 
@@ -164,7 +122,7 @@ export class UserService {
       },
     });
 
-    if (username === oldUsername)
+    if (username === oldUsername) {
       throw new BaseException(
         ExceptionMessages.SAME_DATA(
           i18n.t('common.username', { lng: lang }),
@@ -172,14 +130,16 @@ export class UserService {
         ),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const userWithUsername = await this.repo.existsByField({ username });
 
-    if (userWithUsername)
+    if (userWithUsername) {
       throw new BaseException(
         ExceptionMessages.ALREADY_EXISTS_MESSAGE(username, lang),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const updatedUser = await this.repo.update(
       { _id },
@@ -204,23 +164,16 @@ export class UserService {
     const {
       _id,
       email: oldEmail,
-      provider,
-    } = this.cls.get<IUser>(CLS_KEYS.USER);
+      usesOAuth,
+    } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    const isUserExist = await this.repo.existsByField({ _id });
-
-    if (!isUserExist)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(language),
-        HttpStatus.NOT_FOUND,
-      );
-
-    if (provider !== PROVIDER.PASSWORD)
+    if (usesOAuth) {
       throw new BaseException(
         ExceptionMessages.BAD_REQUEST_MESSAGE(language),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const hashedToken = this.tokenService.hashToken(token);
 
@@ -234,7 +187,7 @@ export class UserService {
       },
     });
 
-    if (email === oldEmail)
+    if (email === oldEmail) {
       throw new BaseException(
         ExceptionMessages.SAME_DATA(
           i18n.t('common.username', { lng: language }),
@@ -242,14 +195,16 @@ export class UserService {
         ),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const userWithEmail = await this.repo.existsByField({ email });
 
-    if (userWithEmail)
+    if (userWithEmail) {
       throw new BaseException(
         ExceptionMessages.ALREADY_EXISTS_MESSAGE(email, language),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_EMAIL }],
@@ -278,16 +233,8 @@ export class UserService {
   // =======================
   async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IReturnedUser> {
     const { token } = data;
-    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-
-    const user = await this.repo.existsByField({ _id });
-
-    if (!user)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
-        HttpStatus.NOT_FOUND,
-      );
 
     const decoded = this.jwtService.verify(token, {
       secret: ENVIRONMENT_VARIABLES.CHANGE_EMAIL_SECRET,
@@ -338,31 +285,36 @@ export class UserService {
   // =======================
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
-    const { _id } = this.cls.get<IUser>(CLS_KEYS.USER);
+    const { _id, usesPasswordAuth } = this.cls.get<IReturnedUser>(
+      CLS_KEYS.USER,
+    );
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    if (password !== confirmPassword)
+    if (password !== confirmPassword) {
       throw new BaseException(
         ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const user = await this.repo.findOne({
       query: { _id },
-      fields: 'provider +password',
+      fields: '+password',
     });
 
-    if (!user)
+    if (!user) {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(lang),
         HttpStatus.NOT_FOUND,
       );
+    }
 
-    if (user.provider !== PROVIDER.PASSWORD)
+    if (!usesPasswordAuth) {
       throw new BaseException(
-        ExceptionMessages.BAD_REQUEST_MESSAGE(lang),
-        HttpStatus.BAD_REQUEST,
+        ExceptionMessages.CONFLICT_MESSAGE(lang),
+        HttpStatus.CONFLICT,
       );
+    }
 
     const hashedToken = this.tokenService.hashToken(token);
 
@@ -381,7 +333,7 @@ export class UserService {
       user.password,
     );
 
-    if (isPasswordSame)
+    if (isPasswordSame) {
       throw new BaseException(
         ExceptionMessages.SAME_DATA(
           i18n.t('common.password', { lng: lang }),
@@ -389,6 +341,7 @@ export class UserService {
         ),
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const hashedPassword = await this.bcryptService.hash(password);
 
@@ -414,18 +367,10 @@ export class UserService {
   // =======================
   async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IReturnedUser> {
     const { phoneNumber, token, action } = data;
-    const { _id, phoneNumber: oldPhoneNumber } = this.cls.get<IUser>(
+    const { _id, phoneNumber: oldPhoneNumber } = this.cls.get<IReturnedUser>(
       CLS_KEYS.USER,
     );
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-
-    const isUserExist = await this.repo.existsByField({ _id });
-
-    if (!isUserExist)
-      throw new BaseException(
-        ExceptionMessages.NOT_FOUND_MESSAGE(lang),
-        HttpStatus.NOT_FOUND,
-      );
 
     const hashedToken = this.tokenService.hashToken(token);
 
@@ -531,5 +476,57 @@ export class UserService {
       );
 
     return true;
+  }
+
+  // =======================
+  // ENABLE/DISABLE 2FA
+  // =======================
+  async updateTwoFactorAuth(data: TwoFactorDto): Promise<IReturnedUser> {
+    const { token, action } = data;
+
+    const { _id, isTwoFactorEnabled, usesPasswordAuth } =
+      this.cls.get<IReturnedUser>(CLS_KEYS.USER);
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+
+    if (!usesPasswordAuth) {
+      throw new BaseException(
+        ExceptionMessages.FORBIDDEN_MESSAGE(lang),
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const hashedToken = this.tokenService.hashToken(token);
+
+    await this.tokenService.findToken({
+      query: {
+        $and: [
+          { token: hashedToken },
+          { userId: _id },
+          { type: TOKEN_TYPE.TWO_FACTOR },
+        ],
+      },
+    });
+
+    if (
+      (isTwoFactorEnabled && action === TWO_FACTOR_ACTION.ENABLE) ||
+      (!isTwoFactorEnabled && action === TWO_FACTOR_ACTION.DISABLE)
+    ) {
+      throw new BaseException(
+        ExceptionMessages.CONFLICT_MESSAGE,
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const finalData = {
+      _id,
+      isTwoFactorEnabled: action === TWO_FACTOR_ACTION.ENABLE,
+    };
+
+    const res = await this.repo.update({ _id }, finalData);
+    await this.tokenService.removeMany({
+      $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
+    });
+
+    return res;
   }
 }

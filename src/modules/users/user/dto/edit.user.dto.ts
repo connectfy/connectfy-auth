@@ -22,4 +22,10 @@ export class EditUserDto extends PartialType(BaseUserDto) {
     isOptional: true,
   })
   status?: USER_STATUS;
+
+  @FieldValidator({
+    type: FIELD_TYPE.BOOLEAN,
+    isOptional: true,
+  })
+  isTwoFactorEnabled?: boolean;
 }

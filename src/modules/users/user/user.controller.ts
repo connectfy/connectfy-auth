@@ -6,43 +6,44 @@ import { ChangeEmailDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { CheckUniqueDto } from './dto/check-unique.dto';
+import { TwoFactorDto } from './dto/two-factor.dto';
 
 @Controller('')
 export class UserController {
   constructor(private readonly service: UserService) {}
 
-  @MessagePattern('user/me', Transport.TCP)
-  async me() {
-    return await this.service.me();
-  }
-
   @MessagePattern('user/change-username', Transport.TCP)
   async changeUsername(@Payload() data: ChangeUsernameDto) {
-    return await this.service.changeUsername(data);
+    return this.service.changeUsername(data);
   }
 
   @MessagePattern('user/change-email', Transport.TCP)
   async changeEmail(@Payload() data: ChangeEmailDto) {
-    return await this.service.changeEmail(data);
+    return this.service.changeEmail(data);
   }
 
   @MessagePattern('user/change-email/verify', Transport.TCP)
   async verifyEmailChange(@Payload() data: VerifyEmailChangeDto) {
-    return await this.service.verifyEmailChange(data);
+    return this.service.verifyEmailChange(data);
   }
 
   @MessagePattern('user/change-password', Transport.TCP)
   async changePassword(@Payload() data: ChangePasswordDto) {
-    return await this.service.changePassword(data);
+    return this.service.changePassword(data);
   }
 
   @MessagePattern('user/change-phone-number', Transport.TCP)
   async changePhoneNumber(@Payload() data: ChangePhoneNumberDto) {
-    return await this.service.changePhoneNumber(data);
+    return this.service.changePhoneNumber(data);
   }
 
   @MessagePattern('user/check-unique', Transport.TCP)
   async checkUnique(@Payload() data: CheckUniqueDto) {
-    return await this.service.checkUnique(data);
+    return this.service.checkUnique(data);
+  }
+
+  @MessagePattern('user/two-factor', Transport.TCP)
+  async updateTwoFactorAuth(@Payload() data: TwoFactorDto) {
+    return this.service.updateTwoFactorAuth(data);
   }
 }

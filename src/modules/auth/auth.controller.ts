@@ -20,12 +20,12 @@ export class AuthController {
 
   @MessagePattern('auth/signup', Transport.TCP)
   async signup(@Payload() data: SignupDto) {
-    return await this.service.signup(data);
+    return this.service.signup(data);
   }
 
   @MessagePattern('auth/verify-signup', Transport.TCP)
   async verifySignup(@Payload() data: VerifySignupDto) {
-    return await this.service.verifySignup(data);
+    return this.service.verifySignup(data);
   }
 
   @MessagePattern('auth/verify-signup/resend', Transport.TCP)
@@ -37,42 +37,42 @@ export class AuthController {
         { navigate: true },
       );
 
-    return await this.service.resendSignupVerify(data);
+    return this.service.resendSignupVerify(data);
   }
 
   @MessagePattern('auth/login', Transport.TCP)
   async login(@Payload() data: LoginDto) {
-    return await this.service.login(data);
+    return this.service.login(data);
   }
 
   @MessagePattern('auth/google/login', Transport.TCP)
   async googleAuthLogin(@Payload() data: GoogleAuthLoginDto) {
-    return await this.service.googleLogin(data);
+    return this.service.googleLogin(data);
   }
 
   @MessagePattern('auth/google/signup', Transport.TCP)
   async googleAuthSignup(@Payload() data: GoogleAuthSignupDto) {
-    return await this.service.googleSignup(data);
+    return this.service.googleSignup(data);
   }
 
   @MessagePattern('auth/forgot-password', Transport.TCP)
   async forgotPassword(@Payload() data: ForgotPasswordDto) {
-    return await this.service.forgotPassword(data);
+    return this.service.forgotPassword(data);
   }
 
   @MessagePattern('auth/reset-password', Transport.TCP)
   async resetPassword(@Payload() data: ResetPasswordDto) {
-    return await this.service.resetPassword(data);
+    return this.service.resetPassword(data);
   }
 
   @MessagePattern('auth/is-valid-token', Transport.TCP)
   async isTokenValid(@Payload() data: ValidateTokenDto) {
-    return await this.service.isTokenValid(data);
+    return this.service.isTokenValid(data);
   }
 
   @MessagePattern('auth/logout', Transport.TCP)
   async logout(@Payload() data: LogoutDto) {
-    return await this.service.logout(data);
+    return this.service.logout(data);
   }
 
   @MessagePattern('auth/refresh-token/verify-token', Transport.TCP)
@@ -86,12 +86,12 @@ export class AuthController {
       refresh_token: string;
     },
   ) {
-    return await this.service.verifyAuthToken(access_token, refresh_token);
+    return this.service.verifyAuthToken(access_token, refresh_token);
   }
 
   @MessagePattern('auth/delete-account', Transport.TCP)
   async deleteAccount(@Payload() data: DeleteAccountDto) {
-    return await this.service.deleteAccount(data);
+    return this.service.deleteAccount(data);
   }
 
   @MessagePattern('auth/refreshToken', Transport.TCP)
@@ -103,21 +103,21 @@ export class AuthController {
         { navigate: true },
       );
 
-    return await this.service.refreshToken(data);
+    return this.service.refreshToken(data);
   }
 
   @MessagePattern('auth/authenticate-user', Transport.TCP)
   async authenticateUser(@Payload() data: AuthenticateUserDto) {
-    return await this.service.authenticateUser(data);
+    return this.service.authenticateUser(data);
   }
 
   @MessagePattern('auth/restore-account', Transport.TCP)
   async restoreAccount(@Payload() data: RestoreAccountDto) {
-    return await this.service.restoreAccount(data);
+    return this.service.restoreAccount(data);
   }
 
   @MessagePattern('auth/deactivate-account', Transport.TCP)
   async deactivateAccount(@Payload() data: DeactivateAccountDto) {
-    return await this.service.deactivateAccount(data);
+    return this.service.deactivateAccount(data);
   }
 }
