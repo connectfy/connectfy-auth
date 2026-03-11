@@ -8,6 +8,7 @@ import {
   googleSignInMessage,
   signupVerifyMessage,
   changeEmailMessage,
+  twoFactorVerifyMessage,
 } from 'connectfy-shared';
 import { KafkaConnectionService } from '@/src/app-settings/kafka-connections/kafka-connection.service';
 
@@ -106,6 +107,20 @@ export class NotificationsService {
       to,
       i18n.t('email_messages.change_email.mail_subject', { lang }),
       changeEmailMessage(token, lang),
+    );
+  }
+
+  // =================================
+  // MESSAGE FOR TWO FACTOR AUTHENTICATION
+  // =================================
+  twoFaEmail(data: ISendEmail): void {
+    const { to, language: lang, additional } = data;
+    const { firstName, lastName, verifyCode } = additional!;
+
+    this.sendEmail(
+      to,
+      i18n.t('email_messages.two_factor.subject', { lng: lang }),
+      twoFactorVerifyMessage(firstName, lastName, verifyCode, lang),
     );
   }
 }

@@ -19,6 +19,14 @@ export class VerifySignupDto {
 
   @FieldValidator({
     type: FIELD_TYPE.STRING,
+    minLength: 6,
+    maxLength: 6,
+    matches: {
+      regexp: /^\d+$/,
+      message: {
+        type: VALIDATION_TYPE.NUMBER,
+      },
+    },
   })
   verifyCode: string;
 
@@ -28,6 +36,52 @@ export class VerifySignupDto {
     validateNested: {},
   })
   unverifiedUser: SignupDto;
+
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+    uuidVersion: '4',
+  })
+  deviceId: string;
+
+  @FieldValidator({
+    type: FIELD_TYPE.OBJECT,
+    classType: RequestDataDto,
+  })
+  requestData: IRequestData;
+}
+
+export class VerifyLoginDto {
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 6,
+    maxLength: 6,
+    matches: {
+      regexp: /^\d+$/,
+      message: {
+        type: VALIDATION_TYPE.NUMBER,
+      },
+    },
+  })
+  twoFaCode: string;
+
+  @FieldValidator({
+    type: FIELD_TYPE.STRING,
+    minLength: 6,
+    maxLength: 6,
+    matches: {
+      regexp: /^\d+$/,
+      message: {
+        type: VALIDATION_TYPE.NUMBER,
+      },
+    },
+  })
+  code: string;
+
+  @FieldValidator({
+    type: FIELD_TYPE.UUID,
+    uuidVersion: '4',
+  })
+  userId: string;
 
   @FieldValidator({
     type: FIELD_TYPE.UUID,

@@ -2,7 +2,7 @@ import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
 import { Controller, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
-import { VerifySignupDto } from './dto/verify.dto';
+import { VerifySignupDto, VerifyLoginDto } from './dto/verify.dto';
 import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -43,6 +43,11 @@ export class AuthController {
   @MessagePattern('auth/login', Transport.TCP)
   async login(@Payload() data: LoginDto) {
     return this.service.login(data);
+  }
+
+  @MessagePattern('auth/verify-login', Transport.TCP)
+  async verifyLogin(@Payload() data: VerifyLoginDto) {
+    return this.service.verifyLogin(data);
   }
 
   @MessagePattern('auth/google/login', Transport.TCP)

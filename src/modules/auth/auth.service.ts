@@ -20,7 +20,7 @@ import { UserRepository } from '../users/user/repo/user.repo';
 import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { DeletedUserRepository } from '../users/deleted-user/repo/deleted-user.repo';
-import { VerifySignupDto } from './dto/verify.dto';
+import { VerifySignupDto, VerifyLoginDto } from './dto/verify.dto';
 import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { IReturnedUser } from '../users/user/interface/user.interface';
 import { BannedUserRepository } from '../users/banned-user/repo/banned-user.repo';
@@ -117,7 +117,7 @@ export class AuthService {
 
     if (verifyCode !== code)
       throw new BaseException(
-        ExceptionMessages.CONFLICT_MESSAGE(language),
+        ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
 
@@ -190,7 +190,7 @@ export class AuthService {
         theme: THEME;
         startupPage: STARTUP_PAGE;
       }
-    | { success: true; isTwoFactorEnabled: true }
+    | { success: true; isTwoFactorEnabled: true; code: string; userId: string }
   > {
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
     const { identifierType, identifier, password, requestData, deviceId } =
@@ -202,21 +202,21 @@ export class AuthService {
       case IDENTIFIER_TYPE.EMAIL:
         user = await this.userRepo.findOne({
           query: { email: identifier },
-          fields: 'password provider status',
+          fields: 'password email provider status isTwoFactorEnabled',
         });
         break;
 
       case IDENTIFIER_TYPE.USERNAME:
         user = await this.userRepo.findOne({
           query: { username: identifier },
-          fields: 'password provider status',
+          fields: 'password email provider status isTwoFactorEnabled',
         });
         break;
 
       default:
         user = await this.userRepo.findOne({
           query: { 'phoneNumber.fullPhoneNumber': identifier },
-          fields: 'password provider status',
+          fields: 'password email provider status isTwoFactorEnabled',
         });
         break;
     }
@@ -228,7 +228,7 @@ export class AuthService {
       );
     }
 
-    if (user.provider !== PROVIDER.PASSWORD) {
+    if (!user.usesPasswordAuth) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
@@ -240,11 +240,12 @@ export class AuthService {
       user.password,
     );
 
-    if (!isPasswordMatch)
+    if (!isPasswordMatch) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
     const isUserBanned = await this.bannedUserRepo.findOne({
       query: { userId: user._id },
@@ -271,7 +272,29 @@ export class AuthService {
     }
 
     if (user.isTwoFactorEnabled) {
-      return { success: true, isTwoFactorEnabled: true };
+      const twoFaCode = generateVerifyCode();
+
+      const account = await this.accountService.findAccount({
+        query: { userId: user._id },
+        fields: 'firstName lastName',
+      });
+
+      this.emailService.twoFaEmail({
+        to: user.email,
+        language,
+        additional: {
+          firstName: account?.firstName || '',
+          lastName: account?.lastName || '',
+          verifyCode: twoFaCode,
+        },
+      });
+
+      return {
+        success: true,
+        isTwoFactorEnabled: true,
+        code: twoFaCode,
+        userId: user._id,
+      };
     }
 
     if (user.status === USER_STATUS.INACTIVE) {
@@ -283,6 +306,98 @@ export class AuthService {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(language),
           HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      await Promise.all([
+        this.userRepo.update(
+          {
+            _id: user._id,
+          },
+          {
+            _id: user._id,
+            status: USER_STATUS.ACTIVE,
+          },
+        ),
+        this.deactivatedUserRepo.remove({ _id: deactivatedUser._id }),
+      ]);
+    }
+
+    const { refresh_token, access_token } =
+      await this.refreshTokenService.generateTokens({
+        _id: user._id,
+      });
+
+    const generalSettings = await this.accountService.findGeneralSettings({
+      query: { userId: user._id },
+      fields: 'language theme startupPage',
+    });
+
+    await this.refreshTokenService.saveTokens({
+      refresh_token,
+      userId: user._id,
+      deviceId,
+      requestData,
+    });
+
+    return {
+      access_token,
+      refresh_token,
+      language: generalSettings.language,
+      theme: generalSettings.theme,
+      startupPage: generalSettings.startupPage,
+    };
+  }
+
+  // =================================
+  // VERIFY LOGIN
+  // =================================
+  async verifyLogin(data: VerifyLoginDto) {
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const { twoFaCode, code, requestData, deviceId, userId } = data;
+
+    const user = await this.userRepo.findOne({
+      query: { _id: userId },
+      fields: 'password provider status isTwoFactorEnabled',
+    });
+
+    if (!user || !user.usesPasswordAuth || !user.isTwoFactorEnabled) {
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(language),
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const isUserBanned = await this.bannedUserRepo.findOne({
+      query: { userId: user._id },
+    });
+
+    if (isUserBanned) {
+      throw new BaseException(
+        ExceptionMessages.BANNED_MESSAGE(
+          isUserBanned.bannedToDate as Date,
+          language,
+        ),
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (twoFaCode !== code) {
+      throw new BaseException(
+        ExceptionMessages.INVALID_CREDENTIALS(language),
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    if (user.isInactive) {
+      const deactivatedUser = await this.deactivatedUserRepo.findOne({
+        query: { userId: user._id },
+      });
+
+      if (!deactivatedUser) {
+        throw new BaseException(
+          ExceptionMessages.NOT_FOUND_MESSAGE(language),
+          HttpStatus.NOT_FOUND,
         );
       }
 
@@ -348,31 +463,34 @@ export class AuthService {
 
     const email = payload?.email;
 
-    if (!email)
+    if (!email) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
     const user = await this.userRepo.findOne({ query: { email } });
 
-    if (!user)
+    if (!user) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
-    if (user.provider !== PROVIDER.GOOGLE)
+    if (!user.usesOAuth) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
     const isUserBanned = await this.bannedUserRepo.findOne({
       query: { userId: user._id },
     });
 
-    if (isUserBanned)
+    if (isUserBanned) {
       throw new BaseException(
         ExceptionMessages.BANNED_MESSAGE(
           isUserBanned.bannedToDate as Date,
@@ -380,26 +498,26 @@ export class AuthService {
         ),
         HttpStatus.FORBIDDEN,
       );
+    }
 
-    if (
-      user.status !== USER_STATUS.ACTIVE &&
-      user.status !== USER_STATUS.INACTIVE
-    )
+    if (!user.isActive && !user.isInactive) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
+    }
 
-    if (user.status === USER_STATUS.INACTIVE) {
+    if (user.isInactive) {
       const deactivatedUser = await this.deactivatedUserRepo.findOne({
         query: { userId: user._id },
       });
 
-      if (!deactivatedUser)
+      if (!deactivatedUser) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(language),
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       await Promise.all([
         this.userRepo.update(
@@ -1002,7 +1120,7 @@ export class AuthService {
   // =================================
   async restoreAccount(data: RestoreAccountDto) {
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-    const { token } = data;
+    const { token, deviceId, requestData } = data;
 
     const hashedToken = this.tokenService.hashToken(token);
 
@@ -1065,7 +1183,25 @@ export class AuthService {
     const { access_token, refresh_token } =
       await this.refreshTokenService.generateTokens({ _id: user._id });
 
-    return { access_token, refresh_token };
+    const generalSettings = await this.accountService.findGeneralSettings({
+      query: { userId: user._id },
+      fields: 'language theme startupPage',
+    });
+
+    await this.refreshTokenService.saveTokens({
+      refresh_token,
+      userId: user._id,
+      deviceId,
+      requestData,
+    });
+
+    return {
+      access_token,
+      refresh_token,
+      language: generalSettings.language,
+      theme: generalSettings.theme,
+      startupPage: generalSettings.startupPage,
+    };
   }
 
   // =================================
