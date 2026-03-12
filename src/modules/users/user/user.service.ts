@@ -13,20 +13,19 @@ import {
   CLS_KEYS,
   LANGUAGE,
   PHONE_NUMBER_ACTION,
-  PROVIDER,
   TOKEN_TYPE,
   ExceptionMessages,
   BaseException,
   COUNTRIES,
   EXPIRE_DATES,
   TWO_FACTOR_ACTION,
+  PROVIDER,
 } from 'connectfy-shared';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { NotificationsService } from '@/src/external-modules/notifications/notifications.service';
 import { BcryptService } from '@/src/internal-modules/bcrypt/bcrypt.service';
 import { TokenService } from '../../tokens/token/token.service';
 import i18n from '@/src/i18n';
-import { AccountService } from '@/src/external-modules/account/account.service';
 import { CheckUniqueDto } from './dto/check-unique.dto';
 import { ENVIRONMENT_VARIABLES } from '@/src/common/constants/environment-variables';
 import { TwoFactorDto } from './dto/two-factor.dto';
@@ -40,7 +39,6 @@ export class UserService {
     private readonly emailService: NotificationsService,
     private readonly bcryptService: BcryptService,
     private readonly tokenService: TokenService,
-    private readonly accountService: AccountService,
   ) {}
 
   // =======================
@@ -90,7 +88,7 @@ export class UserService {
   // FIND ONE USER
   // =======================
   async findOne(query: Record<string, any>): Promise<IReturnedUser | null> {
-    return await this.repo.findOne({ query });
+    return (await this.repo.findOne({ query })) as IReturnedUser;
   }
 
   // =======================
@@ -164,11 +162,11 @@ export class UserService {
     const {
       _id,
       email: oldEmail,
-      usesOAuth,
+      provider,
     } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    if (usesOAuth) {
+    if (provider !== PROVIDER.PASSWORD) {
       throw new BaseException(
         ExceptionMessages.BAD_REQUEST_MESSAGE(language),
         HttpStatus.BAD_REQUEST,
@@ -285,9 +283,7 @@ export class UserService {
   // =======================
   async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
     const { password, confirmPassword, token } = data;
-    const { _id, usesPasswordAuth } = this.cls.get<IReturnedUser>(
-      CLS_KEYS.USER,
-    );
+    const { _id, provider } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
     if (password !== confirmPassword) {
@@ -309,7 +305,7 @@ export class UserService {
       );
     }
 
-    if (!usesPasswordAuth) {
+    if (provider !== PROVIDER.PASSWORD) {
       throw new BaseException(
         ExceptionMessages.CONFLICT_MESSAGE(lang),
         HttpStatus.CONFLICT,
@@ -484,11 +480,12 @@ export class UserService {
   async updateTwoFactorAuth(data: TwoFactorDto): Promise<IReturnedUser> {
     const { token, action } = data;
 
-    const { _id, isTwoFactorEnabled, usesPasswordAuth } =
-      this.cls.get<IReturnedUser>(CLS_KEYS.USER);
+    const { _id, isTwoFactorEnabled, provider } = this.cls.get<IReturnedUser>(
+      CLS_KEYS.USER,
+    );
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    if (!usesPasswordAuth) {
+    if (provider !== PROVIDER.PASSWORD) {
       throw new BaseException(
         ExceptionMessages.FORBIDDEN_MESSAGE(lang),
         HttpStatus.FORBIDDEN,

@@ -143,17 +143,4 @@ export const DeletedUserSchema = SchemaFactory.createForClass(DeletedUserModel);
 // ================================================
 DeletedUserSchema.index({ createdAt: -1 });
 
-// ================================================
-// VIRTUAL FIELDS - Calculated properties
-// ================================================
-
-// Days since deletion
-DeletedUserSchema.virtual('daysSinceDeletion').get(function () {
-  if (!this.deletedAt) return 0;
-  const now = new Date();
-  const deleted = new Date(this.deletedAt);
-  const diffTime = Math.abs(now.getTime() - deleted.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-});
-
 export type DeletedUserDocument = HydratedDocument<DeletedUserModel>;

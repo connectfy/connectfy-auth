@@ -200,24 +200,24 @@ export class AuthService {
 
     switch (identifierType) {
       case IDENTIFIER_TYPE.EMAIL:
-        user = await this.userRepo.findOne({
+        user = (await this.userRepo.findOne({
           query: { email: identifier },
           fields: 'password email provider status isTwoFactorEnabled',
-        });
+        })) as IReturnedUser;
         break;
 
       case IDENTIFIER_TYPE.USERNAME:
-        user = await this.userRepo.findOne({
+        user = (await this.userRepo.findOne({
           query: { username: identifier },
           fields: 'password email provider status isTwoFactorEnabled',
-        });
+        })) as IReturnedUser;
         break;
 
       default:
-        user = await this.userRepo.findOne({
+        user = (await this.userRepo.findOne({
           query: { 'phoneNumber.fullPhoneNumber': identifier },
           fields: 'password email provider status isTwoFactorEnabled',
-        });
+        })) as IReturnedUser;
         break;
     }
 
@@ -228,7 +228,7 @@ export class AuthService {
       );
     }
 
-    if (!user.usesPasswordAuth) {
+    if (user.provider !== PROVIDER.PASSWORD) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
@@ -361,7 +361,11 @@ export class AuthService {
       fields: 'password provider status isTwoFactorEnabled',
     });
 
-    if (!user || !user.usesPasswordAuth || !user.isTwoFactorEnabled) {
+    if (
+      !user ||
+      !user.isTwoFactorEnabled ||
+      user.provider !== PROVIDER.PASSWORD
+    ) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
@@ -389,7 +393,7 @@ export class AuthService {
       );
     }
 
-    if (user.isInactive) {
+    if (user.status === USER_STATUS.INACTIVE) {
       const deactivatedUser = await this.deactivatedUserRepo.findOne({
         query: { userId: user._id },
       });
@@ -479,7 +483,7 @@ export class AuthService {
       );
     }
 
-    if (!user.usesOAuth) {
+    if (user.provider !== PROVIDER.GOOGLE) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
@@ -500,14 +504,17 @@ export class AuthService {
       );
     }
 
-    if (!user.isActive && !user.isInactive) {
+    if (
+      user.status !== USER_STATUS.ACTIVE &&
+      user.status !== USER_STATUS.INACTIVE
+    ) {
       throw new BaseException(
         ExceptionMessages.INVALID_CREDENTIALS(language),
         HttpStatus.CONFLICT,
       );
     }
 
-    if (user.isInactive) {
+    if (user.status === USER_STATUS.INACTIVE) {
       const deactivatedUser = await this.deactivatedUserRepo.findOne({
         query: { userId: user._id },
       });
@@ -846,34 +853,18 @@ export class AuthService {
       );
     }
 
-    const rawUser = await this.userRepo.findOne({
+    const user = await this.userRepo.findOne({
       query: { _id: payload._id },
-      fields: '-password -status -role',
+      fields: '-password',
     });
 
-    if (!rawUser) {
+    if (!user) {
       throw new BaseException(
         ExceptionMessages.UNAUTHORIZED_MESSAGE(language),
         HttpStatus.UNAUTHORIZED,
         { navigate: true },
       );
     }
-
-    const user = {
-      _id: rawUser._id,
-      username: rawUser.username,
-      email: rawUser.email,
-      phoneNumber: rawUser.phoneNumber,
-      isTwoFactorEnabled: rawUser.isTwoFactorEnabled,
-      timeZone: rawUser.timeZone,
-      location: rawUser.location,
-      usesPasswordAuth: rawUser.usesPasswordAuth,
-      usesOAuth: rawUser.usesOAuth,
-      hasPhoneNumber: rawUser.hasPhoneNumber,
-      accountAgeInDays: rawUser.accountAgeInDays,
-      createdAt: rawUser.createdAt,
-      updatedAt: rawUser.updatedAt,
-    };
 
     const [account, generalSettings] = await Promise.all([
       this.accountService.findAccount({
@@ -1056,7 +1047,7 @@ export class AuthService {
       );
     }
 
-    if (user.usesPasswordAuth) {
+    if (user.provider === PROVIDER.PASSWORD) {
       if (!password) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
@@ -1077,7 +1068,7 @@ export class AuthService {
       }
     }
 
-    if (user.usesOAuth) {
+    if (user.provider === PROVIDER.GOOGLE) {
       if (!idToken) {
         throw new BaseException(
           ExceptionMessages.INVALID_CREDENTIALS(lang),
