@@ -1,39 +1,69 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DeletedUserRepository } from './repo/deleted-user.repo';
 import { AddDeletedUserDto } from './dto/add.deleted-user.dto';
 import { IReturnedDeletedUser } from './interface/deleted-user.interface';
 import { RemoveDeletedUserDto } from './dto/remove.deleted-user.dto';
-import { BaseException, CLS_KEYS, ExceptionMessages } from 'connectfy-shared';
+import {
+  BaseException,
+  CLS_KEYS,
+  ExceptionMessages,
+  LANGUAGE,
+  USER_STATUS,
+} from 'connectfy-shared';
 import { ClsService } from 'nestjs-cls';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class DeletedUserService {
   constructor(
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
+
     private readonly repo: DeletedUserRepository,
     private readonly cls: ClsService,
   ) {}
 
-  async create(data: AddDeletedUserDto): Promise<IReturnedDeletedUser> {
-    const res = await this.repo.create(data);
+  async create(data: AddDeletedUserDto): Promise<void> {
+    const userData = {
+      _id: data.userId,
+      status: USER_STATUS.DELETED,
+    };
 
-    return res;
+    await Promise.all([
+      this.repo.create(data),
+      this.userService.edit(userData),
+    ]);
   }
 
-  async remove(data: RemoveDeletedUserDto): Promise<IReturnedDeletedUser> {
-    const language = await this.cls.get(CLS_KEYS.LANG);
-    const { _id } = data;
+  async restoreAccount(userId: string): Promise<void> {
+    const deletedAccount = await this.repo.findOne({ query: { userId } });
+    const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
 
-    const foundData = await this.repo.findOne({ query: { _id } });
-
-    if (!foundData)
+    if (!deletedAccount) {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
       );
+    }
 
-    const res = await this.repo.remove({ _id });
+    const isUserExist = await this.userService.existByField({ _id: userId });
 
-    return res;
+    if (!isUserExist) {
+      throw new BaseException(
+        ExceptionMessages.NOT_FOUND_MESSAGE(language),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const userData = {
+      _id: userId,
+      status: USER_STATUS.ACTIVE,
+    };
+
+    await Promise.all([
+      await this.repo.remove({ _id: deletedAccount._id }),
+      this.userService.edit(userData),
+    ]);
   }
 
   async findOne(

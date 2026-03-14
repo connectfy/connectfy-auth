@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -9,17 +9,18 @@ import { TokenModule } from '../../tokens/token/token.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RefreshTokenModule } from '../../tokens/refresh-token/refresh-token.module';
 import { COLLECTIONS } from 'connectfy-shared';
+import { DeactivatedUsersModule } from '../deactivated-users/deactivated-users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: COLLECTIONS.AUTH.USER.USERS, schema: UserSchema },
     ]),
-    DeletedUserModule,
     TokenModule,
     JwtModule,
     RefreshTokenModule,
-    DeletedUserModule,
+    forwardRef(() => DeletedUserModule),
+    forwardRef(() => DeactivatedUsersModule),
   ],
   controllers: [UserController],
   providers: [UserService, UserRepository],

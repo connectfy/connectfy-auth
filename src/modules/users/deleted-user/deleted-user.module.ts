@@ -1,16 +1,18 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { DeletedUserService } from './deleted-user.service';
 import { DeletedUserController } from './deleted-user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeletedUserSchema } from './entity/deleted-user.entity';
 import { DeletedUserRepository } from './repo/deleted-user.repo';
 import { COLLECTIONS } from 'connectfy-shared';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: COLLECTIONS.AUTH.USER.DELETED, schema: DeletedUserSchema },
     ]),
+    forwardRef(() => UserModule),
   ],
   controllers: [DeletedUserController],
   providers: [DeletedUserService, DeletedUserRepository],

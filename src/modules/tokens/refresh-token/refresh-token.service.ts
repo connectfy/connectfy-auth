@@ -40,7 +40,7 @@ export class RefreshTokenService {
 
     const access_token = await this.jwtService.signAsync(payload, {
       secret: accessSecretKey,
-      expiresIn: accessExpiry,
+      expiresIn: '1m',
     });
 
     const refresh_token = await this.jwtService.signAsync(payload, {

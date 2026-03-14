@@ -6,13 +6,11 @@ import { VerifySignupDto, VerifyLoginDto } from './dto/verify.dto';
 import { GoogleAuthLoginDto, LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LANGUAGE, BaseException, ExceptionMessages } from 'connectfy-shared';
 import { ValidateTokenDto } from './dto/validate-token.dto';
 import { AuthenticateUserDto } from './dto/authenticate-user.dto';
-import { RestoreAccountDto } from './dto/restore-account.dto';
-import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { RestoreAccountDto } from './dto/restore-account.dto';
 
 @Controller('')
 export class AuthController {
@@ -94,11 +92,6 @@ export class AuthController {
     return this.service.verifyAuthToken(access_token, refresh_token);
   }
 
-  @MessagePattern('auth/delete-account', Transport.TCP)
-  async deleteAccount(@Payload() data: DeleteAccountDto) {
-    return this.service.deleteAccount(data);
-  }
-
   @MessagePattern('auth/refreshToken', Transport.TCP)
   async refreshToken(@Payload() data: Record<string, any>) {
     if (!data.refresh_token || !data.deviceId || !data.requestData)
@@ -119,10 +112,5 @@ export class AuthController {
   @MessagePattern('auth/restore-account', Transport.TCP)
   async restoreAccount(@Payload() data: RestoreAccountDto) {
     return this.service.restoreAccount(data);
-  }
-
-  @MessagePattern('auth/deactivate-account', Transport.TCP)
-  async deactivateAccount(@Payload() data: DeactivateAccountDto) {
-    return this.service.deactivateAccount(data);
   }
 }

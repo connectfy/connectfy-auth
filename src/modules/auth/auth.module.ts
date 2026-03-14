@@ -8,7 +8,7 @@ import { UserModule } from '../users/user/user.module';
 import { DeletedUserModule } from '../users/deleted-user/deleted-user.module';
 import { BannedUserModule } from '../users/banned-user/banned-user.module';
 import { TokenModule } from '../tokens/token/token.module';
-import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-users.module';
+import { DeactivatedUsersModule } from '../users/deactivated-users/deactivated-users.module';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { DeactivetedUsersModule } from '../users/deactivated-users/deactivated-u
     DeletedUserModule,
     BannedUserModule,
     TokenModule,
-    DeactivetedUsersModule,
+    DeactivatedUsersModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

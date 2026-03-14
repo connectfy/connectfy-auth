@@ -7,6 +7,9 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { CheckUniqueDto } from './dto/check-unique.dto';
 import { TwoFactorDto } from './dto/two-factor.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
+import { RestoreAccountDto } from '../../auth/dto/restore-account.dto';
+import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 
 @Controller('')
 export class UserController {
@@ -45,5 +48,15 @@ export class UserController {
   @MessagePattern('user/two-factor', Transport.TCP)
   async updateTwoFactorAuth(@Payload() data: TwoFactorDto) {
     return this.service.updateTwoFactorAuth(data);
+  }
+
+  @MessagePattern('user/delete-account', Transport.TCP)
+  async deleteAccount(@Payload() data: DeleteAccountDto) {
+    return this.service.deleteAccount(data);
+  }
+
+  @MessagePattern('user/deactivate-account', Transport.TCP)
+  async deactivateAccount(@Payload() data: DeactivateAccountDto) {
+    return this.service.deactivateAccount(data);
   }
 }

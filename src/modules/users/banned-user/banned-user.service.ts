@@ -3,11 +3,20 @@ import { BannedUserRepository } from './repo/banned-user.repo';
 import { AddBannedUserDto } from './dto/add.banned-user.dto';
 import { RemoveBannedUserDto } from './dto/remove.banned-user.dto';
 import { IReturnedBannedUser } from './interface/banned-user.interface';
-import { ExceptionMessages, BaseException } from 'connectfy-shared';
+import {
+  ExceptionMessages,
+  BaseException,
+  CLS_KEYS,
+  LANGUAGE,
+} from 'connectfy-shared';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class BannedUserService {
-  constructor(private readonly repo: BannedUserRepository) {}
+  constructor(
+    private readonly repo: BannedUserRepository,
+    private readonly cls: ClsService,
+  ) {}
 
   async create(data: AddBannedUserDto): Promise<IReturnedBannedUser> {
     const res = await this.repo.create(data);
@@ -20,11 +29,12 @@ export class BannedUserService {
 
     const foundData = await this.repo.findOne({ query: { _id } });
 
-    if (!foundData)
+    if (!foundData) {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(_lang),
         HttpStatus.NOT_FOUND,
       );
+    }
 
     const res = await this.repo.remove({ _id });
 
@@ -36,5 +46,17 @@ export class BannedUserService {
   ): Promise<IReturnedBannedUser | null> {
     const res = await this.repo.findOne(query);
     return res;
+  }
+
+  async isUserBanned(query: Record<string, any>): Promise<void> {
+    const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
+    const res = await this.repo.existsByField(query);
+
+    if (res) {
+      throw new BaseException(
+        ExceptionMessages.FORBIDDEN_MESSAGE(lang),
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 }
