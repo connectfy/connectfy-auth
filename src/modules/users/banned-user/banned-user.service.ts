@@ -56,6 +56,7 @@ export class BannedUserService {
       throw new BaseException(
         ExceptionMessages.FORBIDDEN_MESSAGE(lang),
         HttpStatus.FORBIDDEN,
+        { navigate: true },
       );
     }
   }
