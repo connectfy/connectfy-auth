@@ -23,6 +23,7 @@ import {
   USER_STATUS,
   DELETE_REASON_CODE,
   DELETE_REASON,
+  IResponse,
 } from 'connectfy-shared';
 import { ChangePhoneNumberDto } from './dto/change-phone-number.dto';
 import { NotificationsService } from '@/src/external-modules/notifications/notifications.service';
@@ -66,26 +67,29 @@ export class UserService {
   // =======================
   // EDIT USER INFORMATION'S
   // =======================
-  async edit(data: EditUserDto): Promise<IReturnedUser> {
-    return await this.repo.update({ _id: data._id }, data);
+  async edit(data: EditUserDto): Promise<IResponse> {
+    await this.repo.update({ _id: data._id }, data);
+    return { success: true };
   }
 
   // =======================
   // REMOVE USER
   // =======================
-  async remove(data: RemoveUserDto): Promise<IReturnedUser> {
+  async remove(data: RemoveUserDto): Promise<IResponse> {
     const language = await this.cls.get(CLS_KEYS.LANG);
     const { _id } = data;
 
-    const foundData = await this.repo.findOne({ query: { _id } });
+    const foundData = await this.repo.existsByField({ _id });
 
-    if (!foundData)
+    if (!foundData) {
       throw new BaseException(
         ExceptionMessages.NOT_FOUND_MESSAGE(language),
         HttpStatus.NOT_FOUND,
       );
+    }
 
-    return await this.repo.remove({ _id });
+    await this.repo.remove({ _id });
+    return { success: true };
   }
 
   // =======================
@@ -118,7 +122,7 @@ export class UserService {
   // =======================
   // CHANGE USERNAME
   // =======================
-  async changeUsername(data: ChangeUsernameDto): Promise<IReturnedUser> {
+  async changeUsername(data: ChangeUsernameDto): Promise<IResponse> {
     const { username, token } = data;
     const { _id, username: oldUsername } = this.cls.get<IReturnedUser>(
       CLS_KEYS.USER,
@@ -168,7 +172,7 @@ export class UserService {
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_USERNAME }],
     });
 
-    return updatedUser;
+    return { success: true };
   }
 
   // =======================
@@ -246,7 +250,7 @@ export class UserService {
   // =======================
   // VERIFY CHANGE EMAIL
   // =======================
-  async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IReturnedUser> {
+  async verifyEmailChange(data: VerifyEmailChangeDto): Promise<IResponse> {
     const { token } = data;
     const { _id } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
@@ -277,7 +281,7 @@ export class UserService {
       },
     });
 
-    const [updatedUser] = await Promise.all([
+    await Promise.all([
       await this.repo.update(
         {
           _id,
@@ -292,13 +296,13 @@ export class UserService {
       }),
     ]);
 
-    return updatedUser;
+    return { success: true, email: decoded.email };
   }
 
   // =======================
   // CHANGE PASSWORD
   // =======================
-  async changePassword(data: ChangePasswordDto): Promise<IReturnedUser> {
+  async changePassword(data: ChangePasswordDto): Promise<IResponse> {
     const { password, confirmPassword, token } = data;
     const { _id, provider } = this.cls.get<IReturnedUser>(CLS_KEYS.USER);
     const lang = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
@@ -358,7 +362,7 @@ export class UserService {
 
     const hashedPassword = await this.bcryptService.hash(password);
 
-    const updatedUser = await this.repo.update(
+    await this.repo.update(
       {
         _id,
       },
@@ -372,13 +376,13 @@ export class UserService {
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PASSWORD }],
     });
 
-    return updatedUser;
+    return { success: true };
   }
 
   // =======================
   // CHANGE PHONE NUMBER
   // =======================
-  async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IReturnedUser> {
+  async changePhoneNumber(data: ChangePhoneNumberDto): Promise<IResponse> {
     const { phoneNumber, token, action } = data;
     const { _id, phoneNumber: oldPhoneNumber } = this.cls.get<IReturnedUser>(
       CLS_KEYS.USER,
@@ -446,31 +450,27 @@ export class UserService {
       }
     }
 
-    let updatedUser: IReturnedUser;
+    let updatedPhoneNumber;
 
-    if (action === PHONE_NUMBER_ACTION.UPDATE) {
-      updatedUser = await this.repo.update(
-        { _id },
-        {
-          _id,
-          phoneNumber: phoneNumber,
-        },
-      );
+    if (action === PHONE_NUMBER_ACTION.REMOVE) {
+      updatedPhoneNumber = null;
     } else {
-      updatedUser = await this.repo.update(
-        { _id },
-        {
-          _id,
-          phoneNumber: null,
-        },
-      );
+      updatedPhoneNumber = phoneNumber;
     }
+
+    await this.repo.update(
+      { _id },
+      {
+        _id,
+        phoneNumber: phoneNumber,
+      },
+    );
 
     await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
     });
 
-    return updatedUser;
+    return { success: true, updatedPhoneNumber };
   }
 
   // =======================
@@ -494,7 +494,7 @@ export class UserService {
   // =======================
   // ENABLE/DISABLE 2FA
   // =======================
-  async updateTwoFactorAuth(data: TwoFactorDto): Promise<IReturnedUser> {
+  async updateTwoFactorAuth(data: TwoFactorDto): Promise<IResponse> {
     const { token, action } = data;
 
     const { _id, isTwoFactorEnabled, provider } = this.cls.get<IReturnedUser>(
@@ -536,12 +536,14 @@ export class UserService {
       isTwoFactorEnabled: action === TWO_FACTOR_ACTION.ENABLE,
     };
 
-    const res = await this.repo.update({ _id }, finalData);
-    await this.tokenService.removeMany({
-      $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
-    });
+    await Promise.all([
+      this.repo.update({ _id }, finalData),
+      this.tokenService.removeMany({
+        $and: [{ userId: _id }, { type: TOKEN_TYPE.TWO_FACTOR }],
+      }),
+    ]);
 
-    return res;
+    return { success: true };
   }
 
   // =================================
