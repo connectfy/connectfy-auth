@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-const appEnv = process.env.APP_ENV || 'remote';
+const appEnv = process.env.NODE_ENV || 'remote';
 
 const envPath = path.resolve(process.cwd(), `.env.${appEnv}`);
 
