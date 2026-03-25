@@ -742,7 +742,7 @@ export class AuthService {
     const [account, generalSettings] = await Promise.all([
       this.accountService.findAccount({
         query: { userId: user._id },
-        fields: 'avatar',
+        fields: 'avatar defaultAvatar',
       }),
       this.accountService.findGeneralSettings({
         query: { userId: user._id },
@@ -762,6 +762,7 @@ export class AuthService {
       ...user,
       language: generalSettings.language,
       avatar: account.avatar,
+      defaultAvatar: account.defaultAvatar,
     };
 
     return { status: 200, user: result };
