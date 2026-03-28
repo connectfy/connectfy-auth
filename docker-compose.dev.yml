@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile.dev
     restart: unless-stopped
     depends_on:
-      - mongo
+      - auth-mongo
     volumes:
       - .:/usr/src/app
     networks:
@@ -20,11 +20,11 @@ services:
     ports:
       - "4000:4000"
 
-  mongo:
-    image: mongo:6
+  auth-mongo:
+    image: mongo:latest
     container_name: connectfy-auth-mongo-dev
     volumes:
-      - mongo-data:/data/db
+      - auth-mongo-data:/data/db
     networks:
       - auth-db-network
     environment:
@@ -32,10 +32,10 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: authDb
     ports:
-      - '25001:27017'
+      - "25001:27017"
 
 volumes:
-  mongo-data:
+  auth-mongo-data:
 
 networks:
   connectfy-core-network:

@@ -39,6 +39,7 @@ import { DeactivateAccountDto } from './dto/deactivate-account.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { RefreshTokenService } from '../../tokens/refresh-token/refresh-token.service';
 import { FindUserDto } from './dto/find.user.dto';
+import { KafkaConnectionService } from '@/src/app-settings/kafka-connections/kafka-connection.service';
 
 @Injectable()
 export class UserService {
@@ -55,6 +56,7 @@ export class UserService {
     private readonly bcryptService: BcryptService,
     private readonly tokenService: TokenService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly kafkaConnectionService: KafkaConnectionService,
   ) {}
 
   // =======================
@@ -160,7 +162,7 @@ export class UserService {
       );
     }
 
-    const updatedUser = await this.repo.update(
+    await this.repo.update(
       { _id },
       {
         _id,
@@ -171,6 +173,16 @@ export class UserService {
     await this.tokenService.removeMany({
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_USERNAME }],
     });
+
+    console.log('username changed');
+    this.kafkaConnectionService.emitWithContext({
+      topic: 'profile.username.update',
+      payload: {
+        userId: _id,
+        username,
+      },
+    });
+    console.log('kafka commit');
 
     return { success: true };
   }

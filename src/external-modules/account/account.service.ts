@@ -11,7 +11,7 @@ export class AccountService {
   ) {}
 
   // =================================
-  // CREATE USER ACCOUNT AND SETTINGS
+  // CREATE USER PROFILE AND SETTINGS
   // =================================
   async createAccountRelatedServices(opts: {
     userId: string;
@@ -72,9 +72,9 @@ export class AccountService {
   }
 
   // =================================
-  // FIND USER ACCOUNT
+  // FIND USER PROFILE
   // =================================
-  async findAccount(payload: BaseFindDto): Promise<any> {
+  async findProfile(payload: BaseFindDto): Promise<any> {
     return await this.tcpConnectionService.account({
       endpoint: 'profile/findOne',
       payload,

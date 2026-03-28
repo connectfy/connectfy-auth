@@ -14,7 +14,6 @@ import {
 } from 'connectfy-shared';
 import { generateVerifyCode } from '@/src/common/functions/function';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { UserRepository } from '../users/user/repo/user.repo';
 import { RefreshTokenService } from '../tokens/refresh-token/refresh-token.service';
 import { GoogleAuthSignupDto, SignupDto } from './dto/signup.dto';
 import { VerifySignupDto, VerifyLoginDto } from './dto/verify.dto';
@@ -254,7 +253,7 @@ export class AuthService {
     if (user.isTwoFactorEnabled) {
       const twoFaCode = generateVerifyCode();
 
-      const account = await this.accountService.findAccount({
+      const account = await this.accountService.findProfile({
         query: { userId: user._id },
         fields: 'firstName lastName',
       });
@@ -474,7 +473,6 @@ export class AuthService {
     const email = payload?.email;
     const firstName = payload?.given_name || '';
     const lastName = payload?.family_name || '';
-    const avatar = payload?.picture || null;
 
     if (!email)
       throw new BaseException(
@@ -519,7 +517,6 @@ export class AuthService {
       firstName,
       lastName,
       gender,
-      avatar,
       birthdayDate,
       theme,
       location: `${userLocation.country ?? ''}${userLocation.city ? `, ${userLocation.city}` : ''}`,
@@ -740,7 +737,7 @@ export class AuthService {
     await this.bannedUserService.isUserBanned({ userId: user._id });
 
     const [account, generalSettings] = await Promise.all([
-      this.accountService.findAccount({
+      this.accountService.findProfile({
         query: { userId: user._id },
         fields: 'avatar defaultAvatar',
       }),
