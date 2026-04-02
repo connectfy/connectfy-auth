@@ -63,7 +63,23 @@ export class UserService {
   // CREATE USER
   // =======================
   async create(data: AddUserDto): Promise<IReturnedUser> {
-    return await this.repo.create(data);
+    const res = await this.repo.create(data);
+
+    const projectionPayload = {
+      _id: res._id,
+      username: res.username,
+      email: res.email,
+      phoneNumber: res.phoneNumber,
+      status: res.status,
+      createdAt: res.createdAt,
+    };
+
+    this.kafkaConnectionService.emitWithContext({
+      topic: 'projection.user.created',
+      payload: projectionPayload,
+    });
+
+    return res;
   }
 
   // =======================
@@ -174,15 +190,13 @@ export class UserService {
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_USERNAME }],
     });
 
-    console.log('username changed');
     this.kafkaConnectionService.emitWithContext({
-      topic: 'profile.username.update',
+      topic: 'projection.user.updated',
       payload: {
-        userId: _id,
+        _id,
         username,
       },
     });
-    console.log('kafka commit');
 
     return { success: true };
   }
@@ -307,6 +321,14 @@ export class UserService {
         $and: [{ type: TOKEN_TYPE.CHANGE_EMAIL }, { userId: _id }],
       }),
     ]);
+
+    this.kafkaConnectionService.emitWithContext({
+      topic: 'projection.user.updated',
+      payload: {
+        _id,
+        email: decoded.email,
+      },
+    });
 
     return { success: true, email: decoded.email };
   }
@@ -482,6 +504,14 @@ export class UserService {
       $and: [{ userId: _id }, { type: TOKEN_TYPE.CHANGE_PHONE_NUMBER }],
     });
 
+    this.kafkaConnectionService.emitWithContext({
+      topic: 'projection.user.updated',
+      payload: {
+        _id,
+        phoneNumber: updatedPhoneNumber,
+      },
+    });
+
     return { success: true, updatedPhoneNumber };
   }
 
@@ -592,6 +622,14 @@ export class UserService {
       this.repo.update({ _id }, { _id, status: USER_STATUS.INACTIVE }),
     ]);
 
+    this.kafkaConnectionService.emitWithContext({
+      topic: 'projection.user.updated',
+      payload: {
+        _id,
+        status: USER_STATUS.INACTIVE,
+      },
+    });
+
     return { statusCode: 200 };
   }
 
@@ -665,6 +703,14 @@ export class UserService {
       to: email,
       language: lang,
       additional: { token: newToken },
+    });
+
+    this.kafkaConnectionService.emitWithContext({
+      topic: 'projection.user.updated',
+      payload: {
+        _id,
+        status: USER_STATUS.INACTIVE,
+      },
     });
 
     return { statusCode: 200 };

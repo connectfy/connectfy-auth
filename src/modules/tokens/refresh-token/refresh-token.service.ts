@@ -40,7 +40,7 @@ export class RefreshTokenService {
 
     const access_token = await this.jwtService.signAsync(payload, {
       secret: accessSecretKey,
-      expiresIn: '1m',
+      expiresIn: accessExpiry,
     });
 
     const refresh_token = await this.jwtService.signAsync(payload, {
@@ -114,9 +114,9 @@ export class RefreshTokenService {
     return await this.repo.removeOne({ userId });
   }
 
-  async findToken(refreshToken: string): Promise<IReturnedRefreshToken> {
+  async findToken(refresh_token: string): Promise<IReturnedRefreshToken> {
     const language = this.cls.get<LANGUAGE>(CLS_KEYS.LANG);
-    const res = await this.repo.findOne({ query: { refreshToken } });
+    const res = await this.repo.findOne({ query: { refresh_token } });
 
     if (!res)
       throw new BaseException(
